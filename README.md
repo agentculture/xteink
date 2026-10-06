@@ -91,7 +91,10 @@ error code.
 
 ### Ports and settings
 
-Copy `.env.example` to `.env` to change anything. The useful variables:
+Copy `.env.example` to `.env` (`cp .env.example .env`) to change anything, or
+export the variables in your shell for one-off runs (for example a scratch stack
+on other ports: `COMPOSE_PROJECT_NAME=scratch XTEINK_PUBLISH_PORT=18780
+XTEINK_PUBLISH_DEVICE_PORT=18781 XTEINK_PUBLISH_MCP_PORT=18782 docker compose up -d api`). The useful variables:
 
 | Variable | Default | Meaning |
 |----------|---------|---------|
@@ -112,11 +115,12 @@ Mint a second key for the MCP service, put it in `.env`, and start everything:
 
 ```bash
 docker compose run --rm api python -m xteink.server create-key mcp
-cp .env.example .env     # then set XTEINK_API_KEY=<the printed key>
+[ -f .env ] || cp .env.example .env   # keep your own .env if you already made one
+# edit .env: set XTEINK_API_KEY=<the printed key>
 docker compose up -d
 ```
 
-The MCP endpoint is then `http://<host>:8782/mcp`. Without a key the `mcp`
+The MCP endpoint is then `http://<host>:8782/mcp/` (with the trailing slash). Without a key the `mcp`
 service refuses to start, which is why step 1 above starts only `api`. See
 [`docs/mcp.md`](docs/mcp.md). MCP is for LAN, Tailscale and mesh use; it is
 never routed through the tunnel.

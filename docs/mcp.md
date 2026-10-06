@@ -44,12 +44,13 @@ python -m xteink.mcp --http --bind 0.0.0.0 --port 8782
 ```
 
 In the compose stack this is the `mcp` service, published on host port 8782
-(`XTEINK_PUBLISH_MCP_PORT`). The endpoint is `http://<host>:8782/mcp`. Put the
+(`XTEINK_PUBLISH_MCP_PORT`). The endpoint is `http://<host>:8782/mcp/`. Put the
 service key in `.env` as `XTEINK_API_KEY` and run `docker compose up -d`; see
 the README.
 
 The MCP server has no authentication of its own: whoever can reach the port can
-use the library through its key. Keep it on a LAN, a tailnet or the mesh.
+use the library through its key. The path is `/mcp/`; `/mcp` answers with a
+307 redirect to it. Keep it on a LAN, a tailnet or the mesh.
 
 ### Scope: not over the internet
 
@@ -84,7 +85,7 @@ Or against the HTTP service on another machine:
   "mcpServers": {
     "xteink": {
       "type": "http",
-      "url": "http://<host-or-tailnet-name>:8782/mcp"
+      "url": "http://<host-or-tailnet-name>:8782/mcp/"
     }
   }
 }
