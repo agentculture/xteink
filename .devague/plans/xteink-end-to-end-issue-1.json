@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T21:24:13Z",
+  "updated": "2026-10-06T21:49:53Z",
   "targets": [
     {
       "id": "c1",
@@ -1231,7 +1231,7 @@
     },
     {
       "id": "r21",
-      "text": "Fork TLS: SNTP is retried before every HTTPS connection when it fails (6 timeouts in one hotspot sync, each adding delay), contrary to t13's one-bounded-attempt-per-boot intent; also the LAN probe takes ~11 s to fail vs its 4 s connect timeout. Both slow tunnel syncs (7 KB took ~22 s)",
+      "text": "Fork sync timing: SNTP retried per HTTPS connection (fixed in d2-nav-sntp, SntpPolicy); the earlier ~11 s delay was measured on hardware (2026-10-07) as the SD free-space query (FAT free-cluster scan on the 16 GB card) = 6,988 ms, not the LAN probe (LAN probe 146 ms). Fix: cache free space / query rarely (protocol allows omitting free_sd_bytes)",
       "kind": "follow_up",
       "task_id": "t17",
       "resolved": false,
@@ -1260,6 +1260,14 @@
       "task_id": "t11",
       "resolved": true,
       "resolution": "User-approved 2026-10-07: appended zone cache rules cache=false for ebooks.culture.dev (except /assets/) and all of xteink.culture.dev after the catch-all; purged 12 cached URLs; verified cf-cache-status DYNAMIC on xteink.culture.dev"
+    },
+    {
+      "id": "r25",
+      "text": "X3 auto-join gives up on each saved network after exactly 7.0 s (upstream WifiSelectionActivity), but the home extender <extender SSID> needs ~8.3 s to associate with the same saved password, so auto-fallback appears broken (user had to pick it manually). Fix: per-network auto-join timeout ~15 s",
+      "kind": "follow_up",
+      "task_id": "t17",
+      "resolved": false,
+      "resolution": ""
     }
   ],
   "obligations": []
