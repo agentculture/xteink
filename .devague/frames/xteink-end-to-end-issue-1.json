@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T19:28:53Z",
+  "updated": "2026-10-06T21:05:08Z",
   "claims": [
     {
       "id": "c1",
@@ -2000,6 +2000,17 @@
       "skipped_check": "arming the flash only after the device was awake and idle; stable by-id port path",
       "refs": [
         "plan t19 / docs/evidence/t19-x3-bringup.md"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l28",
+      "code": "assumption-for-measurement",
+      "what": "fork d2/r21 fix: B2 root cause (11 s LAN probe) not measured \u2014 bounded the probe and added timing logs, whether the time was the probe or inventory/free-space work awaits the next X3 log; hostname LAN URL DNS (xteink.local) still outside the 4 s budget; nothing hardware-verified",
+      "skipped_check": "",
+      "refs": [
+        "fork xteink/d2-nav-sntp / src/xteink/XteinkSync.cpp"
       ],
       "origin": "llm",
       "status": "proposed"

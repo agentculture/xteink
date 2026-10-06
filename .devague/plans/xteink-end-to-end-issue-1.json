@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T20:45:04Z",
+  "updated": "2026-10-06T21:05:08Z",
   "targets": [
     {
       "id": "c1",
@@ -1234,6 +1234,22 @@
       "text": "Fork TLS: SNTP is retried before every HTTPS connection when it fails (6 timeouts in one hotspot sync, each adding delay), contrary to t13's one-bounded-attempt-per-boot intent; also the LAN probe takes ~11 s to fail vs its 4 s connect timeout. Both slow tunnel syncs (7 KB took ~22 s)",
       "kind": "follow_up",
       "task_id": "t17",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r22",
+      "text": "Upstream bug: lib/TrustedTime/TrustedTime.cpp:99-102 syncNow() calls sntp_get_sync_status() twice and ESP-IDF clears COMPLETED on read (lwip sntp.c:82-88), so a completed sync reports failure; fork works around it in src/network (SntpPolicy, reachability check) without editing upstream; report upstream to crosspoint-reader",
+      "kind": "follow_up",
+      "task_id": "t13",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r23",
+      "text": "LibraryListActivity is a tabbed list that overrides navigateButtons and binds Search to front Left/Previous while the tab band is focused (LibraryListActivity.cpp:770-805); d2 tab navigation left it unchanged to keep Search reachable \u2014 user to decide its key map",
+      "kind": "follow_up",
+      "task_id": "t14",
       "resolved": false,
       "resolution": ""
     }
