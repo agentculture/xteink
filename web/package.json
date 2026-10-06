@@ -1,0 +1,36 @@
+{
+  "name": "xteink-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "xteink web UI: upload, library, send-to-device, devices, settings. Built into xteink/server/_webassets.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && node scripts/clean-webassets.mjs && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -b --force"
+  },
+  "dependencies": {
+    "@fontsource-variable/literata": "^5.3.0",
+    "qrcode.react": "^4.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/node": "^22.20.5",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "jsdom": "^25.0.1",
+    "typescript": "~5.6.3",
+    "vite": "^6.4.4",
+    "vitest": "^4.1.11"
+  }
+}
