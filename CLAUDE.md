@@ -20,23 +20,51 @@ afi-cli scaffolder the CLI is cited from.
 
 ### Current state vs. roadmap
 
-So far only the scaffold exists. Everything below that is about e-ink readers is
-**(planned)**. None of it is in the tree yet:
+Landed and in the tree (read the code, not this list, when in doubt):
 
-- **(planned)** A local server with a file/book service the readers sync from.
-- **(planned)** Optional remote access to that server through Cloudflare Tunnel.
-- **(planned)** Custom Xteink device firmware that joins Wi-Fi and syncs books
-  over the local network, so reading needs no cloud.
+- **Core** (`xteink/core`): SQLite store plus content-addressed blobs, library,
+  devices and queue, API/device keys, and ingest (size and zip-bomb limits,
+  Markdown/HTML to EPUB through pandoc).
+- **Server** (`xteink/server`): the main app on :8780 (`/api/library*`,
+  `/api/devices*`, `/api/keys*`, the web UI at `/`, OpenAPI at `api/openapi.json`)
+  and a separate device-only app on :8781 (`/api/device/*`, device protocol v1 in
+  `docs/device-protocol.md`). Run with `python -m xteink.server serve|create-key`.
+  Both apps require keys, including on the LAN.
+- **MCP** (`xteink/mcp`, official `mcp` SDK): tools `push_file`, `list_library`,
+  `send_to_device`; stdio by default, `--http` on :8782. LAN/tailnet/mesh only,
+  never tunnelled. `xteink/client.py` is the stdlib API client behind the CLI and MCP.
+- **Web UI** (`web/`, Vite + React): built into `xteink/server/_webassets`
+  (git-ignored, built by the Dockerfile). First run asks for an API key.
+- **Packaging**: `Dockerfile` and `compose.yaml` (`api`, `mcp`; the `remote`
+  profile adds `cloudflared-ui` and `cloudflared-device`), `docker/avahi/` notes
+  for `xteink.local`, pandoc 3.12 in the image.
+- **Remote access**: two cultureflare tunnels (see `docs/remote-access.md`):
+  `ebooks.culture.dev` behind Cloudflare Access to `api:8780`, and
+  `xteink.culture.dev` tunnel-only to `api:8781`. Tokens are hidden grant secrets
+  injected with `grant run --inject`; xteink never calls the Cloudflare API.
+- **CLI nouns**: `server`, `library`, `device` (`list`, `queue`, `revoke`,
+  `backup`, `provision`), `tunnel` (`status`, `plan`), `mcp` (`serve`), beside
+  `whoami`, `learn`, `explain`, `overview`, `doctor`, `cli overview`. Mutating
+  verbs are dry-run unless `--apply`.
+- User docs: `README.md` (quickstart), `docs/api.md`, `docs/mcp.md`.
 
-What exists today is the agent-first CLI (`whoami`, `learn`, `explain`,
-`overview`, `doctor`, `cli overview`), the harness and identity plumbing, and the
-CI/CD baseline. The CLI's own descriptions (`learn`, `explain`, the parser
-`description`) describe xteink and mark the server, API, MCP, web UI and
-firmware sync as planned. Keep them honest as components land.
+Still **(planned)** or unverified:
+
+- **(in progress, unverified)** Custom device firmware. It lives in a separate
+  repo, `agentculture/xteink-firmware` (a CrossPoint Reader fork: theme, zoom mode,
+  USB provisioning, pinned-root TLS, OTA from fork releases). Its sync client is
+  still being built and nothing has been verified on hardware. Do not claim that a
+  device syncs end to end. The server side of the protocol is implemented and tested
+  against a fake device.
+- **(planned)** PDF ingest (rejected today with `pdf_not_supported`).
+
+Some CLI strings (`xteink/cli/_commands/learn.py`, `xteink/explain/catalog.py`)
+may still describe the server, API, MCP and web UI as planned. They have landed;
+keep those strings honest.
 
 When you add a product component, put it under a new CLI noun group (see
 [The CLI](#the-cli)) instead of a separate entry point. When a planned item
-lands, update this section.
+lands, update this section and the other three prompt files.
 
 ## Commands
 
@@ -55,6 +83,18 @@ markdownlint-cli2 "**/*.md" "#node_modules" "#.local" "#.claude/skills" "#.teken
 uv run teken cli doctor . --strict             # agent-first rubric gate
 python3 scripts/scan-secrets.py                # secrets / non-localhost endpoint gate
 uv run python scripts/harness-smoke.py --stage config   # per-harness config check
+
+uv sync --extra server                         # also install fastapi/uvicorn/mcp (server + MCP tests)
+python -m xteink.server serve                  # main app :8780 + device app :8781
+python -m xteink.server create-key <name>      # mint an API key (printed once)
+python -m xteink.mcp [--http]                  # MCP server: stdio, or :8782
+uv run python scripts/export-openapi.py --check   # api/openapi.json must match the app
+
+cd web && npm ci && npm run build              # web UI -> xteink/server/_webassets
+cd web && npm test && npm run typecheck        # vitest + tsc
+
+docker compose up -d api                       # the stack (set COMPOSE_PROJECT_NAME for a scratch one)
+scripts/check-compose.sh                       # validate compose.yaml (no containers started)
 
 uv run xteink whoami      # identity from culture.yaml (every verb takes --json)
 uv run xteink doctor      # agent-identity invariants
@@ -94,6 +134,10 @@ How it fits together:
 - `explain <path>` reads markdown from `xteink/explain/catalog.py`, keyed by
   command-path tuples. When you add a verb or noun, add a catalog entry too, then
   re-run `uv run teken cli doctor . --strict`.
+- The `server`, `library`, `device` and `mcp` nouns call the HTTP API through
+  `xteink/client.py` (`XTEINK_URL`, default `http://127.0.0.1:8780`, and
+  `XTEINK_API_KEY`). Mutating verbs take `--apply`; without it they only print
+  what they would do. `device backup|provision` drive esptool/USB serial.
 - `whoami` and `doctor` read `culture.yaml`, located by
   `find_culture_yaml` in `_commands/whoami.py`.
 

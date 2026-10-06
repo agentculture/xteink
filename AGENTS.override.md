@@ -23,9 +23,15 @@ what the repo is and how it is laid out, not who is reading it.
 `xteink` lets you control Xteink e-ink readers privately: a local server
 with a file/book service, optional remote access via Cloudflare Tunnel, and
 custom device firmware that joins Wi-Fi to sync books locally, so reading works
-fully offline. Your library never leaves hardware you own. **Only the agent
-scaffold exists so far.** The server, tunnel, and firmware are *(planned)*.
-See `CLAUDE.md` § "Current state vs. roadmap".
+fully offline. Your library never leaves hardware you own. **Landed:** the local
+server (main app :8780 with web UI + API, device-only app :8781, both key-gated),
+an MCP server (`push_file`, `list_library`, `send_to_device`; stdio or :8782),
+Docker/compose packaging, an opt-in two-tunnel Cloudflare setup, and CLI nouns
+`server`, `library`, `device`, `tunnel`, `mcp`. **Not verified:** the device
+firmware (a separate repo, `agentculture/xteink-firmware`, still building its sync
+client; nothing is verified on hardware), so never claim a reader syncs end to
+end. PDF ingest is *(planned)*. User docs: `README.md`, `docs/api.md`,
+`docs/mcp.md`. See `CLAUDE.md` § "Current state vs. roadmap".
 
 It is also an AgentCulture mesh agent (suffix `xteink`), scaffolded from
 `culture-agent-template`. It follows the sibling pattern every Culture agent
@@ -80,6 +86,13 @@ That is a per-clone choice; this repo does not use it.)
 xteink/   agent-first CLI (cited from teken's python-cli reference)
   cli/                    parser, error/output contract, _commands/ (verbs)
   explain/                markdown catalog for `explain`
+  core/                   store, library, devices, keys, ingest (pandoc)
+  server/                 main app :8780 + device app :8781 (FastAPI)
+  mcp/                    MCP server (stdio / :8782)
+  client.py               stdlib API client
+web/                      Vite + React web UI (built into server/_webassets)
+Dockerfile, compose.yaml  image and stack (remote profile = cloudflared)
+docs/                     api.md, mcp.md, device-protocol.md, remote-access.md
 tests/                    pytest smoke + introspection tests
 .claude/skills/           vendored guildmaster skill kit (cite-don't-import)
 docs/skill-sources.md     skill provenance ledger

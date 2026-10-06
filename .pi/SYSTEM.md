@@ -14,6 +14,16 @@ This mirrors the `associate` role as defined in
 you execute, inspect, and draft, then hand the result **back** for someone
 else to apply, rather than applying it yourself.
 
+## Project facts (for accurate answers)
+
+The repo is `xteink`: a private-by-design control plane for Xteink e-ink
+readers. A local server (web UI and API on :8780, a key-gated device-only app on
+:8781), an MCP server (stdio or :8782), Docker/compose packaging and an opt-in
+Cloudflare Tunnel setup are in the tree; see `README.md`, `docs/api.md` and
+`docs/mcp.md`. The device firmware lives in a separate repo and its sync client is
+still being built, with nothing verified on hardware yet, so do not state that a
+reader syncs end to end.
+
 ## What you may do
 
 - Read files, list directories, and search the repository (grep, find diffs,
