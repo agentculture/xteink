@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T17:40:04Z",
+  "updated": "2026-10-06T18:03:25Z",
   "claims": [
     {
       "id": "c1",
@@ -1728,6 +1728,94 @@
       ],
       "origin": "llm",
       "status": "approved"
+    },
+    {
+      "id": "l3",
+      "code": "grader-unverified",
+      "what": "t5: reported scan-secrets 'clean' but a literal fake key in tests/mcp/test_client.py:60 trips the scanner once tracked; the check was likely run before commit (untracked files are not scanned), so the reported result did not cover the delivered files",
+      "skipped_check": "",
+      "refs": [
+        "plan t5 / tests/mcp/test_client.py:60"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l4",
+      "code": "assumption-for-measurement",
+      "what": "t1: SQLite store thread-safety is claimed 'by design' but concurrent multi-thread access was never tested",
+      "skipped_check": "concurrent access test on xteink/core/store.py",
+      "refs": [
+        "plan t1 / xteink/core/store.py"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l5",
+      "code": "control-absent",
+      "what": "t1: DeviceService.rotate_key clears revoked_at (re-enables a revoked device) without a test for that case or a spec decision",
+      "skipped_check": "test for rotate_key on a revoked device",
+      "refs": [
+        "plan t1 / xteink/core/devices.py"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l6",
+      "code": "control-absent",
+      "what": "t2: pandoc conversion (--sandbox, real EPUB output, no network fetch) only tested against a fake pandoc; the real-pandoc test skipped because pandoc is not on spark",
+      "skipped_check": "real-pandoc conversion test (runs in Docker image/CI via t8/t10)",
+      "refs": [
+        "plan t2 / xteink/core/ingest.py"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l7",
+      "code": "assumption-for-measurement",
+      "what": "t2: ingest default limits (50 MiB upload, 5000 EPUB entries, 500 MiB uncompressed, 60 s timeout) are chosen, not measured against real libraries",
+      "skipped_check": "",
+      "refs": [
+        "plan t2 / IngestLimits"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l8",
+      "code": "control-absent",
+      "what": "t3: suite ran on local Python 3.13.11, not the 3.12 CI targets; serve() (two uvicorn servers in one process) has no automated test, only a manual smoke run",
+      "skipped_check": "py3.12 run; automated serve() test",
+      "refs": [
+        "plan t3 / xteink/server/app.py"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l9",
+      "code": "control-absent",
+      "what": "t5: tests passed on first run; red-first (failing before implementation) was never demonstrated and no mutation check was done",
+      "skipped_check": "red-first run of tests/mcp",
+      "refs": [
+        "plan t5 / tests/mcp"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l10",
+      "code": "provenance-missing",
+      "what": "Main agent: during the t5 merge-gate revert ran 'git reset --hard' on feat/issue-1, which discarded uncommitted tracked .devague state (risks r8-r10 and six lapses); all were re-filed from the session record the same turn, but their original filing order/timestamps are lost",
+      "skipped_check": "",
+      "refs": [
+        "assign-to-workforce / t5 revert"
+      ],
+      "origin": "llm",
+      "status": "proposed"
     }
   ],
   "obligations": [
