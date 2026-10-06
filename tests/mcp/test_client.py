@@ -57,7 +57,7 @@ def test_devices_and_queue(api_url, api_key, device):
 
 
 def test_bad_key_is_authentication_error_without_leaking(api_url):
-    secret = "xtk_supersecretvalue"
+    secret = "xtk_" + "x" * 8 + "_" + "fake"
     cl = make(api_url, secret)
     with pytest.raises(c.AuthenticationError) as e:
         cl.list_library()
