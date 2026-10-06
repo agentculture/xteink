@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T18:04:08Z",
+  "updated": "2026-10-06T18:11:15Z",
   "claims": [
     {
       "id": "c1",
@@ -1824,6 +1824,28 @@
       "skipped_check": "real socket-drop resume test; py3.12 run",
       "refs": [
         "plan t4 / tests/server/fake_device.py"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l12",
+      "code": "assumption-for-measurement",
+      "what": "t16: only env default was built (x4pro/x4c share main.cpp but were not built); slim behaviour reasoned from #ifdef, not built; USB RX chunking advice (128 B / 10 ms) estimated from the 256 B HWCDC queue, not measured; nothing run on hardware",
+      "skipped_check": "x4pro/x4c/slim builds; RX drop measurement",
+      "refs": [
+        "plan t16 / src/xteink/ProvisioningProtocol"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l13",
+      "code": "grader-unverified",
+      "what": "t6: CLI tests run against a stdlib stub API whose JSON shapes were written from reading route code, not captured from the live FastAPI app; mcp serve, server status and tunnel status never exercised against real servers",
+      "skipped_check": "CLI run against the real API (covered later by t9/t20)",
+      "refs": [
+        "plan t6 / tests/cli/conftest.py"
       ],
       "origin": "llm",
       "status": "proposed"
