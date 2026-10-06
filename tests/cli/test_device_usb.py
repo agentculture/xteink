@@ -129,8 +129,11 @@ class FakeTransport(du.Transport):
     def write(self, data):
         self.max_chunk = max(self.max_chunk, len(data))
         self.written += data
+        self.raw = getattr(self, "raw", b"") + data
         if self.written.endswith(b"\n"):
             line, self.written = self.written.strip(), b""
+            if not line:  # like the firmware: empty lines are ignored
+                return
             prefix, ver, payload = line.split(b" ")
             assert prefix == b"XTEINK-PROV" and ver == b"1" and len(line) <= 3072
             req = json.loads(base64.b64decode(payload))
@@ -353,3 +356,12 @@ def test_serial_transport_open_failure_is_env_error():
     with pytest.raises(du.CliError) as ei:
         du.SerialTransport("/nonexistent/tty")
     assert ei.value.code == 2
+
+
+def test_each_request_starts_with_a_newline():
+    """A leading newline terminates any stray partial line in the device's RX buffer."""
+    tp = FakeTransport(
+        [lambda req: [b"XTEINK-PROV-ACK 1 " + base64.b64encode(json.dumps({"mac": "aa"}).encode())]]
+    )
+    du.exchange(tp, {})
+    assert tp.raw.startswith(b"\nXTEINK-PROV 1 ")

@@ -298,7 +298,9 @@ def _b64_json(obj: dict[str, Any]) -> str:
 
 def exchange(tp: Transport, obj: dict[str, Any], timeout: float = REPLY_TIMEOUT) -> dict[str, Any]:
     """Send one request, return the ACK JSON; raise :class:`CliError` on ERR/timeout."""
-    line = f"XTEINK-PROV {PROTOCOL_VERSION} {_b64_json(obj)}\n".encode()
+    # The leading newline ends any stray partial line already in the device RX
+    # buffer (the firmware ignores empty lines); seen once as bad_format on the X3.
+    line = f"\nXTEINK-PROV {PROTOCOL_VERSION} {_b64_json(obj)}\n".encode()
     if len(line) > MAX_LINE:
         raise CliError(EXIT_USER_ERROR, f"request line is {len(line)} bytes (max {MAX_LINE})")
     tp.discard_input()
