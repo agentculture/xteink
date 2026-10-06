@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T18:19:59Z",
+  "updated": "2026-10-06T18:28:31Z",
   "targets": [
     {
       "id": "c1",
@@ -1178,6 +1178,30 @@
       "text": "Fork CI (xteink-ci.yml) only builds the Xteink envs; upstream's clang-format and cppcheck jobs run on pull_request only, so formatting/static-analysis regressions on feat/* pushes are caught only by the main-agent gate until the fork PR opens (t24)",
       "kind": "follow_up",
       "task_id": "t12",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r15",
+      "text": "TLS verification heap on the X3 (no PSRAM): host-measured peak ~39 KB for xteink.culture.dev (Let's Encrypt RSA-4096 chain) and ~41 KB for the GitHub release CDN vs 20-32 KB unverified; may OOM during sync/OTA after a reading session. Mitigations measured but not applied: pin the culture.dev Cloudflare zone to Google Trust Services (~24 KB, no firmware change) or -DWOLFSSL_SP_4096 (~33 KB, touches ContentProtection RSA)",
+      "kind": "unknown_nonblocking",
+      "task_id": "t17",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r16",
+      "text": "Remaining unverified TLS paths in the fork: KOReaderSyncClient, PluginHttp and the plugin download relay in CrossPointWebServer.cpp still call setInsecure(); and OPDS servers whose certs don't chain to the 5 pinned roots (e.g. DigiCert, self-signed) now fail instead of downloading unverified (behaviour change vs upstream)",
+      "kind": "follow_up",
+      "task_id": "t13",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r17",
+      "text": "t15 theme enum: XTEINK=4 shifted COVER_GRID to 5, so X4 Pro/X4 Classic users who saved Cover Grid silently load xteink after flashing; existing installs keep their saved theme (new default applies only on fresh settings); no settings migration",
+      "kind": "follow_up",
+      "task_id": "t15",
       "resolved": false,
       "resolution": ""
     }

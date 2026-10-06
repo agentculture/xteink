@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T18:27:49Z",
+  "updated": "2026-10-06T18:28:31Z",
   "claims": [
     {
       "id": "c1",
@@ -1901,6 +1901,28 @@
       "skipped_check": "",
       "refs": [
         "plan t7 / web/docs/screens"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l19",
+      "code": "assumption-for-measurement",
+      "what": "t13: TLS heap figures and verification behaviour measured on a 64-bit host build of the firmware's wolfSSL, not on the ESP32-C3; root CA fingerprints cross-checked only against the local Mozilla store, not the CAs' published values",
+      "skipped_check": "on-device heap measurement; CA fingerprint cross-check",
+      "refs": [
+        "plan t13 / docs/xteink/tls.md"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l20",
+      "code": "control-absent",
+      "what": "t15: no preview images (no host renderer for firmware screens); theme sizes/spacing are estimates never seen on a panel; Library tab still uses upstream's grey dither",
+      "skipped_check": "on-panel visual check",
+      "refs": [
+        "plan t15 / src/components/themes/xteink"
       ],
       "origin": "llm",
       "status": "proposed"
