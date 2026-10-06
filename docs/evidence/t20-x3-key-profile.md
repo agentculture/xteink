@@ -20,4 +20,5 @@ The top-key reset while USB is charging still goes to charge-sleep; the
 operator accepted that ("I can't read while it's on").
 
 Rotation now goes portrait to Landscape CCW (and Inverted to Landscape CW),
-fork `1c58a24b`. Not yet checked on the device.
+fork `1c58a24b`, flashed app-only (firmware sha256 `1b4f2c87…`, hash
+verified). The operator confirmed it: "rotation confirmed".
