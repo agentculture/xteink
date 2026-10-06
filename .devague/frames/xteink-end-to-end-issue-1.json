@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T18:12:22Z",
+  "updated": "2026-10-06T18:18:58Z",
   "claims": [
     {
       "id": "c1",
@@ -1857,6 +1857,28 @@
       "skipped_check": "amd64 build; cloudflared run; real web/ build in image",
       "refs": [
         "plan t8 / Dockerfile"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l15",
+      "code": "control-absent",
+      "what": "t14: x4c not built and full ctest not run by the task agent (main agent gate runs full ctest + default; CI builds x4pro/x4c); scale overlay FAST-refresh behaviour on e-ink and physical top-key identity unverified; zoom is EPUB-only (XTC pre-rendered pages cannot reflow)",
+      "skipped_check": "x4c build; full ctest; on-panel refresh check",
+      "refs": [
+        "plan t14 / src/activities/reader/EpubReaderActivity.cpp"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l16",
+      "code": "grader-unverified",
+      "what": "t8/t11: check-compose.sh exported placeholder values for required variables, which masked that compose's ${VAR:?} interpolation (applied to every service, even inactive-profile ones) broke plain 'docker compose up -d' and the create-key bootstrap on a fresh clone; found only during real deployment; also a failed mint piped an empty value into 'grant set' (fixed by re-minting with a guard)",
+      "skipped_check": "",
+      "refs": [
+        "plan t8,t11 / compose.yaml, scripts/check-compose.sh"
       ],
       "origin": "llm",
       "status": "proposed"

@@ -62,7 +62,7 @@ services:
         condition: service_healthy
     environment:
       XTEINK_URL: http://api:8780
-      XTEINK_API_KEY: ${XTEINK_API_KEY:?set XTEINK_API_KEY in .env (see .env.example)}
+      XTEINK_API_KEY: ${XTEINK_API_KEY:-}  # mcp exits 2 with a clear message if empty
       XTEINK_MCP_BIND: 0.0.0.0
       XTEINK_MCP_PORT: "8782"
     ports:
@@ -89,7 +89,7 @@ services:
     restart: unless-stopped
     environment:
       # ebooks.culture.dev -> http://api:8780 (web UI, behind Cloudflare Access)
-      TUNNEL_TOKEN: ${TUNNEL_TOKEN_UI:?set TUNNEL_TOKEN_UI in .env for --profile remote}
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN_UI:-}
       TUNNEL_METRICS: 127.0.0.1:20241
     depends_on:
       api:
@@ -105,7 +105,7 @@ services:
     <<: *cloudflared
     environment:
       # xteink.culture.dev -> http://api:8781 (device app only; xteink checks device keys)
-      TUNNEL_TOKEN: ${TUNNEL_TOKEN_DEVICE:?set TUNNEL_TOKEN_DEVICE in .env for --profile remote}
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN_DEVICE:-}
       TUNNEL_METRICS: 127.0.0.1:20241
 
 volumes:

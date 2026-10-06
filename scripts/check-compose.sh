@@ -4,10 +4,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# Do not depend on a local .env: supply placeholders for required variables.
-export XTEINK_API_KEY="${XTEINK_API_KEY:-<check>}"
-export TUNNEL_TOKEN_UI="${TUNNEL_TOKEN_UI:-<check>}"
-export TUNNEL_TOKEN_DEVICE="${TUNNEL_TOKEN_DEVICE:-<check>}"
+# Do not depend on a local .env or exported secrets: the stack must resolve with NO
+# variables set, so `docker compose up -d` and the create-key bootstrap work on a fresh
+# clone (compose interpolates every service, including inactive-profile ones).
+unset XTEINK_API_KEY TUNNEL_TOKEN_UI TUNNEL_TOKEN_DEVICE
 DC=(docker compose --env-file /dev/null)
 
 base="$("${DC[@]}" config --services)"
