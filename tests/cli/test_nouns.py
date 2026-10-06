@@ -15,7 +15,7 @@ from xteink.explain import known_paths
 NOUNS = {
     "server": ["status"],
     "library": ["add", "list", "rm"],
-    "device": ["list", "queue", "revoke"],
+    "device": ["list", "queue", "revoke", "backup", "provision"],
     "tunnel": ["status", "plan"],
     "mcp": ["serve"],
 }

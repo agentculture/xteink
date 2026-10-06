@@ -10,6 +10,7 @@ import argparse
 from typing import Any
 
 from xteink import client as api
+from xteink.cli._commands.device_usb import register_usb
 from xteink.cli._commands.overview import emit_overview
 from xteink.cli._commands.server import add_json, call, json_mode, make_client
 from xteink.cli._errors import EXIT_USER_ERROR, CliError
@@ -101,6 +102,8 @@ def cmd_overview(args: argparse.Namespace) -> int:
                     "list — registered devices",
                     "queue DEVICE ITEM_ID [--apply] — queue a library item for a device",
                     "revoke DEVICE [--apply] — revoke a device key",
+                    "backup --port PORT [--apply] — dump the flash over USB (esptool)",
+                    "provision --port PORT [--apply] — send Wi-Fi/URLs/key over USB",
                     "overview — this description",
                 ],
             },
@@ -139,6 +142,8 @@ def register(sub: argparse._SubParsersAction) -> None:
     r.add_argument("--apply", action="store_true", help="Actually revoke.")
     add_json(r)
     r.set_defaults(func=cmd_revoke)
+
+    register_usb(nsub)  # backup / provision (USB; see device_usb.py)
 
     ov = nsub.add_parser("overview", help="Describe the device noun.")
     add_json(ov)

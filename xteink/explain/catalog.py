@@ -174,7 +174,26 @@ or a name. `queue` and `revoke` are **dry-run unless `--apply`**.
     xteink device list [--json]
     xteink device queue DEVICE ITEM_ID [--apply]
     xteink device revoke DEVICE [--apply]
+    xteink device backup --port PORT [--esptool CMD] [--chip C] [--apply] [--json]
+    xteink device provision --port PORT [--name N] [--networks-file P | --no-networks]
+                            [--lan-url U] [--tunnel-url U] [--replace-networks] [--apply] [--json]
     xteink device overview
+
+## USB verbs (`backup`, `provision`)
+
+Both are **dry-run unless `--apply`** and never touch hardware without it.
+
+- `backup` runs `esptool` (external tool, default `uvx esptool@latest`, override with
+  `--esptool`): `read-mac`, `flash-id`, then `read-flash 0x0 <size> <out>`. The dump and a
+  `.sha256` file land in `<data dir>/backups/<MAC>/<UTC timestamp>-full.bin`
+  (`XTEINK_DATA_DIR`, else `~/.local/share/xteink`). Dry-run prints the exact commands.
+- `provision` first needs Settings > System > Provision via USB open on the device. With
+  `--apply` it sends a hello, mints a device key via the API, sends networks, server URLs and
+  the key over the serial port (`XTEINK-PROV 1` protocol), checks the ACK's key id and prints
+  only the key id. If the device refuses, the minted key is revoked again.
+- Wi-Fi networks come from `--networks-file` (default `~/.config/xteink/networks.json`: a JSON
+  list of `{ssid, password}`, must be `chmod 600`, never commit it) or an interactive prompt.
+  Passwords are never accepted as flags, and the device key and passwords are never printed.
 """
 
 _TUNNEL = """\
@@ -240,6 +259,8 @@ ENTRIES: dict[tuple[str, ...], str] = {
     ("device", "list"): _DEVICE,
     ("device", "queue"): _DEVICE,
     ("device", "revoke"): _DEVICE,
+    ("device", "backup"): _DEVICE,
+    ("device", "provision"): _DEVICE,
     ("tunnel",): _TUNNEL,
     ("tunnel", "overview"): _TUNNEL,
     ("tunnel", "status"): _TUNNEL,
