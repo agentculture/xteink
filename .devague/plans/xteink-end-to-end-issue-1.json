@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T19:04:43Z",
+  "updated": "2026-10-06T19:13:39Z",
   "targets": [
     {
       "id": "c1",
@@ -1074,8 +1074,8 @@
       "text": "X3 USB lock status unknown (frame v1): if get-security-info shows a locked unit, flashing moves to the SD update.bin route and USB provisioning (t18) may need an SD-file fallback",
       "kind": "unknown_nonblocking",
       "task_id": "t19",
-      "resolved": false,
-      "resolution": ""
+      "resolved": true,
+      "resolution": "X3 68:c6:3a:3b:c2:4c probed 2026-10-06 22:04 with esptool v5.4.0 get-security-info: Secure Boot Disabled, Flash Encryption Disabled, SPI_BOOT_CRYPT_CNT 0x0, all key blocks USER/EMPTY -> USB-flashable; 16MB flash (flash-id)"
     },
     {
       "id": "r2",
@@ -1226,8 +1226,8 @@
       "text": "t17 added HalStorage::sdFreeBytes() (lib/hal, +9 lines, read-only wrapper under storageMutex) \u2014 the HAL is upstream SD territory per docs/xteink/CONTRIBUTING.md (boundary c53); needs explicit user accept or an alternative",
       "kind": "unknown_nonblocking",
       "task_id": "t17",
-      "resolved": false,
-      "resolution": ""
+      "resolved": true,
+      "resolution": "User accepted HalStorage::sdFreeBytes() (read-only, mutex-guarded) on 2026-10-06; add it to the fork CONTRIBUTING allowed areas"
     }
   ],
   "obligations": []
