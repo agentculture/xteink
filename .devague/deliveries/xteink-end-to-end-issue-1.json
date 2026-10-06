@@ -2,7 +2,7 @@
   "plan_slug": "xteink-end-to-end-issue-1",
   "schema_version": 2,
   "created": "2026-10-06T18:14:16Z",
-  "updated": "2026-10-06T21:36:03Z",
+  "updated": "2026-10-06T22:34:52Z",
   "deviations": [
     {
       "id": "d1",
@@ -74,6 +74,19 @@
       "status": "approved",
       "classification": "needs-follow-up",
       "seq": 5
+    },
+    {
+      "id": "d6",
+      "what": "Reader scroll is by paragraph, not by line: on the X3, 4.4 skips the rest of the paragraph at the top so the next paragraph starts at the top of the screen, and 4.3 brings the start of the paragraph above back to the top. A paragraph starts at a line whose gap from the line above is wider than 1.25 line pitches (Extra paragraph spacing adds half a line by default). The page's top line counts as a start, so no text is skipped. Supersedes the line-by-line step of d3 (fork 7f833be3, merged 43676ff6)",
+      "task_ref": "t14",
+      "reason": "Operator asked on 2026-10-07 after trying the d5 build: 'Can we change the next line, previous line to next paragraph, previous paragraph'",
+      "affects": [
+        "t20"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 6
     }
   ],
   "evidence": [],

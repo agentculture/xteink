@@ -10,3 +10,10 @@ keeps the reading position).
 
 The binding moves to a long press of 4.2 (OK) in the X3 key profile
 (deviation d5); re-check zoom after that build is flashed.
+
+## Re-check on the X3 key profile build
+
+Date: 2026-10-07. Fork `feat/issue-1` at `04b1e1fd` (d5 merged), flashed
+app-only at 0x10000 (esptool "Hash of data verified"). Zoom mode is now opened
+with a long press of 4.2 (OK) in the EPUB reader. The operator tried it and
+reported: "Zoom works great".
