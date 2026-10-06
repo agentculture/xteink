@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T21:49:53Z",
+  "updated": "2026-10-06T22:01:17Z",
   "targets": [
     {
       "id": "c1",
@@ -1266,6 +1266,14 @@
       "text": "X3 auto-join gives up on each saved network after exactly 7.0 s (upstream WifiSelectionActivity), but the home extender <extender SSID> needs ~8.3 s to associate with the same saved password, so auto-fallback appears broken (user had to pick it manually). Fix: per-network auto-join timeout ~15 s",
       "kind": "follow_up",
       "task_id": "t17",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r26",
+      "text": "More zoom sizes wanted (user, 2026-10-07; deferred to a later session): built-in reader fonts offer only 12/14/16/18 pt (src/ReaderFontSizes.h); wider range needs SD-card vector fonts (8-22 pt) or extra built-in sizes, which cost flash (C3 image at 89.6%)",
+      "kind": "follow_up",
+      "task_id": "t14",
       "resolved": false,
       "resolution": ""
     }
