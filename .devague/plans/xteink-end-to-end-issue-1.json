@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T22:38:16Z",
+  "updated": "2026-10-06T22:47:54Z",
   "targets": [
     {
       "id": "c1",
@@ -1272,6 +1272,14 @@
     {
       "id": "r26",
       "text": "More zoom sizes wanted (user, 2026-10-07; deferred to a later session): built-in reader fonts offer only 12/14/16/18 pt (src/ReaderFontSizes.h); wider range needs SD-card vector fonts (8-22 pt) or extra built-in sizes, which cost flash (C3 image at 89.6%)",
+      "kind": "follow_up",
+      "task_id": "t14",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r27",
+      "text": "Paragraph scroll sometimes needs a second press (operator, 2026-10-07). Suspects, unconfirmed: the next page's top line counts as a paragraph start at a page seam, or a press during a render is dropped by turnGuardActive. Needs a serial log of a double-press case",
       "kind": "follow_up",
       "task_id": "t14",
       "resolved": false,
