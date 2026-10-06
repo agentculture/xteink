@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T18:03:25Z",
+  "updated": "2026-10-06T18:04:08Z",
   "claims": [
     {
       "id": "c1",
@@ -1813,6 +1813,17 @@
       "skipped_check": "",
       "refs": [
         "assign-to-workforce / t5 revert"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l11",
+      "code": "control-absent",
+      "what": "t4: 'dropped connection' resume is simulated (TestClient stops reading after N bytes, then Range resume); no real socket drop was exercised; suite ran on Python 3.13 not 3.12",
+      "skipped_check": "real socket-drop resume test; py3.12 run",
+      "refs": [
+        "plan t4 / tests/server/fake_device.py"
       ],
       "origin": "llm",
       "status": "proposed"

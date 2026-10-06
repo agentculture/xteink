@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T18:03:25Z",
+  "updated": "2026-10-06T18:04:08Z",
   "targets": [
     {
       "id": "c1",
@@ -1146,6 +1146,14 @@
       "text": "CI test job runs plain 'uv sync' so fastapi-dependent server tests, including the api/openapi.json drift check (t3 criterion 4), are skipped in CI; t10 must switch the test job to 'uv sync --extra server' (or add an export-openapi --check step)",
       "kind": "unknown_blocking",
       "task_id": "t10",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r11",
+      "text": "t4 criterion 4 interpretation: GET /api/devices/{id} returns status (last_seen, last sync result, free SD, firmware, last error) but the queue is at GET /api/devices/{id}/queue?state=all; accepted as the same resource family pending user confirmation; t6/t7 should present status+queue together",
+      "kind": "follow_up",
+      "task_id": "t4",
       "resolved": false,
       "resolution": ""
     }
