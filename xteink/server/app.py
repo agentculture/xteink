@@ -92,7 +92,7 @@ def create_app(
 
     web = WEBASSETS_DIR if webassets_dir is None else Path(webassets_dir)
     if (web / "index.html").is_file():
-        app.mount("/", StaticFiles(directory=web, html=True), name="web")
+        app.mount("/", _CachedStaticFiles(directory=web, html=True), name="web")
     else:
 
         @app.get("/", include_in_schema=False, response_class=HTMLResponse)
@@ -100,6 +100,24 @@ def create_app(
             return _PLACEHOLDER
 
     return app
+
+
+class _CachedStaticFiles(StaticFiles):
+    """Serve the SPA so a deploy is picked up on the next load.
+
+    ``index.html`` (and the ``/`` alias) revalidates every time; Vite's
+    content-hashed files under ``assets/`` never change, so they cache for a year.
+    Without this, browsers cache ``index.html`` heuristically and keep showing the
+    previous UI after a deploy.
+    """
+
+    async def get_response(self, path, scope):  # type: ignore[override]
+        response = await super().get_response(path, scope)
+        if path.startswith("assets/"):
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        else:
+            response.headers["Cache-Control"] = "no-cache"
+        return response
 
 
 def _device_router() -> APIRouter:
