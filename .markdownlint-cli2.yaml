@@ -16,6 +16,11 @@ config:
 
 ignores:
   - "node_modules/**"
+  # web/ is a Vite app: its dependencies and Playwright output are not ours to lint.
+  - "web/node_modules/**"
+  - "web/e2e/.results/**"
+  # Deliberately malformed inputs for the ingest tests (e.g. ingest/bad.md).
+  - "tests/fixtures/**"
   - ".local/**"
   - ".afi/**"
   - ".teken/**"
