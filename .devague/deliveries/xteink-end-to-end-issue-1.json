@@ -2,7 +2,7 @@
   "plan_slug": "xteink-end-to-end-issue-1",
   "schema_version": 2,
   "created": "2026-10-06T18:14:16Z",
-  "updated": "2026-10-06T20:55:24Z",
+  "updated": "2026-10-06T21:36:03Z",
   "deviations": [
     {
       "id": "d1",
@@ -60,6 +60,20 @@
       "status": "approved",
       "classification": "acceptable",
       "seq": 4
+    },
+    {
+      "id": "d5",
+      "what": "X3 key profile (measured with the XKEY logger 2026-10-07): left edge reads logical Up (adc2~2222), right edge logical Down (adc2~2), 4.1 Back (adc1~3515), 4.2 Confirm (~2686), 4.3 Left (~1486), 4.4 Right (~0); the top regular button is the chip's hardware reset (no ADC/GPIO change, full reboot) so it cannot be bound. Target on X3: edges = Left/Right (prev/next page; prev/next tab in Settings), 4.1 = Back (long-press in reader = rotate portrait<->landscape), 4.2 = Menu/OK (long-press in reader = zoom mode, edges step size), 4.3/4.4 = Up/Down (line back/forward in reader per d3; option up/down in menus). A reset boot (EN) boots normally to Home instead of going back to sleep. Supersedes 'top button = zoom toggle' (c40) and the top-button parts of d3",
+      "task_ref": "t14",
+      "reason": "User decisions after the key-logger session: rotate wanted on the top button, which measured as a hardware reset; user chose long-press Back for rotate, long-press OK for zoom, and normal boot after reset",
+      "affects": [
+        "t14",
+        "t20"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "needs-follow-up",
+      "seq": 5
     }
   ],
   "evidence": [],
