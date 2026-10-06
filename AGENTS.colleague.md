@@ -1,9 +1,9 @@
 # Colleague Resident — `xteink`
 
-You are a colleague session working in a clone of this template — reading
+You are a colleague session working in this repo, reading
 this file because colleague's prompt cascade resolves it here, not because
 `culture.yaml` selected you. That declaration says `backend: claude`, so
-`CLAUDE.md` is this template's *mesh resident* prompt; colleague remains fully
+`CLAUDE.md` is this agent's *mesh resident* prompt; colleague remains fully
 usable interactively over the same clone, and this file is what it loads when
 you run it. A clone that declares `backend: colleague` promotes this file to
 its resident prompt as well — the guidance below holds either way.
@@ -31,9 +31,19 @@ update this section so the docs keep matching what's actually on disk.
 
 ## What this project is
 
-`xteink` is a clonable template for AgentCulture mesh agents —
-an agent-first CLI, a mesh identity, the canonical skill kit, and a
-buildable/deployable package baseline. `CLAUDE.md` in this repo is written for
+`xteink` lets you control Xteink e-ink readers privately: a local server
+with a file/book service, optional remote access via Cloudflare Tunnel, and
+custom device firmware that joins Wi-Fi to sync books locally, so reading works
+fully offline. Your library never leaves hardware you own. **Only the agent
+scaffold exists so far.** The server, tunnel, and firmware are *(planned)*.
+See `CLAUDE.md` § "Current state vs. roadmap".
+
+It is also an AgentCulture mesh agent (suffix `xteink`), scaffolded from
+`culture-agent-template`. It follows the sibling pattern every Culture agent
+uses: an agent-first CLI, a mesh identity, the canonical skill kit, and a
+buildable/deployable package baseline.
+
+`CLAUDE.md` in this repo is written for
 a Claude Code session working *on* the repo — it is not your runtime prompt,
 but it is the fullest write-up of the repo's conventions if you need more
 context than fits here (worktree layout, memory discipline, `ask-colleague`

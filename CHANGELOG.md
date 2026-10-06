@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2026-10-06
+
+### Changed
+
+- CLAUDE.md re-initialized from the seed into a full xteink guide: current state vs. roadmap (local book server, Cloudflare Tunnel, Wi-Fi sync firmware all planned), commands, CLI architecture, harness/identity, conventions, worktrees, memory.
+- README.md gains a Status section and drops the template-only "Make it your own" steps; skill count corrected to 19.
+- AGENTS.override.md, AGENTS.colleague.md and QWEN.md now describe xteink instead of a clonable template; QWEN.md drops the template-cloning steps.
+
 ## [0.9.0] - 2026-09-06
 
 ### Added
