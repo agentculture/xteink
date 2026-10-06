@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T18:36:14Z",
+  "updated": "2026-10-06T18:41:58Z",
   "targets": [
     {
       "id": "c1",
@@ -1146,8 +1146,8 @@
       "text": "CI test job runs plain 'uv sync' so fastapi-dependent server tests, including the api/openapi.json drift check (t3 criterion 4), are skipped in CI; t10 must switch the test job to 'uv sync --extra server' (or add an export-openapi --check step)",
       "kind": "unknown_blocking",
       "task_id": "t10",
-      "resolved": false,
-      "resolution": ""
+      "resolved": true,
+      "resolution": "t10: test job runs 'uv sync --extra server' after a base-only CLI smoke; a guard fails CI if any tests/server or tests/mcp test is skipped, so the OpenAPI drift check runs"
     },
     {
       "id": "r11",
@@ -1210,6 +1210,14 @@
       "text": "Markdown article title in the library is the filename, not the document's first '# H1' (observed in t9 e2e); agents pushing articles via MCP should pass title explicitly until ingest extracts it",
       "kind": "follow_up",
       "task_id": "t2",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r19",
+      "text": "PyPI wheel serves the placeholder UI: _webassets is gitignored and hatch skips VCS-ignored files; shipping the UI in the wheel needs [tool.hatch.build.targets.wheel] artifacts + a node build step in publish.yml + web/** in publish paths (the Docker image already carries the real UI)",
+      "kind": "follow_up",
+      "task_id": "t10",
       "resolved": false,
       "resolution": ""
     }

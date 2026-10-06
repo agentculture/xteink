@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T18:39:41Z",
+  "updated": "2026-10-06T18:41:58Z",
   "claims": [
     {
       "id": "c1",
@@ -1967,6 +1967,17 @@
       "skipped_check": "",
       "refs": [
         "plan t21 / README.md"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l25",
+      "code": "control-absent",
+      "what": "t10: the arm64 'image' job, the 'changes' path-filter job and Playwright's --with-deps install were not run locally (no sudo; GitHub runner only) \u2014 first real run will be the PR's CI",
+      "skipped_check": "GitHub Actions run of image/changes jobs",
+      "refs": [
+        "plan t10 / .github/workflows/tests.yml"
       ],
       "origin": "llm",
       "status": "proposed"
