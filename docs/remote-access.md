@@ -15,6 +15,40 @@ including `/docs` and `/openapi.json`, returns 404. So the tunnel-only hostname
 exposes device sync and nothing else: no library writes, no admin routes and no
 MCP.
 
+## SSO is enough for the web UI
+
+Cloudflare Access already signs you in to `ebooks.culture.dev`, so the web UI
+there does not ask for an `xtk_` API key. Cloudflare adds a signed
+`Cf-Access-Jwt-Assertion` header to every request it lets through, and the
+main app verifies that JWT itself (signature against the team's public keys,
+issuer, audience and expiry), so a forged header is refused. On load, the UI asks `GET /api/whoami` without a
+key. A `200` means you're signed in via SSO, and Settings shows the Access
+identity. On the LAN there is no Access session, so the "Connect this browser"
+panel still asks for a key. API keys keep working everywhere.
+
+This needs two values in the api container's environment. Set both or neither.
+With only one set, the api refuses to start.
+
+| Variable | Value | Where to find it |
+|----------|-------|------------------|
+| `XTEINK_ACCESS_TEAM_DOMAIN` | `<your-team>.cloudflareaccess.com` | Zero Trust dashboard, Settings, team domain |
+| `XTEINK_ACCESS_AUD` | the application's audience tag | Zero Trust dashboard, Access, the `ebooks.culture.dev` application |
+
+Both are public identifiers, not secrets. Put them in `.env`, which is
+gitignored, and keep tracked files placeholder-only. compose passes them to
+the `api` service. Then recreate it:
+
+```bash
+docker compose up -d api
+```
+
+With both unset (the default), Access auth is off and the server never
+contacts Cloudflare. With them set, the team's public keys
+(`https://<team>/cdn-cgi/access/certs`) are fetched once, when the first
+request carrying an Access JWT arrives, and cached. They are never fetched at
+startup. The device app (`xteink.culture.dev`) never accepts Access JWTs. It
+takes device keys only.
+
 ## Why two tunnels
 
 `cultureflare remote-login setup` replaces a tunnel's whole ingress list with

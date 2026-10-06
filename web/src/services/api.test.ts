@@ -6,6 +6,7 @@ import {
   createKey,
   deleteItem,
   listItems,
+  probeSession,
   queueItem,
   registerDevice,
   uploadItem,
@@ -64,6 +65,35 @@ describe("auth header", () => {
   it("verifyKey reports a rejected key as false", async () => {
     fetchMock.mockResolvedValue(jsonResponse(401, { detail: "invalid or missing key" }));
     await expect(verifyKey("xtk_wrong")).resolves.toBe(false);
+  });
+});
+
+describe("SSO session (Cloudflare Access)", () => {
+  it("sends same-origin credentials and the CSRF header on every request", async () => {
+    fetchMock.mockResolvedValue(jsonResponse(201, { api_key: {}, key: "xtk_x" }));
+    await createKey("phone");
+    const { init } = lastCall();
+    expect(init.credentials).toBe("same-origin");
+    expect(new Headers(init.headers).get("X-Xteink-Request")).toBe("1");
+  });
+
+  it("probeSession asks whoami without a key, even when one is stored", async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, { via: "access", identity: "me@example.com" }));
+    await expect(probeSession()).resolves.toEqual({ via: "access", identity: "me@example.com" });
+    const { url, init } = lastCall();
+    expect(url).toBe("/api/whoami");
+    expect(new Headers(init.headers).has("Authorization")).toBe(false);
+    expect(init.credentials).toBe("same-origin");
+  });
+
+  it("probeSession resolves null on 401 (no SSO, e.g. on the LAN)", async () => {
+    fetchMock.mockResolvedValue(jsonResponse(401, { detail: "invalid or missing key" }));
+    await expect(probeSession()).resolves.toBeNull();
+  });
+
+  it("probeSession surfaces a network failure", async () => {
+    fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
+    await expect(probeSession()).rejects.toBeInstanceOf(NetworkError);
   });
 });
 

@@ -29,12 +29,15 @@ Landed and in the tree (read the code, not this list, when in doubt):
   `/api/devices*`, `/api/keys*`, the web UI at `/`, OpenAPI at `api/openapi.json`)
   and a separate device-only app on :8781 (`/api/device/*`, device protocol v1 in
   `docs/device-protocol.md`). Run with `python -m xteink.server serve|create-key`.
-  Both apps require keys, including on the LAN.
+  Both apps require keys, including on the LAN; the main app also accepts a
+  verified Cloudflare Access JWT when `XTEINK_ACCESS_TEAM_DOMAIN` and
+  `XTEINK_ACCESS_AUD` are set (`xteink/server/access.py`, cited from culture-rules).
 - **MCP** (`xteink/mcp`, official `mcp` SDK): tools `push_file`, `list_library`,
   `send_to_device`; stdio by default, `--http` on :8782. LAN/tailnet/mesh only,
   never tunnelled. `xteink/client.py` is the stdlib API client behind the CLI and MCP.
 - **Web UI** (`web/`, Vite + React): built into `xteink/server/_webassets`
-  (git-ignored, built by the Dockerfile). First run asks for an API key.
+  (git-ignored, built by the Dockerfile). Behind Cloudflare Access it needs no
+  key; on the LAN the first run asks for an API key.
 - **Packaging**: `Dockerfile` and `compose.yaml` (`api`, `mcp`; the `remote`
   profile adds `cloudflared-ui` and `cloudflared-device`), `docker/avahi/` notes
   for `xteink.local`, pandoc 3.12 in the image.

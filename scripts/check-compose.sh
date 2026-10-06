@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 # Do not depend on a local .env or exported secrets: the stack must resolve with NO
 # variables set, so `docker compose up -d` and the create-key bootstrap work on a fresh
 # clone (compose interpolates every service, including inactive-profile ones).
-unset XTEINK_API_KEY TUNNEL_TOKEN_UI TUNNEL_TOKEN_DEVICE
+unset XTEINK_API_KEY TUNNEL_TOKEN_UI TUNNEL_TOKEN_DEVICE XTEINK_ACCESS_TEAM_DOMAIN XTEINK_ACCESS_AUD
 DC=(docker compose --env-file /dev/null)
 
 base="$("${DC[@]}" config --services)"

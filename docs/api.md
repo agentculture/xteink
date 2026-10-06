@@ -4,7 +4,7 @@ The xteink server runs two apps from one process and one library:
 
 | App | Default port | Serves | Key |
 |-----|--------------|--------|-----|
-| Main app | 8780 | Web UI at `/`, `/api/library*`, `/api/devices*`, `/api/keys*`, `/docs` | API key (`xtk_`) |
+| Main app | 8780 | Web UI at `/`, `/api/library*`, `/api/devices*`, `/api/keys*`, `/api/whoami`, `/docs` | API key (`xtk_`), or Cloudflare Access SSO when configured |
 | Device app | 8781 | `/api/device/*` only | Device key (`xtd_`) |
 
 The machine-readable schema of the main app is committed at
@@ -16,8 +16,8 @@ Regenerate the committed schema with
 
 ## Authentication
 
-Every `/api/*` route needs a key, including on the LAN. Send it as a bearer
-token:
+Every `/api/*` route needs a credential, including on the LAN. Usually that is
+a key, sent as a bearer token:
 
 ```http
 Authorization: Bearer <api-key>
@@ -36,10 +36,46 @@ Authorization: Bearer <api-key>
 - A missing, malformed, unknown, revoked or wrong-kind key gets `401` with
   `WWW-Authenticate: Bearer` and `{"detail": "invalid or missing key"}`.
 
-The web UI shell at `/` is static and loads without a key. Its data calls use
-the same API keys: the first-run "Connect this browser" panel stores a key in
-that browser. Protect the UI with Cloudflare Access if you expose it remotely
-(see [`remote-access.md`](remote-access.md)).
+### Cloudflare Access SSO (main app only)
+
+When the server is started with both `XTEINK_ACCESS_TEAM_DOMAIN` and
+`XTEINK_ACCESS_AUD` set, the main app also accepts the signed
+`Cf-Access-Jwt-Assertion` header that Cloudflare Access adds to every request
+it proxies (the web UI on `ebooks.culture.dev`). Setting only one of the two
+makes the server refuse to start. With neither set, Access auth is off and the
+server never contacts Cloudflare.
+
+The server checks the JWT itself: RS256 only, `kid` in the team's JWKS
+(`https://<team>/cdn-cgi/access/certs`), a valid signature,
+`iss == https://<team>`, the configured AUD in `aud`, and `nbf`/`exp` with
+30 seconds of clock leeway. The JWKS is fetched lazily, the first time a
+request carries an Access JWT, then cached by `kid`. That fetch is the only
+outbound call it adds.
+
+The rules, in order:
+
+| Request | Result |
+|---------|--------|
+| Any `Authorization` header | Decided by the key alone, exactly as above. A bad key is `401` even if a valid Access JWT is also present. |
+| No `Authorization`, valid Access JWT, Access configured | Authenticated as an operator (the Access email, or service-token name, is logged; the token never is). |
+| Same, but `POST`/`PUT`/`DELETE` without `X-Xteink-Request: 1` | `403`. An SSO session is an ambient browser credential, and the custom header cannot be sent cross-site without a CORS preflight. |
+| No `Authorization`, Access JWT invalid (bad signature, unknown `kid`, wrong `iss` or `aud`, expired) | `401` |
+| No `Authorization`, Access JWT present, Access not configured | `401` (the JWT is ignored) |
+| Only the `CF_Authorization` cookie | `401`. Only the header is read. |
+
+The device app never accepts Access JWTs, configured or not.
+
+### GET /api/whoami
+
+Response `200`: `{"via": "key", "identity": "<key name>"}` or
+`{"via": "access", "identity": "<email>"}`. `401` without a credential. The
+web UI calls it without a key on load: a `200` means the browser is signed in
+via Cloudflare Access and needs no key.
+
+The web UI shell at `/` is static and loads without a key. Behind Cloudflare
+Access it needs no key either. On the LAN, its first-run "Connect this browser"
+panel stores an API key in that browser (see
+[`remote-access.md`](remote-access.md)).
 
 Errors are JSON with a `detail` field. Besides the codes listed per endpoint,
 request-validation failures return `422` with FastAPI's list-shaped `detail`.

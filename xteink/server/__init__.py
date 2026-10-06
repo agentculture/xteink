@@ -6,6 +6,10 @@ without the ``server`` extra; FastAPI is imported only by :mod:`xteink.server.ap
 Two apps, two ports. The Cloudflare tunnel for remote device sync points at the
 device app's port only, so remote exposure is limited by port rather than by
 path rules: the device app does not mount library/admin routes at all.
+
+Cloudflare Access (optional, all-or-nothing): with ``XTEINK_ACCESS_TEAM_DOMAIN`` and
+``XTEINK_ACCESS_AUD`` set, the main app also accepts a verified ``Cf-Access-Jwt-Assertion``
+(see :mod:`xteink.server.access`); a partial pair makes :func:`load_config` fail.
 """
 
 from __future__ import annotations
@@ -13,6 +17,8 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from typing import Mapping
+
+from .access import AccessConfig
 
 BIND_ENV = "XTEINK_BIND"
 PORT_ENV = "XTEINK_PORT"
@@ -30,6 +36,7 @@ class ServerConfig:
     bind: str = DEFAULT_BIND
     port: int = DEFAULT_PORT
     device_port: int = DEFAULT_DEVICE_PORT
+    access: AccessConfig | None = None
 
 
 def _port(env: Mapping[str, str], name: str, default: int) -> int:
@@ -46,14 +53,19 @@ def _port(env: Mapping[str, str], name: str, default: int) -> int:
 
 
 def load_config(env: Mapping[str, str] | None = None) -> ServerConfig:
-    """Read bind address and ports from the environment (``os.environ`` by default)."""
+    """Read bind address, ports and Access config from the environment (``os.environ``).
+
+    Raises :class:`ValueError` (including :class:`~xteink.server.access.AccessConfigError`
+    for a partial Access pair) so ``serve`` refuses to start.
+    """
     env = os.environ if env is None else env
     bind = (env.get(BIND_ENV) or "").strip() or DEFAULT_BIND
     port = _port(env, PORT_ENV, DEFAULT_PORT)
     device_port = _port(env, DEVICE_PORT_ENV, DEFAULT_DEVICE_PORT)
     if port == device_port:
         raise ValueError(f"{PORT_ENV} and {DEVICE_PORT_ENV} must differ (both {port})")
-    return ServerConfig(bind=bind, port=port, device_port=device_port)
+    access = AccessConfig.from_env(env)
+    return ServerConfig(bind=bind, port=port, device_port=device_port, access=access)
 
 
 __all__ = [

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ConnectPanel } from "./components/ConnectPanel";
+import { probeSession } from "./services/api";
 import { SessionProvider } from "./services/session";
 import { clearStoredKey, getStoredKey } from "./services/storage";
 import { AddView } from "./views/AddView";
@@ -21,9 +22,28 @@ function routeFromHash(hash: string): Route {
   return (ROUTES.find(([r]) => r === name)?.[0] ?? "library") as Route;
 }
 
+/**
+ * How this browser is signed in:
+ * - `key`: an API key stored here (LAN use, or by choice),
+ * - `sso`: no key, but the server accepts this browser's Cloudflare Access
+ *   session (ebooks.culture.dev), so no key is needed,
+ * - `checking`: asking the server whether an SSO session exists,
+ * - `none`: neither; the connect panel asks for a key.
+ * `expired` remembers that a stored key just stopped working.
+ */
+type Auth =
+  | { kind: "checking"; expired: boolean }
+  | { kind: "key" }
+  | { kind: "sso"; identity: string }
+  | { kind: "none"; expired: boolean };
+
+function initialAuth(): Auth {
+  return getStoredKey() !== null ? { kind: "key" } : { kind: "checking", expired: false };
+}
+
 export function App() {
-  const [connected, setConnected] = useState(() => getStoredKey() !== null);
-  const [expired, setExpired] = useState(false);
+  const [auth, setAuth] = useState<Auth>(initialAuth);
+  const connected = auth.kind === "key" || auth.kind === "sso";
   const [route, setRoute] = useState<Route>(() => routeFromHash(window.location.hash));
   const [libraryVersion, setLibraryVersion] = useState(0);
 
@@ -32,6 +52,23 @@ export function App() {
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+
+  useEffect(() => {
+    if (auth.kind !== "checking") return;
+    const expired = auth.expired;
+    let live = true;
+    probeSession()
+      .then((who) => {
+        if (!live) return;
+        setAuth(who ? { kind: "sso", identity: who.identity } : { kind: "none", expired });
+      })
+      .catch(() => {
+        if (live) setAuth({ kind: "none", expired });
+      });
+    return () => {
+      live = false;
+    };
+  }, [auth]);
 
   useEffect(() => {
     document.title = connected
@@ -44,24 +81,26 @@ export function App() {
     setRoute(next);
   }
 
-  if (!connected) {
+  if (auth.kind === "checking") {
     return (
-      <ConnectPanel
-        expired={expired}
-        onConnected={() => {
-          setExpired(false);
-          setConnected(true);
-        }}
-      />
+      <main id="main" className="checking">
+        <p role="status" className="muted">
+          Checking sign-in…
+        </p>
+      </main>
     );
+  }
+
+  if (auth.kind === "none") {
+    return <ConnectPanel expired={auth.expired} onConnected={() => setAuth({ kind: "key" })} />;
   }
 
   return (
     <SessionProvider
       onAuthLost={() => {
+        // A rejected key is dropped; then ask once whether an SSO session covers us.
         clearStoredKey();
-        setExpired(true);
-        setConnected(false);
+        setAuth({ kind: "checking", expired: auth.kind === "key" });
       }}
     >
       <a className="skip" href="#main">
@@ -91,10 +130,10 @@ export function App() {
         {route === "readers" && <DevicesView />}
         {route === "settings" && (
           <SettingsView
+            access={auth.kind === "sso" ? { identity: auth.identity } : null}
             onForget={() => {
               clearStoredKey();
-              setExpired(false);
-              setConnected(false);
+              setAuth({ kind: "checking", expired: false });
             }}
           />
         )}
