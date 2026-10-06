@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T18:13:19Z",
+  "updated": "2026-10-06T18:14:16Z",
   "targets": [
     {
       "id": "c1",
@@ -1170,8 +1170,8 @@
       "text": "cultureflare remote-login setup replaces a tunnel's whole ingress with [hostname, 404] (cultureflare/_remote_login/_tunnel.py:68-105, ensure_tunnel_config); two hostnames on one shared tunnel would silently drop ebooks.culture.dev. Needs either two tunnels (two cloudflared services/tokens in compose) or a cultureflare change to merge ingress rules",
       "kind": "unknown_blocking",
       "task_id": "t11",
-      "resolved": false,
-      "resolution": ""
+      "resolved": true,
+      "resolution": "Two tunnels, two cloudflared services (deviation recorded, user-approved)"
     }
   ],
   "obligations": []

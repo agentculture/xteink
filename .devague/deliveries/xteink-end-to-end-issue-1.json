@@ -1,0 +1,25 @@
+{
+  "plan_slug": "xteink-end-to-end-issue-1",
+  "schema_version": 2,
+  "created": "2026-10-06T18:14:16Z",
+  "updated": "2026-10-06T18:14:16Z",
+  "deviations": [
+    {
+      "id": "d1",
+      "what": "Remote access uses two Cloudflare tunnels (cultureflare's default per-hostname tunnels) and two cloudflared services under the compose 'remote' profile (TUNNEL_TOKEN_UI for ebooks.culture.dev -> http://api:8780, TUNNEL_TOKEN_DEVICE for xteink.culture.dev -> http://api:8781) instead of one tunnel/one cloudflared/one TUNNEL_TOKEN",
+      "task_ref": "t11",
+      "reason": "cultureflare ensure_tunnel_config replaces a tunnel's whole ingress list (_remote_login/_tunnel.py:68-105), so two hostnames cannot share one tunnel; user chose two tunnels over blocking on a cultureflare change (2026-10-06)",
+      "affects": [
+        "t8",
+        "t11"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 1
+    }
+  ],
+  "evidence": [],
+  "deltas": [],
+  "supersessions": []
+}
