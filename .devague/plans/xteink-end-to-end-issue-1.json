@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T18:14:16Z",
+  "updated": "2026-10-06T18:19:59Z",
   "targets": [
     {
       "id": "c1",
@@ -1172,6 +1172,14 @@
       "task_id": "t11",
       "resolved": true,
       "resolution": "Two tunnels, two cloudflared services (deviation recorded, user-approved)"
+    },
+    {
+      "id": "r14",
+      "text": "Fork CI (xteink-ci.yml) only builds the Xteink envs; upstream's clang-format and cppcheck jobs run on pull_request only, so formatting/static-analysis regressions on feat/* pushes are caught only by the main-agent gate until the fork PR opens (t24)",
+      "kind": "follow_up",
+      "task_id": "t12",
+      "resolved": false,
+      "resolution": ""
     }
   ],
   "obligations": []
