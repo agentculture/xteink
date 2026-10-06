@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T21:05:08Z",
+  "updated": "2026-10-06T21:16:37Z",
   "targets": [
     {
       "id": "c1",
@@ -1250,6 +1250,14 @@
       "text": "LibraryListActivity is a tabbed list that overrides navigateButtons and binds Search to front Left/Previous while the tab band is focused (LibraryListActivity.cpp:770-805); d2 tab navigation left it unchanged to keep Search reachable \u2014 user to decide its key map",
       "kind": "follow_up",
       "task_id": "t14",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r24",
+      "text": "culture.dev zone cache rule 'true' -> set_cache_settings cache=true, edge_ttl override 7200s applies to every host; ebooks.culture.dev and xteink.culture.dev have no bypass (terminal/nodes/rules do). Effects: stale UI and cached /api/* responses (incl. a cached 401 on /api/whoami) served from the edge without reaching origin; device queue/download responses cacheable at Cloudflare for 2 h, i.e. library content stored in a third-party edge cache, violating the privacy thesis (c46/h20). Fix: add bypass rules for both hosts (ebooks except /assets/) in the zone's http_request_cache_settings ruleset and purge cached URLs",
+      "kind": "unknown_blocking",
+      "task_id": "t11",
       "resolved": false,
       "resolution": ""
     }

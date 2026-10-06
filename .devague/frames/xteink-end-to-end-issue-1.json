@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T21:05:08Z",
+  "updated": "2026-10-06T21:16:37Z",
   "claims": [
     {
       "id": "c1",
@@ -2011,6 +2011,28 @@
       "skipped_check": "",
       "refs": [
         "fork xteink/d2-nav-sntp / src/xteink/XteinkSync.cpp"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l29",
+      "code": "control-absent",
+      "what": "Main agent (t19/t20): reflashed the X3 with the full factory image at 0x0, whose NVS region (0x9000-0xE000) is 0xFF, wiping the provisioned device key and server URLs; should have written the app image only (firmware.bin at 0x10000) for an update. Old key revoked; device re-provisioned",
+      "skipped_check": "check that an update flash preserves NVS",
+      "refs": [
+        "plan t19 / flash procedure"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l30",
+      "code": "control-absent",
+      "what": "Challenge/scope passes and t11 never inspected the culture.dev zone's cache rules; the catch-all 2 h edge cache on every host was only found when the SSO UI failed to reach origin",
+      "skipped_check": "zone ruleset inspection for new hostnames",
+      "refs": [
+        "t11 / cultureflare remote-login (does not manage cache rules)"
       ],
       "origin": "llm",
       "status": "proposed"
