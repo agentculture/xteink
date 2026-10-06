@@ -1,0 +1,121 @@
+--- port open 00:26:55
+513] [DBG] [ACT] Exiting activity: Boot
+[2513] [DBG] [ACT] Entering activity: Home
+[2583] [DBG] [GFX] Time = 68 ms from clearScreen to displayBuffer
+[2615] [INF] [XKEY] adc1=4095 adc2=4095 pwr=1 mask=0x00 -> none
+[5527] [DBG] [PWR] Going to low-power mode
+[115192] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[125229] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[135265] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[145301] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[155338] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[165374] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[175411] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[185447] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[195484] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[205520] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[215557] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[225593] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[235630] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[245666] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[255703] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[265739] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[275775] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[285811] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[295848] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[305884] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[315921] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[325957] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[335993] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[346025] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[356062] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[366098] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[376134] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[386171] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[396207] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[406244] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[416280] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[426317] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[436354] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[446390] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[456427] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[466463] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[476500] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[486536] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[496573] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[506609] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[516646] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[526683] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[536719] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[542261] [INF] [XKEY] adc1=4095 adc2=2222 pwr=1 mask=0x00 -> UNDECODED
+[542295] [DBG] [PWR] Restoring normal CPU frequency
+[542362] [DBG] [GFX] Time = 62 ms from clearScreen to displayBuffer
+[542372] [INF] [XKEY] adc1=4095 adc2=2222 pwr=1 mask=0x10 -> Up
+[542493] [INF] [XKEY] adc1=4095 adc2=4095 pwr=1 mask=0x00 -> none
+[542792]   Wait complete:  X3_DRF (378 ms)
+[545462] [DBG] [PWR] Going to low-power mode
+[545487] [INF] [XKEY] adc1=4095 adc2=2 pwr=1 mask=0x20 -> Down
+[545491] [DBG] [PWR] Restoring normal CPU frequency
+[545558] [DBG] [GFX] Time = 65 ms from clearScreen to displayBuffer
+[545627] [INF] [XKEY] adc1=4095 adc2=4095 pwr=1 mask=0x00 -> none
+[545988]   Wait complete:  X3_DRF (378 ms)
+[546724] [INF] [MEM] Free: 112540 bytes, Total: 265100 bytes, Min Free: 112016 bytes, MaxAlloc: 94196 bytes
+[547839] [INF] [XKEY] adc1=3516 adc2=4095 pwr=1 mask=0x00 -> UNDECODED
+[547959] [INF] [XKEY] adc1=3515 adc2=4095 pwr=1 mask=0x01 -> Back
+[548055] [DBG] [ACT] Exiting activity: Home
+[548056] [DBG] [ACT] Entering activity: EpubReader
+[548056] [INF] [MEM] reader enter: free=128380 max_block=114676
+[548059] [DBG] [EBP] Loading ePub: /xteink/The Port of Least Resistance.epub
+[548059] [INF] [CPRO] open: free=128084 max_block=114676
+[548065] [DBG] [BMC] Loaded cache data: 2 spine, 1 TOC entries
+[548080] [DBG] [CSS] Loaded 86 rules from complete cache
+[548081] [DBG] [EBP] Loaded ePub: /xteink/The Port of Least Resistance.epub
+[548084] [DBG] [ERS] Loaded cache: 1, 7
+[548088] [DBG] [ERS] Loading file: EPUB/text/ch001.xhtml, index: 1
+[548091] [DBG] [SCT] Deserialization succeeded: 8 pages
+[548091] [DBG] [ERS] Cache found, skipping build...
+[548100] [INF] [XKEY] adc1=4095 adc2=4095 pwr=1 mask=0x00 -> none
+[548128] [DBG] [FDC] Prewarm: 32 glyphs in 3017 bytes from 3 groups (0 missed)
+[548141] [DBG] [FDC] Prewarm: 7 glyphs in 442 bytes from 1 groups (0 missed)
+[548152] [DBG] [GFX] Time = 61 ms from clearScreen to displayBuffer
+[549181]   Wait complete:  X3_DRF (927 ms)
+[549887]   Wait complete:  X3_DRF (455 ms)
+[550319] [INF] [XKEY] adc1=2685 adc2=4095 pwr=1 mask=0x00 -> UNDECODED
+[550394]   Wait complete:  X3_DRF (404 ms)
+[550440] [INF] [XKEY] adc1=2686 adc2=4095 pwr=1 mask=0x02 -> Confirm
+[550918]   Wait complete:  X3_DRF (472 ms)
+[551256]   Wait complete:  X3_DRF (225 ms)
+[551347] [DBG] [ERS] Page render (tiled): prewarm=45ms bw_render=11ms display=2766ms gray_lsb=57ms gray_msb=55ms gray_display=226ms cleanup=91ms total=3251ms
+[551347] [DBG] [ERS] Rendered page in 3251ms
+[551367] [DBG] [ERS] Progress saved: spine=1 offset=3173 page=7
+[551368] [DBG] [ACT] Pushed to activity stack, new size = 1
+[551368] [DBG] [ACT] Entering activity: EpubReaderMenu
+[551369] [DBG] [LOOP] New max loop duration: 858 ms (activity: 856 ms)
+[551381] [INF] [XKEY] adc1=4095 adc2=4095 pwr=1 mask=0x00 -> none
+[551403] [DBG] [GFX] Time = 34 ms from clearScreen to displayBuffer
+[551834]   Wait complete:  X3_DRF (378 ms)
+[553258] [INF] [XKEY] adc1=1487 adc2=4095 pwr=1 mask=0x00 -> UNDECODED
+[553304] [DBG] [GFX] Time = 34 ms from clearScreen to displayBuffer
+[553380] [INF] [XKEY] adc1=1486 adc2=4095 pwr=1 mask=0x04 -> Left
+[553500] [INF] [XKEY] adc1=4095 adc2=4095 pwr=1 mask=0x00 -> none
+[553734]   Wait complete:  X3_DRF (378 ms)
+[556413] [INF] [XKEY] adc1=0 adc2=4095 pwr=1 mask=0x08 -> Right
+[556447] [DBG] [GFX] Time = 33 ms from clearScreen to displayBuffer
+[556631] [INF] [XKEY] adc1=4095 adc2=4095 pwr=1 mask=0x08 -> Right
+[556727] [INF] [MEM] Free: 134776 bytes, Total: 265100 bytes, Min Free: 101120 bytes, MaxAlloc: 114676 bytes
+[556751] [INF] [XKEY] adc1=4095 adc2=4095 pwr=1 mask=0x00 -> none
+[556879]   Wait complete:  X3_DRF (379 ms)
+--- port open 00:34:20
+[258] [INF] [HW] Using cached device type: X3
+[258] [XTDET] NVS hw_calib/screenType: not set
+[369] [XTDET] X3 stock probe VER=FF FF FF BUSY-timeout=0 -> UC8253
+[383] [INF] [GYR] SDK IMU initialized
+[384] [INF] [CLK] SDK RTC found[384] [INF] [MAIN] Hardware detect: X3
+[399] [SD] SD card detected
+[417] [DBG] [CPS] Settings loaded from file
+[423] [DBG] [RBS] Recent books loaded from file (2 entries)
+[426] [DBG] [UI] Using xteink theme
+[429] [DBG] [TIME] Clock restored to persisted floor
+[429] [DBG] [MAIN] Power-button wake not held through verification, sleeping
+
+--- port lost 00:34:21: [Errno 19] No such device: '/dev/serial/by-id/usb-Espressif_USB_JTAG_serial_debug_unit_68:C6:3A:3B:C2:4C-if00'
