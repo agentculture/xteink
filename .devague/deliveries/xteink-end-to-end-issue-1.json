@@ -2,7 +2,7 @@
   "plan_slug": "xteink-end-to-end-issue-1",
   "schema_version": 2,
   "created": "2026-10-06T18:14:16Z",
-  "updated": "2026-10-06T20:47:08Z",
+  "updated": "2026-10-06T20:55:24Z",
   "deviations": [
     {
       "id": "d1",
@@ -45,6 +45,21 @@
       "status": "approved",
       "classification": "needs-follow-up",
       "seq": 3
+    },
+    {
+      "id": "d4",
+      "what": "Web UI on ebooks.culture.dev authenticates with Cloudflare Access SSO alone: the server verifies the Cf-Access-Jwt-Assertion RS256 JWT (team agentculture.cloudflareaccess.com JWKS, iss, aud = the ebooks.culture.dev Access app AUD, nbf/exp) and treats a valid token as an authenticated operator for the main-app /api routes; the UI skips the 'Connect this browser' key panel when an unauthenticated probe succeeds. API keys remain required for device (8781), MCP and plain LAN API clients. Verifier cited (cite-don't-import) from culture-rules culture_rules/auth/access.py (stdlib-only)",
+      "task_ref": "t7",
+      "reason": "User (2026-10-06): 'I thought i only use sso? https://ebooks.culture.dev/ I need an xtk api key' \u2014 the key panel was the agent's own interpretation of c77, flagged but shipped before the user answered",
+      "affects": [
+        "t3",
+        "t7",
+        "t20"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 4
     }
   ],
   "evidence": [],
