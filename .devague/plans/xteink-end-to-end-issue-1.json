@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T18:41:58Z",
+  "updated": "2026-10-06T19:04:43Z",
   "targets": [
     {
       "id": "c1",
@@ -1218,6 +1218,14 @@
       "text": "PyPI wheel serves the placeholder UI: _webassets is gitignored and hatch skips VCS-ignored files; shipping the UI in the wheel needs [tool.hatch.build.targets.wheel] artifacts + a node build step in publish.yml + web/** in publish paths (the Docker image already carries the real UI)",
       "kind": "follow_up",
       "task_id": "t10",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r20",
+      "text": "t17 added HalStorage::sdFreeBytes() (lib/hal, +9 lines, read-only wrapper under storageMutex) \u2014 the HAL is upstream SD territory per docs/xteink/CONTRIBUTING.md (boundary c53); needs explicit user accept or an alternative",
+      "kind": "unknown_nonblocking",
+      "task_id": "t17",
       "resolved": false,
       "resolution": ""
     }

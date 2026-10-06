@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T18:41:58Z",
+  "updated": "2026-10-06T19:04:43Z",
   "claims": [
     {
       "id": "c1",
@@ -1978,6 +1978,17 @@
       "skipped_check": "GitHub Actions run of image/changes jobs",
       "refs": [
         "plan t10 / .github/workflows/tests.yml"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l26",
+      "code": "control-absent",
+      "what": "t17: sync client compiled but never run against the real server or fake device (host tests cover pure functions only); heap thresholds estimated from host TLS numbers; ~19 KB of its +41 KB flash unattributed; partial downloads do not survive across syncs (no HalStorage append); status-line placement checked by arithmetic only",
+      "skipped_check": "on-device sync run; heap calibration",
+      "refs": [
+        "plan t17 / src/xteink/XteinkSync.cpp"
       ],
       "origin": "llm",
       "status": "proposed"
