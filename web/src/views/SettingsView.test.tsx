@@ -10,10 +10,10 @@ vi.mock("../services/api", async (orig) => {
   return { ...real, listKeys: vi.fn(), createKey: vi.fn(), revokeKey: vi.fn() };
 });
 
-const SECRET = "xtk_ab12cd34_TOPSECRETvalue";
+const STORED = "xtk_ab12cd34_PRIVATEpart";
 
 beforeEach(() => {
-  storeKey(SECRET);
+  storeKey(STORED);
   vi.mocked(api.listKeys).mockReset().mockResolvedValue({
     keys: [
       { id: 1, name: "laptop", key_id: "ab12cd34", created_at: "2026-10-01T00:00:00Z", revoked_at: null, last_used: null },
@@ -28,7 +28,7 @@ describe("SettingsView", () => {
   it("shows only the stored key's public prefix and marks it as this browser's", async () => {
     render(<SettingsView onForget={vi.fn()} hostname="192.168.1.20" />);
     expect(await screen.findByText("This browser")).toBeInTheDocument();
-    expect(document.body.textContent).not.toContain("TOPSECRET");
+    expect(document.body.textContent).not.toContain("PRIVATEpart");
     expect(screen.getAllByText("xtk_ab12cd34…").length).toBeGreaterThan(0);
   });
 
