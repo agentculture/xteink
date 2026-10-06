@@ -30,10 +30,9 @@ So far only the scaffold exists. Everything below that is about e-ink readers is
 
 What exists today is the agent-first CLI (`whoami`, `learn`, `explain`,
 `overview`, `doctor`, `cli overview`), the harness and identity plumbing, and the
-CI/CD baseline. Some CLI strings still say "a clonable template for AgentCulture
-mesh agents": the parser `description` in `xteink/cli/__init__.py`,
-`xteink/cli/_commands/learn.py`, and `xteink/explain/catalog.py`. Leftovers like
-these should be updated to describe xteink.
+CI/CD baseline. The CLI's own descriptions (`learn`, `explain`, the parser
+`description`) describe xteink and mark the server, API, MCP, web UI and
+firmware sync as planned. Keep them honest as components land.
 
 When you add a product component, put it under a new CLI noun group (see
 [The CLI](#the-cli)) instead of a separate entry point. When a planned item

@@ -12,14 +12,16 @@ from xteink import __version__
 from xteink.cli._output import emit_result
 
 _TEXT = """\
-xteink — a clonable template for AgentCulture mesh agents.
+xteink — private, local-first control for Xteink e-ink readers.
 
 Purpose
 -------
-Scaffold for a new Culture mesh agent: an agent-first CLI (cited from the teken
-`python-cli` reference), an identity (culture.yaml + CLAUDE.md), the canonical
-guildmaster skill kit under .claude/skills/, and a deploy/CI baseline. Clone it,
-rename the package, and edit culture.yaml to mint a new agent.
+Keep your e-book library on hardware you own: a local book server, optional
+remote access through a Cloudflare Tunnel, and custom reader firmware that syncs
+books over Wi-Fi so reading works fully offline. xteink is also an AgentCulture
+mesh agent. Today only the agent baseline ships (agent-first CLI, identity in
+culture.yaml + CLAUDE.md, skill kit, CI); the server, API, MCP, web UI and
+firmware sync are planned.
 
 Commands
 --------
@@ -52,7 +54,7 @@ def _as_json_payload() -> dict[str, object]:
     return {
         "tool": "xteink",
         "version": __version__,
-        "purpose": "Clonable scaffold for a new AgentCulture mesh agent.",
+        "purpose": "Private, local-first control for Xteink e-ink readers.",
         "commands": [
             {"path": ["whoami"], "summary": "Identity probe from culture.yaml."},
             {"path": ["learn"], "summary": "Self-teaching prompt."},

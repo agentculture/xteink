@@ -71,7 +71,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     parser = _CliArgumentParser(
         prog="xteink",
-        description="xteink — a clonable template for AgentCulture mesh agents.",
+        description="xteink — private, local-first control for Xteink e-ink readers.",
     )
     parser.add_argument(
         "--version",

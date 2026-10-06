@@ -290,7 +290,7 @@ def stage_config(repo: Path, harnesses: dict[str, Any]) -> list[Result]:
                 "config",
                 "no-bare-agents-md",
                 FAIL,
-                "AGENTS.md exists; this template ships none on purpose — it would "
+                "AGENTS.md exists; this repo ships none on purpose — it would "
                 "shadow AGENTS.override.md / AGENTS.colleague.md in the Pi and "
                 "colleague prompt cascades",
             )

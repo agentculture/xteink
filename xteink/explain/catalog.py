@@ -12,11 +12,16 @@ from __future__ import annotations
 _ROOT = """\
 # xteink
 
-A clonable template for AgentCulture mesh agents. It carries an agent-first CLI
-(cited from the teken `python-cli` reference), a mesh identity (`culture.yaml` +
-`CLAUDE.md`), the canonical guildmaster skill kit under `.claude/skills/`, and a
-buildable/deployable package baseline. Clone it, rename the package, edit
-`culture.yaml`, and you have a new agent.
+Private, local-first control for Xteink e-ink readers: a local book server,
+optional remote access through a Cloudflare Tunnel, and custom reader firmware
+that syncs books over Wi-Fi so reading works fully offline. Your library never
+leaves hardware you own.
+
+xteink is also an AgentCulture mesh agent. Today it ships the agent baseline: an
+agent-first CLI (cited from the teken `python-cli` reference), a mesh identity
+(`culture.yaml` + `CLAUDE.md`), the guildmaster skill kit under
+`.claude/skills/`, and a buildable/deployable package. The server, API, MCP,
+web UI and firmware sync are planned.
 
 ## Verbs
 
@@ -81,7 +86,7 @@ _OVERVIEW = """\
 # xteink overview
 
 Read-only descriptive snapshot of the agent: identity (from `culture.yaml`), the
-verb surface, and the sibling-pattern artifacts the template carries. Accepts an
+verb surface, and the sibling-pattern artifacts the repo carries. Accepts an
 ignored `target` so a stray path never hard-fails.
 
 ## Usage

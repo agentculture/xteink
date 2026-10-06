@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2026-10-06
+
+### Changed
+
+- CLI descriptions (parser description, learn, explain root/overview) now describe xteink instead of the culture-agent-template scaffold, marking server/API/MCP/web UI/firmware sync as planned
+- Module docstrings (overview, doctor, whoami) and the harness-smoke AGENTS.md error message no longer refer to "this template"
+- CLAUDE.md no longer lists the template leftovers as pending
+
 ## [0.9.1] - 2026-10-06
 
 ### Changed
