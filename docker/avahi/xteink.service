@@ -1,0 +1,14 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<!-- Advertises the xteink server over mDNS from the HOST's avahi-daemon.
+     Install: see README.md in this directory. Containers do not do mDNS. -->
+<service-group>
+  <name replace-wildcards="yes">xteink on %h</name>
+  <service>
+    <type>_http._tcp</type>
+    <port>8780</port>
+    <txt-record>path=/</txt-record>
+    <txt-record>device_port=8781</txt-record>
+    <txt-record>mcp_port=8782</txt-record>
+  </service>
+</service-group>
