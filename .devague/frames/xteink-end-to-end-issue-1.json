@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T21:16:37Z",
+  "updated": "2026-10-06T22:12:14Z",
   "claims": [
     {
       "id": "c1",
@@ -2033,6 +2033,66 @@
       "skipped_check": "zone ruleset inspection for new hostnames",
       "refs": [
         "t11 / cultureflare remote-login (does not manage cache rules)"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l31",
+      "code": "assumption-for-measurement",
+      "what": "d5 reset-boot battery guard thresholds (>=3% and >=3400 mV) are a judgement, not measured on the X3",
+      "skipped_check": "measure gauge readings at the brownout edge",
+      "refs": [
+        "d5",
+        "fork:c590cd1a"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l32",
+      "code": "assumption-for-measurement",
+      "what": "d3 line scroll assumes page elements are stored in top-to-bottom yPos order; not checked against real EPUB layouts",
+      "skipped_check": "dump element yPos order from a laid-out page on hardware or in a host fixture",
+      "refs": [
+        "d3",
+        "fork:7a7a610b"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l33",
+      "code": "assumption-for-measurement",
+      "what": "d3 line scroll keeps two Page objects resident while rendering; heap headroom not measured",
+      "skipped_check": "log free heap during a scrolled render on the X3",
+      "refs": [
+        "d3",
+        "fork:7a7a610b"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l34",
+      "code": "control-absent",
+      "what": "d5 x4pro/x4c builds and clang-format ran only on the final tree, not after each of the six commits",
+      "skipped_check": "build every board at each commit",
+      "refs": [
+        "d5",
+        "fork:xteink/d5-x3-keys"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l35",
+      "code": "control-absent",
+      "what": "fix E (Wi-Fi auto-join timeout/budget) has no host test because its helper sits in a header that host builds cannot compile",
+      "skipped_check": "unit test for the 45 s budget / 10 s floor arithmetic",
+      "refs": [
+        "r25",
+        "fork:3925ed4d"
       ],
       "origin": "llm",
       "status": "proposed"
