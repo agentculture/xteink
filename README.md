@@ -2,12 +2,24 @@
 
 Control Xteink e-ink readers privately: a local server with a file/book service, optional remote access via Cloudflare Tunnel, and custom device firmware that joins Wi-Fi to sync books locally so reading works fully offline. Your library never leaves hardware you own.
 
+## Status
+
+**Early scaffold.** The e-ink pieces are planned, not built yet:
+
+- **(planned)** Local server with a file/book service the readers sync from.
+- **(planned)** Optional remote access through Cloudflare Tunnel.
+- **(planned)** Custom Xteink firmware that joins Wi-Fi and syncs books over the
+  local network, so reading needs no cloud.
+
+What ships today is the agent scaffold below: the CLI, the mesh identity,
+the harness prompts, the skill kit, and CI/CD.
+
 ## What you get
 
 - **An agent-first CLI** cited from [teken](https://github.com/agentculture/teken)
   (`afi-cli`) — the runtime package has no third-party dependencies.
 - **A mesh identity** — `culture.yaml` (`suffix` + `backend`) and the matching
-  resident prompt file (`CLAUDE.md`, since this template runs
+  resident prompt file (`CLAUDE.md`, since this agent runs
   `backend: claude`). The mesh resident is one of **two separate
   selections** over this clone — see
   [Two selections, not one](#two-selections-not-one) below.
@@ -15,7 +27,7 @@ Control Xteink e-ink readers privately: a local server with a file/book service,
   one of them (see [Prompt files by harness](#prompt-files-by-harness) below).
   All four harnesses are usable interactively regardless of which one
   `culture.yaml` names as the mesh resident.
-- **The canonical guildmaster skill kit** (11 skills) under `.claude/skills/`,
+- **The canonical guildmaster skill kit** (19 skills) under `.claude/skills/`,
   vendored cite-don't-import. See [`docs/skill-sources.md`](docs/skill-sources.md).
 - **A build + deploy baseline** — pytest, lint, the agent-first rubric gate, and
   PyPI Trusted Publishing wired into GitHub Actions.
@@ -54,7 +66,7 @@ unrelated file rather than cascading from a shared base.
 ## Two selections, not one
 
 It is tempting to read "switch harness" as one decision. It is actually two,
-and this template exists partly to keep them separate:
+and this repo keeps them separate:
 
 1. **The interactive harness** — which binary you run (`claude`, `pi`,
    `colleague`, `qwen`). `cd` into the clone and run any of them; all four
@@ -97,23 +109,16 @@ Every command supports `--json`. Results go to stdout, errors/diagnostics to
 stderr (never mixed). Exit codes: `0` success, `1` user error, `2` environment
 error, `3+` reserved.
 
-## Make it your own
+## Contributing
 
-1. Rename the package `xteink/` and the `xteink`
-   CLI/dist name throughout `pyproject.toml`, the package, `tests/`,
-   `sonar-project.properties`, and this `README.md`. The name is hard-coded in
-   ~100 places, so list every occurrence first — see the `git grep` discovery
-   command in [`CLAUDE.md`](CLAUDE.md), the authoritative rename procedure.
-2. Edit `culture.yaml` with your `suffix` and `backend`.
-3. Rewrite `CLAUDE.md` for your agent and run `/init`. Rewrite the other three
-   harness files (`AGENTS.override.md` + `.pi/SYSTEM.md`, `AGENTS.colleague.md`,
-   `QWEN.md`) too if your agent uses those harnesses — don't let them drift out
-   of sync with `CLAUDE.md`.
-4. Re-vendor only the skills you need from guildmaster (see
-   [`docs/skill-sources.md`](docs/skill-sources.md)).
+See [`CLAUDE.md`](CLAUDE.md) for the conventions:
 
-See [`CLAUDE.md`](CLAUDE.md) for the full conventions (version-bump-every-PR,
-the `cicd` PR lane, deploy setup).
+- Every PR bumps the version.
+- PRs go through the `cicd` lane.
+- Worktrees live in a repo-named folder.
+- Deploys use PyPI Trusted Publishing.
+
+If you change project facts, update all four harness prompt files together.
 
 ## License
 

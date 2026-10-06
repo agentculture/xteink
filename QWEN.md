@@ -9,11 +9,17 @@ Qwen Code session.
 
 ## What this project is
 
-`xteink` is a **clonable template for AgentCulture mesh agents**.
-It is a working, minimal example of the sibling pattern every Culture agent
-follows: an agent-first CLI, a mesh identity, the canonical skill kit, and a
-buildable/deployable package baseline. Clone it, rename the package, edit
-`culture.yaml`, and you have a new agent that `steward doctor` recognizes.
+`xteink` lets you control Xteink e-ink readers privately: a local server
+with a file/book service, optional remote access via Cloudflare Tunnel, and
+custom device firmware that joins Wi-Fi to sync books locally, so reading works
+fully offline. Your library never leaves hardware you own. **Only the agent
+scaffold exists so far.** The server, tunnel, and firmware are *(planned)*.
+See `CLAUDE.md`, section "Current state vs. roadmap".
+
+It is also an AgentCulture mesh agent (suffix `xteink`), scaffolded from
+`culture-agent-template`. It follows the sibling pattern every Culture agent
+uses: an agent-first CLI, a mesh identity, the canonical skill kit, and a
+buildable/deployable package baseline.
 
 It is a sibling to [`guildmaster`](https://github.com/agentculture/guildmaster)
 (the **skills supplier**), [`steward`](https://github.com/agentculture/steward)
@@ -51,28 +57,6 @@ regardless of what `culture.yaml` declares, and running Qwen Code here neither
 requires nor changes that declaration. The declaration and the resident prompt
 together satisfy the two invariants `steward doctor` verifies:
 **prompt-file-present** and **backend-consistency** (`claude` ↔ `CLAUDE.md`).
-
-## Cloning this template (re-initialization)
-
-When you start a new agent from this template:
-
-1. Rename the package directory `xteink/` → `<your_module>/`
-   and replace `xteink` (module) / `xteink`
-   (CLI and dist name) throughout `pyproject.toml`, the package, `tests/`,
-   `sonar-project.properties`, and `README.md`. The name is hard-coded in
-   ~100 places, so list every occurrence first rather than renaming by hand
-   (`git grep` is portable and skips `.git` / untracked `__pycache__`):
-
-   ```bash
-   git grep -nF -e 'xteink' -e 'xteink'
-   ```
-
-2. Set your `suffix` (and `backend`) in `culture.yaml`. `whoami` and `doctor`
-   then reflect the new identity with no further code change.
-3. Rewrite `CLAUDE.md` (and this file, and the other two harness files) to
-   describe your agent.
-4. Re-vendor the skill kit you need from guildmaster (see
-   `docs/skill-sources.md`) — keep only the skills your agent uses.
 
 ## The CLI
 
@@ -125,5 +109,5 @@ This file describes the repository **as it exists on disk today**. When you
 edit, keep claims grounded in checked-in reality; if a section drifts ahead of
 reality, mark it `(planned)` or move it under a `## Roadmap` heading. For the
 full set of workflow conventions (worktree layout, memory discipline,
-`ask-colleague` usage), see [`CLAUDE.md`](CLAUDE.md) — those conventions apply
+`ask-colleague` usage, CLI architecture), see [`CLAUDE.md`](CLAUDE.md) — those conventions apply
 to work in this repo regardless of which harness is doing it.
