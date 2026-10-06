@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T18:11:15Z",
+  "updated": "2026-10-06T18:13:19Z",
   "targets": [
     {
       "id": "c1",
@@ -1162,6 +1162,14 @@
       "text": "xteink/cli/_commands/learn.py is not in any task's file set and now omits the new nouns (server, library, device, tunnel, mcp); device revoke uses client._request because xteink/client.py lacks revoke_device \u2014 fold both fixes into t21 (docs/prompt facts) or a main-agent fixup before t22",
       "kind": "follow_up",
       "task_id": "t21",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r13",
+      "text": "cultureflare remote-login setup replaces a tunnel's whole ingress with [hostname, 404] (cultureflare/_remote_login/_tunnel.py:68-105, ensure_tunnel_config); two hostnames on one shared tunnel would silently drop ebooks.culture.dev. Needs either two tunnels (two cloudflared services/tokens in compose) or a cultureflare change to merge ingress rules",
+      "kind": "unknown_blocking",
+      "task_id": "t11",
       "resolved": false,
       "resolution": ""
     }
