@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T19:05:15Z",
+  "updated": "2026-10-06T19:28:53Z",
   "claims": [
     {
       "id": "c1",
@@ -1989,6 +1989,17 @@
       "skipped_check": "on-device sync run; heap calibration",
       "refs": [
         "plan t17 / src/xteink/XteinkSync.cpp"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l27",
+      "code": "control-absent",
+      "what": "Main agent (t19): asked the operator to wake the X3 while the flash was armed to start the instant the port appeared, so a button press reset the chip mid-write (partial flash, unbootable); also filtered esptool output with grep, hiding progress, and the retry loop watched /dev/ttyACM0 while the device re-enumerated as ttyACM1. Recovered via the /dev/serial/by-id path with verified write",
+      "skipped_check": "arming the flash only after the device was awake and idle; stable by-id port path",
+      "refs": [
+        "plan t19 / docs/evidence/t19-x3-bringup.md"
       ],
       "origin": "llm",
       "status": "proposed"

@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T19:13:39Z",
+  "updated": "2026-10-06T19:28:53Z",
   "targets": [
     {
       "id": "c1",
@@ -1183,7 +1183,7 @@
     },
     {
       "id": "r15",
-      "text": "TLS verification heap on the X3 (no PSRAM): host-measured peak ~39 KB for xteink.culture.dev (Let's Encrypt RSA-4096 chain) and ~41 KB for the GitHub release CDN vs 20-32 KB unverified; may OOM during sync/OTA after a reading session. Mitigations measured but not applied: pin the culture.dev Cloudflare zone to Google Trust Services (~24 KB, no firmware change) or -DWOLFSSL_SP_4096 (~33 KB, touches ContentProtection RSA)",
+      "text": "TLS verification heap on the X3: host-measured peak ~39-41 KB per handshake; on the real X3 (2026-10-06 first boot) idle heap on home is 141 KB free / 114 KB largest block, so headroom looks ample at idle; still unmeasured during an actual sync after a reading session (t20). Zone-pin mitigation (Google Trust Services) not needed unless t20 shows ELOWMEM",
       "kind": "unknown_nonblocking",
       "task_id": "t17",
       "resolved": false,
