@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T22:01:17Z",
+  "updated": "2026-10-06T22:04:52Z",
   "targets": [
     {
       "id": "c1",
@@ -1079,7 +1079,7 @@
     },
     {
       "id": "r2",
-      "text": "X3 physical keys (user, 2026-10-06/07): top edge has a regular button + power; left edge key; right edge key; 4 bottom keys in pairs [4.1 4.2] [4.3 4.4]. Observed on the d2 build in Settings: the side (edge) keys act as logical Up/Down and the bottom-right pair (4.3/4.4) as logical Left/Right, i.e. the X3 wiring is swapped vs the X4-centric logical map. freeink-sdk XteinkAdcLadder decodes 4 (ADC1) + 2 (ADC2) + power = 7 logical keys for 8 physical; the top regular button is likely undecoded or aliased. Fix: an X3 key profile (edges -> Left/Right, 4.3/4.4 -> Up/Down, top button -> zoom) after the key-logger session confirms which edge is which and what the top button reads",
+      "text": "X3 keys measured (XKEY logger, docs/evidence/x3-key-mapping-serial.txt): left edge=logical Up, right edge=Down, 4.1=Back, 4.2=Confirm, 4.3=Left, 4.4=Right; top regular button = chip hardware RESET (unbindable). d5 X3 profile (in progress, fork branch xteink/d5-x3-keys): edges=Left/Right, 4.3/4.4=Up/Down, hold 4.1=rotate, hold 4.2=zoom, reset boots normally; verify on device after app-only flash",
       "kind": "unknown_nonblocking",
       "task_id": "t14",
       "resolved": false,
@@ -1090,8 +1090,8 @@
       "text": "Creating the agentculture firmware fork repo needs the user's go-ahead and org permissions; every firmware task waits on it",
       "kind": "unknown_nonblocking",
       "task_id": "t12",
-      "resolved": false,
-      "resolution": ""
+      "resolved": true,
+      "resolution": "User approved; agentculture/xteink-firmware forked 2026-10-06 (public, default develop; work on feat/issue-1)"
     },
     {
       "id": "r4",
