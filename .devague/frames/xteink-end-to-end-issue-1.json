@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T18:11:15Z",
+  "updated": "2026-10-06T18:12:22Z",
   "claims": [
     {
       "id": "c1",
@@ -1846,6 +1846,17 @@
       "skipped_check": "CLI run against the real API (covered later by t9/t20)",
       "refs": [
         "plan t6 / tests/cli/conftest.py"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l14",
+      "code": "assumption-for-measurement",
+      "what": "t8: assumed Debian's pandoc supported --sandbox EPUB output (it fails: missing epub.css); caught only by the real-pandoc test; amd64 image path, cloudflared ready-healthcheck and MCP tool calls in compose were not run; web stage tested with a fake web/, not the real Vite app",
+      "skipped_check": "amd64 build; cloudflared run; real web/ build in image",
+      "refs": [
+        "plan t8 / Dockerfile"
       ],
       "origin": "llm",
       "status": "proposed"
