@@ -21,7 +21,7 @@ Run 2026-10-06, X3 `68:c6:3a:3b:c2:4c`, firmware `1.6.5-dev-feat/issue-1-e0aec33
 [28899] [ERR] [TLS] SNTP sync failed; certificate date checks use the restored clock
 [29118] [INF] [XSYNC] Queue: 1 items, 0 skipped, 0 deletes, 0 dropped
 [31730] [ERR] [TLS] SNTP sync failed; certificate date checks use the restored clock
-[35388] [DBG] [BookCache] Done checking metadata cache for: /xteink/The Port of Least Resistance.epub
+[35388] [DBG] [BookCache] Done checking metadata cache for: /xteink/<article>.epub
 [39289] [ERR] [TLS] SNTP sync failed; certificate date checks use the restored clock
 [51119] [ERR] [TLS] SNTP sync failed; certificate date checks use the restored clock
 [51429] [INF] [XSYNC] Sync done: OK, 1 new, 0 deleted, 0 skipped, 0 failed
