@@ -39,3 +39,9 @@ Item 2: Markdown article converted to EPUB by the image pandoc 3.12 (7,629 B, sh
 
 - Auto-join gives up per saved network after 7.0 s; the extender needs ~8.3 s, so auto-fallback to home Wi-Fi failed and the network had to be picked manually (same saved password). Plan risk r25.
 - The slow step is the SD free-space query (6,988 ms), not the LAN probe. Plan risk r21.
+
+## Offline reading (operator check, 2026-10-07)
+
+With the network disconnected, the operator opened and read books on the X3 and
+switched between books. Not separately counted: the ">= 10 pages" figure in
+success signal c48.
