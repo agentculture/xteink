@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T18:35:14Z",
+  "updated": "2026-10-06T18:36:14Z",
   "targets": [
     {
       "id": "c1",
@@ -1202,6 +1202,14 @@
       "text": "t15 theme enum: XTEINK=4 shifted COVER_GRID to 5, so X4 Pro/X4 Classic users who saved Cover Grid silently load xteink after flashing; existing installs keep their saved theme (new default applies only on fresh settings); no settings migration",
       "kind": "follow_up",
       "task_id": "t15",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r18",
+      "text": "Markdown article title in the library is the filename, not the document's first '# H1' (observed in t9 e2e); agents pushing articles via MCP should pass title explicitly until ingest extracts it",
+      "kind": "follow_up",
+      "task_id": "t2",
       "resolved": false,
       "resolution": ""
     }

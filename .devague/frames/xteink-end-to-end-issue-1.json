@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T18:32:37Z",
+  "updated": "2026-10-06T18:36:14Z",
   "claims": [
     {
       "id": "c1",
@@ -1934,6 +1934,17 @@
       "skipped_check": "real esptool read-mac/flash-id against the X3 (planned in t19)",
       "refs": [
         "plan t18 / xteink/cli/_commands/device_usb.py"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l22",
+      "code": "control-absent",
+      "what": "t9: first throwaway 'compose up --build' started without noticing compose.yaml's hardcoded image tag xteink:local and could have retagged the production image (killed before completion; prod image id verified unchanged; fixed by the XTEINK_IMAGE override); two specs first written without running",
+      "skipped_check": "",
+      "refs": [
+        "plan t9 / compose.yaml image tag"
       ],
       "origin": "llm",
       "status": "proposed"
