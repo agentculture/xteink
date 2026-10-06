@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T18:19:37Z",
+  "updated": "2026-10-06T18:27:49Z",
   "claims": [
     {
       "id": "c1",
@@ -1890,6 +1890,17 @@
       "skipped_check": "",
       "refs": [
         "plan t16 / src/xteink/ProvisioningProtocol.*, ProvisionUsbActivity.*"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l18",
+      "code": "provenance-missing",
+      "what": "t7: Playwright MCP wrote .playwright-mcp/ into the main checkout (outside the task worktree; removed); screenshots 07-library.png and 10-pair-reveal.png predate final CSS tweaks; 10-pair-reveal.png shows a real device key + QR from a throwaway server (data dir deleted, key useless); root .gitignore 'lib/' silently dropped web/src/lib/ until renamed",
+      "skipped_check": "",
+      "refs": [
+        "plan t7 / web/docs/screens"
       ],
       "origin": "llm",
       "status": "proposed"
