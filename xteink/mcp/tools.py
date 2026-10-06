@@ -88,7 +88,7 @@ def _resolve_device(client: Client, device: str | int) -> int:
 
 
 def _brief(item: dict) -> dict:
-    keys = ("id", "title", "author", "kind", "format", "size_bytes")
+    keys = ("id", "title", "author", "kind", "format", "size")
     return {k: item[k] for k in keys if k in item}
 
 

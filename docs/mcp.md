@@ -127,7 +127,7 @@ Push a Markdown article and queue it for a reader called `my-reader`:
 ```
 
 Result (JSON text): `{"item": {"id": 7, "title": "...", "kind": "article",
-"format": "epub"}, "created": true, "queued": {...queue entry...}}`. `created`
+"format": "epub", "size": 18422}, "created": true, "queued": {...queue entry...}}`. `created`
 is `false` when identical bytes were already in the library.
 
 ### list_library

@@ -17,11 +17,12 @@ optional remote access through a Cloudflare Tunnel, and custom reader firmware
 that syncs books over Wi-Fi so reading works fully offline. Your library never
 leaves hardware you own.
 
-xteink is also an AgentCulture mesh agent. Today it ships the agent baseline: an
-agent-first CLI (cited from the teken `python-cli` reference), a mesh identity
-(`culture.yaml` + `CLAUDE.md`), the guildmaster skill kit under
-`.claude/skills/`, and a buildable/deployable package. The server, API, MCP,
-web UI and firmware sync are planned.
+xteink is also an AgentCulture mesh agent. It ships the library server (HTTP
+API on port 8780, a device-only sync app on 8781, and the web UI), an MCP server
+(`push_file`, `list_library`, `send_to_device`), and this agent-first CLI (cited
+from the teken `python-cli` reference), plus a docker compose stack. The reader
+firmware is a separate fork (agentculture/xteink-firmware) and is pending
+hardware verification. See `xteink learn` for the command map.
 
 ## Verbs
 
