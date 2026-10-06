@@ -15,6 +15,14 @@ classifiers = [
 ]
 dependencies = []
 
+[project.optional-dependencies]
+server = [
+    "fastapi",
+    "uvicorn",
+    "mcp>=1.2,<2",
+    "python-multipart",
+]
+
 [project.urls]
 Homepage = "https://github.com/agentculture/xteink"
 Issues = "https://github.com/agentculture/xteink/issues"
