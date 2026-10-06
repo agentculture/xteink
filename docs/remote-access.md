@@ -49,6 +49,16 @@ request carrying an Access JWT arrives, and cached. They are never fetched at
 startup. The device app (`xteink.culture.dev`) never accepts Access JWTs. It
 takes device keys only.
 
+## Edge caching is off for both hosts
+
+The culture.dev zone caches every host for 2 hours by default (a catch-all
+Cloudflare cache rule). xteink adds two bypass rules after it: everything on
+`xteink.culture.dev`, and everything on `ebooks.culture.dev` except the
+content-hashed `/assets/`. So device queues, book downloads and API responses
+are never stored at the edge. Check with `curl -sI` and look for
+`cf-cache-status: DYNAMIC`. cultureflare does not manage cache rules, so add
+them in the zone (Caching, Cache Rules) when you set up new hostnames.
+
 ## Why two tunnels
 
 `cultureflare remote-login setup` replaces a tunnel's whole ingress list with
