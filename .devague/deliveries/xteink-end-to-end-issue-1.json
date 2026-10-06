@@ -2,7 +2,7 @@
   "plan_slug": "xteink-end-to-end-issue-1",
   "schema_version": 2,
   "created": "2026-10-06T18:14:16Z",
-  "updated": "2026-10-06T18:14:16Z",
+  "updated": "2026-10-06T20:35:35Z",
   "deviations": [
     {
       "id": "d1",
@@ -17,6 +17,20 @@
       "status": "approved",
       "classification": "acceptable",
       "seq": 1
+    },
+    {
+      "id": "d2",
+      "what": "Tabbed screens (Settings and other UiTabListActivity lists): Left/Right switch tabs, Up/Down move between rows on the current tab; replaces upstream's single ring where all four keys step tab-band+rows and tab switching needs a long press (UiTabListActivity.cpp:62-86, MappedInputManager.cpp:154-162). Scope extension of t14 (input), implemented in the fork and reflashed after provisioning",
+      "task_ref": "t14",
+      "reason": "User expectation stated during X3 hands-on (2026-10-06): 'On settings, I expect left and right to move tabs, and up/down to move down the options on that tab'",
+      "affects": [
+        "t14",
+        "t20"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "needs-follow-up",
+      "seq": 2
     }
   ],
   "evidence": [],
