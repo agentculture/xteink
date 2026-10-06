@@ -477,12 +477,7 @@ def cmd_provision(args: argparse.Namespace) -> int:
         hello = exchange_retry(tp, {})
         mac = str(hello.get("mac", ""))
         name = args.name or f"xteink-{mac.replace(':', '').lower()[-6:] or 'device'}"
-        # client.py has no register_device method yet; reuse its request plumbing.
-        minted = call(
-            lambda: client._request(
-                "POST", "/api/devices", json_body={"name": name, "mirror": False}
-            )
-        )
+        minted = call(lambda: client.register_device(name, mirror=False))
         key = minted["key"]
         expect_id = _key_id(key)
         msg: dict[str, Any] = {
@@ -500,7 +495,7 @@ def cmd_provision(args: argparse.Namespace) -> int:
         if minted is not None:
             try:
                 dev_id = int(minted["device"]["id"])
-                client._request("POST", f"/api/devices/{dev_id}/revoke")
+                client.revoke_device(dev_id)
                 revoked = True
             except Exception:  # best effort; reported below
                 revoked = False

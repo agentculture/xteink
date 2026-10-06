@@ -161,6 +161,12 @@ class FakeClient:
     def __init__(self):
         self.calls: list[tuple[str, str, object]] = []
 
+    def register_device(self, name, *, mirror=False):
+        return self._request("POST", "/api/devices", json_body={"name": name, "mirror": mirror})
+
+    def revoke_device(self, device_id):
+        return self._request("POST", f"/api/devices/{int(device_id)}/revoke")
+
     def _request(self, method, path, *, json_body=None, **kw):
         self.calls.append((method, path, json_body))
         if method == "POST" and path == "/api/devices":

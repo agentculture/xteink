@@ -200,6 +200,14 @@ class Client:
     def list_devices(self) -> list[dict]:
         return self._request("GET", "/api/devices")["devices"]
 
+    def register_device(self, name: str, *, mirror: bool = False) -> dict:
+        """Register a reader; returns ``{device, key}`` with the raw device key (shown once)."""
+        return self._request("POST", "/api/devices", json_body={"name": name, "mirror": mirror})
+
+    def revoke_device(self, device_id: int) -> dict:
+        """Revoke a reader's key; its next sync gets 401."""
+        return self._request("POST", f"/api/devices/{int(device_id)}/revoke")
+
     def queue_item(self, device_id: int, item_id: int) -> dict:
         return self._request(
             "POST", f"/api/devices/{int(device_id)}/queue", json_body={"item_id": int(item_id)}

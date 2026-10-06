@@ -19,9 +19,9 @@ Purpose
 Keep your e-book library on hardware you own: a local book server, optional
 remote access through a Cloudflare Tunnel, and custom reader firmware that syncs
 books over Wi-Fi so reading works fully offline. xteink is also an AgentCulture
-mesh agent. Today only the agent baseline ships (agent-first CLI, identity in
-culture.yaml + CLAUDE.md, skill kit, CI); the server, API, MCP, web UI and
-firmware sync are planned.
+mesh agent. The library server (HTTP API, device-only sync app, web UI), the MCP
+server and this CLI ship today; the reader firmware lives in the
+agentculture/xteink-firmware fork and is pending hardware verification.
 
 Commands
 --------
@@ -31,6 +31,15 @@ Commands
   xteink overview           Descriptive snapshot of the agent.
   xteink doctor             Check the agent-identity invariants.
   xteink cli overview       Describe the CLI surface itself.
+  xteink server status      Is the API reachable and the key valid?
+  xteink library ...        list | add PATH | rm ID  (writes need --apply)
+  xteink device ...         list | queue | revoke | backup | provision
+  xteink tunnel ...         status | plan  (prints cultureflare commands)
+  xteink mcp serve          Run the MCP server (needs xteink[server])
+
+Writes are dry-run by default: they print what would happen and change nothing
+until you pass --apply. The CLI talks to the API at XTEINK_URL with
+XTEINK_API_KEY.
 
 Machine-readable output
 -----------------------
@@ -62,6 +71,11 @@ def _as_json_payload() -> dict[str, object]:
             {"path": ["overview"], "summary": "Descriptive snapshot of the agent."},
             {"path": ["doctor"], "summary": "Check the agent-identity invariants."},
             {"path": ["cli", "overview"], "summary": "Describe the CLI surface."},
+            {"path": ["server", "status"], "summary": "API reachability and key check."},
+            {"path": ["library"], "summary": "List, add (--apply) and remove (--apply) items."},
+            {"path": ["device"], "summary": "Readers: list, queue, revoke, backup, provision."},
+            {"path": ["tunnel"], "summary": "Remote access status and cultureflare plan."},
+            {"path": ["mcp", "serve"], "summary": "Run the MCP server."},
         ],
         "exit_codes": {
             "0": "success",

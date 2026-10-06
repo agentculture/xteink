@@ -84,10 +84,7 @@ def cmd_revoke(args: argparse.Namespace) -> int:
     if not args.apply:
         _emit(args, payload, f"would {what}\n{DRY_RUN_HINT}")
         return 0
-    # client.py has no revoke method yet; reuse its request plumbing (POST /revoke).
-    payload["result"] = call(
-        lambda: client._request("POST", f"/api/devices/{int(dev['id'])}/revoke")
-    )
+    payload["result"] = call(lambda: client.revoke_device(int(dev["id"])))
     _emit(args, payload, f"revoked: {what}")
     return 0
 

@@ -15,7 +15,9 @@
 #
 # mDNS (xteink.local) is NOT done here: containers do not do mDNS. See docker/avahi/.
 
-x-image: &image xteink:local
+# Override XTEINK_IMAGE for throwaway stacks (e2e, README checks) so they never retag the
+# production image.
+x-image: &image ${XTEINK_IMAGE:-xteink:local}
 
 services:
   api:

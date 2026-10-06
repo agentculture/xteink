@@ -82,3 +82,11 @@ def test_from_env():
     cl = c.from_env({"XTEINK_API_KEY": "k"})
     assert cl.base_url == "http://127.0.0.1:8780"
     assert c.from_env({"XTEINK_API_KEY": "k", "XTEINK_URL": "http://h:1/"}).base_url == "http://h:1"
+
+
+def test_register_and_revoke_device(api_url, api_key):
+    cl = make(api_url, api_key)
+    minted = cl.register_device("pocket", mirror=True)
+    assert minted["key"].startswith("xtd_") and minted["device"]["mirror"] is True
+    cl.revoke_device(minted["device"]["id"])
+    assert any(d["id"] == minted["device"]["id"] and d["revoked_at"] for d in cl.list_devices())
