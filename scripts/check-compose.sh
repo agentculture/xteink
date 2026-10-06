@@ -6,20 +6,23 @@ cd "$(dirname "$0")/.."
 
 # Do not depend on a local .env: supply placeholders for required variables.
 export XTEINK_API_KEY="${XTEINK_API_KEY:-<check>}"
-export TUNNEL_TOKEN="${TUNNEL_TOKEN:-<check>}"
+export TUNNEL_TOKEN_UI="${TUNNEL_TOKEN_UI:-<check>}"
+export TUNNEL_TOKEN_DEVICE="${TUNNEL_TOKEN_DEVICE:-<check>}"
 DC=(docker compose --env-file /dev/null)
 
 base="$("${DC[@]}" config --services)"
 remote="$("${DC[@]}" --profile remote config --services)"
 
-if grep -qx cloudflared <<<"$base"; then
-  echo "FAIL: cloudflared listed without --profile remote" >&2
-  exit 1
-fi
-if ! grep -qx cloudflared <<<"$remote"; then
-  echo "FAIL: cloudflared missing with --profile remote" >&2
-  exit 1
-fi
+for c in cloudflared-ui cloudflared-device; do
+  if grep -qx "$c" <<<"$base"; then
+    echo "FAIL: $c listed without --profile remote" >&2
+    exit 1
+  fi
+  if ! grep -qx "$c" <<<"$remote"; then
+    echo "FAIL: $c missing with --profile remote" >&2
+    exit 1
+  fi
+done
 for s in api mcp; do
   grep -qx "$s" <<<"$base" || { echo "FAIL: service $s missing" >&2; exit 1; }
 done
@@ -33,10 +36,11 @@ for name, svc in cfg["services"].items():
         bad.append(f"{name}: restart != unless-stopped")
     if not svc.get("healthcheck", {}).get("test"):
         bad.append(f"{name}: no healthcheck")
-if cfg["services"]["cloudflared"].get("profiles") != ["remote"]:
-    bad.append("cloudflared: profiles != [remote]")
+for c in ("cloudflared-ui", "cloudflared-device"):
+    if cfg["services"][c].get("profiles") != ["remote"]:
+        bad.append(f"{c}: profiles != [remote]")
 if bad:
     print("FAIL: " + "; ".join(bad), file=sys.stderr)
     sys.exit(1)
 '
-echo "OK: compose config valid (cloudflared only under --profile remote)"
+echo "OK: compose config valid (cloudflared-ui and cloudflared-device only under --profile remote)"

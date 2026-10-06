@@ -3,7 +3,8 @@
 # Services
 #   api         main app :8780 (web UI + API) and device app :8781 (key-gated device protocol)
 #   mcp         MCP streamable-http :8782, talks to api over the compose network
-#   cloudflared ONLY with `--profile remote` (needs TUNNEL_TOKEN in .env)
+#   cloudflared-ui + cloudflared-device ONLY with `--profile remote`
+#   (need TUNNEL_TOKEN_UI and TUNNEL_TOKEN_DEVICE in .env)
 #
 # Remote access: cloudflared runs inside this compose network, so the Cloudflare ingress
 # targets (configured separately with cultureflare; this stack never touches Cloudflare)
@@ -78,13 +79,17 @@ services:
       retries: 3
       start_period: 15s
 
-  cloudflared:
+  # Two tunnels, one per hostname: cultureflare's remote-login setup replaces a tunnel's
+  # whole ingress list, so ebooks.culture.dev and xteink.culture.dev cannot share one
+  # tunnel (devague deviation d1). Each connector gets its own token from .env.
+  cloudflared-ui: &cloudflared
     profiles: [remote]
     image: cloudflare/cloudflared:2025.9.1
     command: tunnel --no-autoupdate run
     restart: unless-stopped
     environment:
-      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?set TUNNEL_TOKEN in .env for --profile remote}
+      # ebooks.culture.dev -> http://api:8780 (web UI, behind Cloudflare Access)
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN_UI:?set TUNNEL_TOKEN_UI in .env for --profile remote}
       TUNNEL_METRICS: 127.0.0.1:20241
     depends_on:
       api:
@@ -95,6 +100,13 @@ services:
       timeout: 10s
       retries: 3
       start_period: 15s
+
+  cloudflared-device:
+    <<: *cloudflared
+    environment:
+      # xteink.culture.dev -> http://api:8781 (device app only; xteink checks device keys)
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN_DEVICE:?set TUNNEL_TOKEN_DEVICE in .env for --profile remote}
+      TUNNEL_METRICS: 127.0.0.1:20241
 
 volumes:
   xteink-data:
