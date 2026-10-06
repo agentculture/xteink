@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-06T19:28:53Z",
+  "updated": "2026-10-06T20:39:29Z",
   "targets": [
     {
       "id": "c1",
@@ -1183,7 +1183,7 @@
     },
     {
       "id": "r15",
-      "text": "TLS verification heap on the X3: host-measured peak ~39-41 KB per handshake; on the real X3 (2026-10-06 first boot) idle heap on home is 141 KB free / 114 KB largest block, so headroom looks ample at idle; still unmeasured during an actual sync after a reading session (t20). Zone-pin mitigation (Google Trust Services) not needed unless t20 shows ELOWMEM",
+      "text": "TLS verification heap on the X3: host-measured peak ~39-41 KB per handshake; on the real X3 a verified tunnel sync (2026-10-06) started with 87,484 B free / 77,812 B largest block and completed OK; min-during-handshake not logged. Mitigation not needed so far",
       "kind": "unknown_nonblocking",
       "task_id": "t17",
       "resolved": false,
@@ -1228,6 +1228,14 @@
       "task_id": "t17",
       "resolved": true,
       "resolution": "User accepted HalStorage::sdFreeBytes() (read-only, mutex-guarded) on 2026-10-06; add it to the fork CONTRIBUTING allowed areas"
+    },
+    {
+      "id": "r21",
+      "text": "Fork TLS: SNTP is retried before every HTTPS connection when it fails (6 timeouts in one hotspot sync, each adding delay), contrary to t13's one-bounded-attempt-per-boot intent; also the LAN probe takes ~11 s to fail vs its 4 s connect timeout. Both slow tunnel syncs (7 KB took ~22 s)",
+      "kind": "follow_up",
+      "task_id": "t17",
+      "resolved": false,
+      "resolution": ""
     }
   ],
   "obligations": []
