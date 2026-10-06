@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
-export const API_KEY = process.env.XTEINK_E2E_KEY ?? "";
+export const API_KEY: string = process.env.XTEINK_E2E_KEY!; // checked in global-setup.ts
 export const DEVICE_URL = process.env.XTEINK_E2E_DEVICE_URL ?? "http://127.0.0.1:18781";
 
 /** A short token that is unique per run, so reruns never collide on duplicate hashes or names. */
