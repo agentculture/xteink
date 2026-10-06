@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-06T18:28:31Z",
+  "updated": "2026-10-06T18:32:37Z",
   "claims": [
     {
       "id": "c1",
@@ -1923,6 +1923,17 @@
       "skipped_check": "on-panel visual check",
       "refs": [
         "plan t15 / src/components/themes/xteink"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l21",
+      "code": "grader-unverified",
+      "what": "t18: tests written in the same pass as the implementation (no red-first); esptool output parsing (read-mac 'MAC:', flash-id 'Detected flash size') verified only against a fake esptool and remembered v5 formats, not a live device; revoke-failure path untested; edited tests/cli/test_nouns.py outside its owned set to register the new verbs",
+      "skipped_check": "real esptool read-mac/flash-id against the X3 (planned in t19)",
+      "refs": [
+        "plan t18 / xteink/cli/_commands/device_usb.py"
       ],
       "origin": "llm",
       "status": "proposed"
