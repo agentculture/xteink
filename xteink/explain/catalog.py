@@ -127,6 +127,96 @@ itself (distinct from the global `overview`, which describes the agent).
 """
 
 
+_SERVER = """\
+# xteink server
+
+Health of the xteink HTTP API, as seen from the CLI. `status` probes `GET /` on
+`XTEINK_URL` (default `http://127.0.0.1:8780`), checks that `XTEINK_API_KEY` works
+with a cheap authenticated call, and probes the device app
+(`XTEINK_DEVICE_URL`, default `http://127.0.0.1:8781`; a 401 on
+`/api/device/whoami` means alive). The key is never printed.
+
+## Usage
+
+    xteink server status [--json]
+    xteink server overview
+
+Exit codes: `0` healthy, `1` key rejected, `2` server unreachable.
+"""
+
+_LIBRARY = """\
+# xteink library
+
+Manage the library through the HTTP API (no direct database access).
+`add` and `rm` are **dry-run unless `--apply`**: they say what they would do and
+send no write request.
+
+## Usage
+
+    xteink library list [--q TEXT] [--kind book|article|image] [--limit N] [--json]
+    xteink library add PATH [--title T] [--author A] [--kind K] [--device ID|NAME] [--apply]
+    xteink library rm ID [--apply]
+    xteink library overview
+
+`add --device` also queues the new item for that device (after upload, with
+`--apply`). Needs `XTEINK_API_KEY`; exit `2` when the server is unreachable or no
+key is set, `1` for API errors such as an unknown id.
+"""
+
+_DEVICE = """\
+# xteink device
+
+List devices and manage their queues/keys through the HTTP API. DEVICE is an id
+or a name. `queue` and `revoke` are **dry-run unless `--apply`**.
+
+## Usage
+
+    xteink device list [--json]
+    xteink device queue DEVICE ITEM_ID [--apply]
+    xteink device revoke DEVICE [--apply]
+    xteink device overview
+"""
+
+_TUNNEL = """\
+# xteink tunnel
+
+Remote access through a Cloudflare Tunnel. xteink never calls the Cloudflare API.
+
+- `status` probes the two public hostnames over HTTPS: the device host's
+  `/api/device/whoami` should answer 401 (reachable, key-gated) and the UI host
+  should answer with a Cloudflare Access redirect/login (3xx/401/403). Each is
+  reported reachable / unreachable / unexpected; network failures never fail
+  hard unless `--strict` (then exit 2).
+- `plan` prints (never runs) the two `cultureflare remote-login setup` commands.
+  cultureflare is dry-run until you add `--apply` yourself.
+
+## Usage
+
+    xteink tunnel status [--ui-host H] [--device-host H] [--strict] [--json]
+    xteink tunnel plan [--allow EMAIL] [--ui-host H] [--device-host H]
+                       [--ui-port N] [--device-port N]
+    xteink tunnel overview
+
+Env: `XTEINK_UI_HOST` (default `ebooks.culture.dev`), `XTEINK_DEVICE_HOST`
+(default `xteink.culture.dev`), `XTEINK_OWNER_EMAIL`.
+"""
+
+_MCP = """\
+# xteink mcp
+
+Serve the xteink MCP tools (a thin client of the HTTP API). Delegates to
+`python -m xteink.mcp`; requires the server extra (`pip install 'xteink[server]'`)
+and `XTEINK_API_KEY`.
+
+## Usage
+
+    xteink mcp serve [--http] [--bind ADDR] [--port N]
+    xteink mcp overview
+
+stdio is the default transport; `--http` selects streamable-http.
+"""
+
+
 ENTRIES: dict[tuple[str, ...], str] = {
     (): _ROOT,
     ("xteink",): _ROOT,
@@ -137,4 +227,24 @@ ENTRIES: dict[tuple[str, ...], str] = {
     ("doctor",): _DOCTOR,
     ("cli",): _CLI,
     ("cli", "overview"): _CLI,
+    ("server",): _SERVER,
+    ("server", "overview"): _SERVER,
+    ("server", "status"): _SERVER,
+    ("library",): _LIBRARY,
+    ("library", "overview"): _LIBRARY,
+    ("library", "list"): _LIBRARY,
+    ("library", "add"): _LIBRARY,
+    ("library", "rm"): _LIBRARY,
+    ("device",): _DEVICE,
+    ("device", "overview"): _DEVICE,
+    ("device", "list"): _DEVICE,
+    ("device", "queue"): _DEVICE,
+    ("device", "revoke"): _DEVICE,
+    ("tunnel",): _TUNNEL,
+    ("tunnel", "overview"): _TUNNEL,
+    ("tunnel", "status"): _TUNNEL,
+    ("tunnel", "plan"): _TUNNEL,
+    ("mcp",): _MCP,
+    ("mcp", "overview"): _MCP,
+    ("mcp", "serve"): _MCP,
 }
