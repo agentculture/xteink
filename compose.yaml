@@ -30,6 +30,11 @@ services:
       XTEINK_BIND: 0.0.0.0
       XTEINK_PORT: "8780"
       XTEINK_DEVICE_PORT: "8781"
+      # Cloudflare Access SSO for the web UI (main app only; the device app never accepts
+      # it). Set both or neither: a partial pair makes the api refuse to start. Unset = off,
+      # and no JWKS fetch ever happens. See docs/remote-access.md.
+      XTEINK_ACCESS_TEAM_DOMAIN: ${XTEINK_ACCESS_TEAM_DOMAIN:-}
+      XTEINK_ACCESS_AUD: ${XTEINK_ACCESS_AUD:-}
     volumes:
       # Named volume by default; set XTEINK_DATA_DIR=/host/dir in .env for a bind mount.
       - ${XTEINK_DATA_DIR:-xteink-data}:/data

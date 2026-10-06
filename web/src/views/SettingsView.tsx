@@ -15,9 +15,14 @@ export const TUNNEL_HOSTS = {
   devices: "xteink.culture.dev",
 } as const;
 
-type Props = { onForget: () => void; hostname?: string };
+type Props = {
+  onForget: () => void;
+  hostname?: string;
+  /** Set when this browser is signed in through Cloudflare Access instead of a key. */
+  access?: { identity: string } | null;
+};
 
-export function SettingsView({ onForget, hostname = window.location.hostname }: Props) {
+export function SettingsView({ onForget, hostname = window.location.hostname, access = null }: Props) {
   const stored = getStoredKey();
   const viaTunnel = hostname === TUNNEL_HOSTS.library;
 
@@ -27,16 +32,25 @@ export function SettingsView({ onForget, hostname = window.location.hostname }: 
 
       <section className="panel" aria-labelledby="conn-heading">
         <h2 id="conn-heading">This browser</h2>
-        <p>
-          This browser uses the key <code>{stored ? keyPrefix(stored) : "none"}</code>, stored here
-          only. Its secret part is never shown.
-        </p>
-        <Confirm
-          label="Forget this key"
-          confirmLabel="Forget key"
-          question="You'll need to paste a key again to use the library here."
-          onConfirm={onForget}
-        />
+        {access && !stored ? (
+          <p>
+            Signed in via Cloudflare Access as <strong>{access.identity}</strong>. No API key is
+            stored in this browser.
+          </p>
+        ) : (
+          <>
+            <p>
+              This browser uses the key <code>{stored ? keyPrefix(stored) : "none"}</code>, stored
+              here only. Its secret part is never shown.
+            </p>
+            <Confirm
+              label="Forget this key"
+              confirmLabel="Forget key"
+              question="You'll need to paste a key again to use the library here."
+              onConfirm={onForget}
+            />
+          </>
+        )}
       </section>
 
       <section className="panel" aria-labelledby="tunnel-heading">

@@ -129,7 +129,9 @@ never routed through the tunnel.
 
 `docker compose --profile remote up -d` adds two cloudflared connectors, one for
 the web UI behind Cloudflare Access and one for device-only sync. Tunnels, DNS
-and Access policy are provisioned separately with cultureflare. The full steps,
+and Access policy are provisioned separately with cultureflare. Behind Access the
+web UI needs no API key once `XTEINK_ACCESS_TEAM_DOMAIN` and `XTEINK_ACCESS_AUD`
+are set in `.env`. The full steps,
 including the hidden-secret handling for the tunnel tokens, are in
 [`docs/remote-access.md`](docs/remote-access.md).
 

@@ -17,9 +17,11 @@ from xteink.core.ingest import (
     ingest_and_add,
 )
 
-from .auth import Services, get_services, require_api_key
+from .auth import Services, get_services, require_operator
 
-router = APIRouter(prefix="/api/library", tags=["library"], dependencies=[Depends(require_api_key)])
+router = APIRouter(
+    prefix="/api/library", tags=["library"], dependencies=[Depends(require_operator)]
+)
 
 UPLOAD_LIMITS = DEFAULT_LIMITS
 

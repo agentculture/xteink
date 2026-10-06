@@ -170,7 +170,7 @@
     }
   },
   "info": {
-    "description": "xteink library server API",
+    "description": "xteink library server API. Every /api route needs `Authorization: Bearer xtk_...`. When the server is configured for Cloudflare Access (XTEINK_ACCESS_TEAM_DOMAIN + XTEINK_ACCESS_AUD), a request without an Authorization header may instead carry the `Cf-Access-Jwt-Assertion` header Cloudflare adds at the edge; unsafe methods then also need `X-Xteink-Request: 1`.",
     "title": "xteink",
     "version": "1"
   },
@@ -966,6 +966,35 @@
         "summary": "Download Item",
         "tags": [
           "library"
+        ]
+      }
+    },
+    "/api/whoami": {
+      "get": {
+        "description": "How this request authenticated: ``via`` is ``key`` (the key's name) or ``access``\n(the Cloudflare Access identity, normally an email).",
+        "operationId": "whoami_api_whoami_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Whoami Api Whoami Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Whoami",
+        "tags": [
+          "session"
         ]
       }
     }

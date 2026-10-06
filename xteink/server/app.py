@@ -1,9 +1,11 @@
 """FastAPI apps: the main LAN app and the device-only app (what the tunnel targets).
 
-* :func:`create_app` - ``/api/library*``, ``/api/devices*``, ``/api/keys*`` (API key) and
-  the web UI at ``/`` (open on the LAN; Cloudflare Access fronts it if ever tunnelled).
-* :func:`create_device_app` - only ``/api/device/*`` (device key). Every other path,
-  including ``/docs`` and ``/openapi.json``, is a 404 because nothing else is mounted.
+* :func:`create_app` - ``/api/library*``, ``/api/devices*``, ``/api/keys*``, ``/api/whoami``
+  (API key, or a verified Cloudflare Access JWT when built with ``access=``) and the web UI
+  at ``/`` (open on the LAN; Cloudflare Access fronts it through the tunnel).
+* :func:`create_device_app` - only ``/api/device/*`` (device key; never an Access JWT). Every
+  other path, including ``/docs`` and ``/openapi.json``, is a 404 because nothing else is
+  mounted.
 
 Device routes extension point: if a module ``xteink.server.routes_device`` exists and
 defines ``router`` (an :class:`fastapi.APIRouter` with paths relative to
@@ -26,14 +28,23 @@ from fastapi.staticfiles import StaticFiles
 from xteink.core import AuthError, Device, NotFoundError, Store, ValidationError
 
 from . import ServerConfig
+from .access import AccessVerifier
 from .auth import ServicesHolder, require_device_key
-from .routes_admin import devices_router, keys_router
+from .routes_admin import devices_router, keys_router, whoami_router
 from .routes_library import router as library_router
 
 API_VERSION = "1"
 WEBASSETS_DIR = Path(__file__).parent / "_webassets"
 DEVICE_PREFIX = "/api/device"
 DEVICE_ROUTES_MODULE = "xteink.server.routes_device"
+
+_DESCRIPTION = (
+    "xteink library server API. Every /api route needs `Authorization: Bearer xtk_...`. "
+    "When the server is configured for Cloudflare Access (XTEINK_ACCESS_TEAM_DOMAIN + "
+    "XTEINK_ACCESS_AUD), a request without an Authorization header may instead carry the "
+    "`Cf-Access-Jwt-Assertion` header Cloudflare adds at the edge; unsafe methods then also "
+    "need `X-Xteink-Request: 1`."
+)
 
 _PLACEHOLDER = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>xteink</title></head>
@@ -66,14 +77,18 @@ def create_app(
     *,
     webassets_dir: Path | None = None,
     services: ServicesHolder | None = None,
+    access: AccessVerifier | None = None,
 ) -> FastAPI:
-    """The main (LAN/tailnet) app. Every ``/api`` route requires an API key."""
-    app = FastAPI(title="xteink", version=API_VERSION, description="xteink library server API")
+    """The main (LAN/tailnet) app. Every ``/api`` route requires an API key, or, when
+    ``access`` is given, a Cloudflare Access JWT that ``access`` verifies."""
+    app = FastAPI(title="xteink", version=API_VERSION, description=_DESCRIPTION)
     app.state.services = services or ServicesHolder(store)
+    app.state.access = access
     _install_error_handlers(app)
     app.include_router(library_router)
     app.include_router(devices_router)
     app.include_router(keys_router)
+    app.include_router(whoami_router)
 
     web = WEBASSETS_DIR if webassets_dir is None else Path(webassets_dir)
     if (web / "index.html").is_file():
@@ -119,10 +134,23 @@ def create_device_app(
     return app
 
 
-def create_apps(store: Store | None = None) -> tuple[FastAPI, FastAPI]:
-    """Both apps over one shared set of services (one Store)."""
+def create_apps(
+    store: Store | None = None, *, access: AccessVerifier | None = None
+) -> tuple[FastAPI, FastAPI]:
+    """Both apps over one shared set of services (one Store). ``access`` goes to the main
+    app only; the device app accepts device keys and nothing else."""
     holder = ServicesHolder(store)
-    return create_app(services=holder), create_device_app(services=holder)
+    return create_app(services=holder, access=access), create_device_app(services=holder)
+
+
+def build_apps(cfg: ServerConfig) -> tuple[FastAPI, FastAPI]:
+    """The apps ``serve`` runs: an Access verifier only when Access is configured.
+
+    Building the verifier makes no network call; the JWKS is fetched on the first request
+    that carries an Access JWT.
+    """
+    access = cfg.access.verifier() if cfg.access is not None else None
+    return create_apps(access=access)
 
 
 def render_openapi() -> str:
@@ -134,7 +162,7 @@ def render_openapi() -> str:
 async def _serve_both(cfg: ServerConfig) -> None:
     import uvicorn
 
-    main_app, device_app = create_apps()
+    main_app, device_app = build_apps(cfg)
     servers = [
         uvicorn.Server(uvicorn.Config(main_app, host=cfg.bind, port=cfg.port)),
         uvicorn.Server(uvicorn.Config(device_app, host=cfg.bind, port=cfg.device_port)),
@@ -148,6 +176,7 @@ def serve(cfg: ServerConfig) -> None:  # pragma: no cover - blocking network ser
 
 __all__ = [
     "API_VERSION",
+    "build_apps",
     "create_app",
     "create_apps",
     "create_device_app",

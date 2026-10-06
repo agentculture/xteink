@@ -1,4 +1,4 @@
-"""``/api/devices`` and ``/api/keys`` admin routes (main app only).
+"""``/api/devices``, ``/api/keys`` and ``/api/whoami`` routes (main app only).
 
 Raw device/API keys appear only in the register/rotate/create responses.
 """
@@ -11,12 +11,13 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Response
 from pydantic import BaseModel, Field
 
-from .auth import Services, get_services, require_api_key
+from .auth import Operator, Services, get_services, require_operator
 
 devices_router = APIRouter(
-    prefix="/api/devices", tags=["devices"], dependencies=[Depends(require_api_key)]
+    prefix="/api/devices", tags=["devices"], dependencies=[Depends(require_operator)]
 )
-keys_router = APIRouter(prefix="/api/keys", tags=["keys"], dependencies=[Depends(require_api_key)])
+keys_router = APIRouter(prefix="/api/keys", tags=["keys"], dependencies=[Depends(require_operator)])
+whoami_router = APIRouter(prefix="/api", tags=["session"])
 
 
 class DeviceCreate(BaseModel):
@@ -111,3 +112,13 @@ def create_key(body: KeyCreate, services: Services = Depends(get_services)) -> d
 def revoke_key(key_id: int, services: Services = Depends(get_services)) -> Response:
     services.keys.revoke(key_id)
     return Response(status_code=204)
+
+
+# --- whoami ----------------------------------------------------------------
+
+
+@whoami_router.get("/whoami")
+def whoami(operator: Operator = Depends(require_operator)) -> dict:
+    """How this request authenticated: ``via`` is ``key`` (the key's name) or ``access``
+    (the Cloudflare Access identity, normally an email)."""
+    return {"via": operator.via, "identity": operator.identity}

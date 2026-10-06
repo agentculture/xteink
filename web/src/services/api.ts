@@ -1,8 +1,13 @@
 /**
  * The only module that talks to the xteink HTTP API.
  *
- * Components call these functions and present what comes back. Every request
- * carries `Authorization: Bearer <API key>` from storage. Errors become:
+ * Components call these functions and present what comes back. A request
+ * carries `Authorization: Bearer <API key>` when this browser stores one.
+ * Without a key it still sends the browser's same-origin cookies: behind
+ * Cloudflare Access (ebooks.culture.dev) the edge turns the SSO session into a
+ * signed `Cf-Access-Jwt-Assertion` header that the server verifies, so no key
+ * is needed there. Every request also sends `X-Xteink-Request: 1`, which the
+ * server requires on SSO-authenticated writes (CSRF guard). Errors become:
  * - AuthRequiredError on 401 (the app shows the connect panel again),
  * - ApiError with a machine-readable `code` (the server's ingest code when it
  *   sends one, otherwise derived from the status),
@@ -60,6 +65,9 @@ export type ApiKey = {
   revoked_at: string | null;
   last_used: string | null;
 };
+
+/** How the server authenticated this browser (`GET /api/whoami`). */
+export type Whoami = { via: "access" | "key"; identity: string };
 
 export class AuthRequiredError extends Error {
   constructor() {
@@ -119,7 +127,7 @@ type RequestOptions = {
 };
 
 async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
-  const headers = new Headers();
+  const headers = new Headers({ "X-Xteink-Request": "1" });
   const key = opts.key !== undefined ? opts.key : getStoredKey();
   if (key) headers.set("Authorization", `Bearer ${key}`);
   let body: BodyInit | undefined;
@@ -132,7 +140,12 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
 
   let response: Response;
   try {
-    response = await fetch(path, { method: opts.method ?? "GET", headers, body });
+    response = await fetch(path, {
+      method: opts.method ?? "GET",
+      headers,
+      body,
+      credentials: "same-origin",
+    });
   } catch {
     throw new NetworkError();
   }
@@ -165,6 +178,20 @@ export async function verifyKey(key: string): Promise<boolean> {
     return true;
   } catch (err) {
     if (err instanceof AuthRequiredError) return false;
+    throw err;
+  }
+}
+
+/**
+ * Ask the server, without any API key, whether this browser is already signed
+ * in (Cloudflare Access SSO). Resolves to the identity, or null on a 401
+ * (no SSO here, e.g. on the LAN: the connect panel is needed).
+ */
+export async function probeSession(): Promise<Whoami | null> {
+  try {
+    return await request<Whoami>("/api/whoami", { key: null });
+  } catch (err) {
+    if (err instanceof AuthRequiredError) return null;
     throw err;
   }
 }

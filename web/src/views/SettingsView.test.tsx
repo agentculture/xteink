@@ -40,6 +40,14 @@ describe("SettingsView", () => {
     expect(screen.getByText(/your local network \(192\.168\.1\.20\)/)).toBeInTheDocument();
   });
 
+  it("says this browser is signed in via Cloudflare Access when no key is stored", () => {
+    clearStoredKey();
+    render(<SettingsView onForget={vi.fn()} hostname="ebooks.culture.dev" access={{ identity: "owner@example.com" }} />);
+    expect(screen.getByText(/signed in via cloudflare access/i)).toBeInTheDocument();
+    expect(screen.getByText("owner@example.com")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /forget this key/i })).not.toBeInTheDocument();
+  });
+
   it("recognises the tunnel hostname", () => {
     render(<SettingsView onForget={vi.fn()} hostname="ebooks.culture.dev" />);
     expect(screen.getByText(/the tunnel, through cloudflare access/i)).toBeInTheDocument();
