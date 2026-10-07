@@ -1,18 +1,183 @@
 # xteink
 
-Control Xteink e-ink readers privately: a local server with a file/book service, optional remote access via Cloudflare Tunnel, and custom device firmware that joins Wi-Fi to sync books locally so reading works fully offline. Your library never leaves hardware you own.
+Control Xteink e-ink readers privately. xteink is a local server with a
+file/book service, a web UI, an HTTP API and an MCP server, plus optional remote
+access through Cloudflare Tunnel and custom device firmware that joins Wi-Fi to
+sync books locally so reading works fully offline. Your library never leaves
+hardware you own: there is no cloud service, no account and no telemetry.
 
 ## Status
 
-**Early scaffold.** The e-ink pieces are planned, not built yet:
+What exists and runs today:
 
-- **(planned)** Local server with a file/book service the readers sync from.
-- **(planned)** Optional remote access through Cloudflare Tunnel.
-- **(planned)** Custom Xteink firmware that joins Wi-Fi and syncs books over the
-  local network, so reading needs no cloud.
+- A local server (`xteink.server`) with a library, device registry, API keys and
+  a device sync protocol (v1, [`docs/device-protocol.md`](docs/device-protocol.md)).
+- A web UI served by the same server (upload, library, send to device).
+- An MCP server (`xteink.mcp`) so agents can push files and queue them for a
+  device. See [`docs/mcp.md`](docs/mcp.md).
+- A Docker image and `compose.yaml`, with an opt-in `remote` profile for two
+  Cloudflare Tunnels. See [`docs/remote-access.md`](docs/remote-access.md).
+- The agent-first CLI (`xteink server|library|device|tunnel|mcp ...`) and the
+  AgentCulture mesh identity, harness prompts, skill kit and CI/CD baseline.
 
-What ships today is the agent scaffold below: the CLI, the mesh identity,
-the harness prompts, the skill kit, and CI/CD.
+What is **not** verified yet:
+
+- **The device side.** The firmware lives in a separate repo,
+  [`agentculture/xteink-firmware`](https://github.com/agentculture/xteink-firmware)
+  (a CrossPoint Reader fork: theme, zoom mode, USB provisioning, pinned-root
+  TLS, OTA from fork releases, the X3 key profile). On an **Xteink X3** it is
+  hardware-verified: a book pushed via MCP or the web UI reaches the reader
+  over the home LAN, or over a phone hotspot through the tunnel, and reads with
+  Wi-Fi off (see `docs/evidence/`). X4, X4 Pro and X4 Classic are
+  build-verified only. Large (≥ 5 MB) EPUB syncs over HTTPS are not verified
+  yet.
+
+## Architecture
+
+```text
+ browser / curl / agents                      Xteink reader (firmware fork, pending)
+        |                                              |
+        | Bearer xtk_... (API key)                     | Bearer xtd_... (device key)
+        v                                              v
+ +--------------------------------------------------------------+
+ | api container                                                |
+ |   main app    :8780  web UI + /api/library, /api/devices,    |
+ |                      /api/keys  (API key required)           |
+ |   device app  :8781  /api/device/* only (device key)         |
+ |   SQLite + files in /data (volume xteink-data)               |
+ +--------------------------------------------------------------+
+        ^
+        | XTEINK_URL + each caller's key
+ +--------------+
+ | mcp :8782    |  streamable-http for LAN / tailnet / mesh agents
+ +--------------+
+
+ Optional (compose --profile remote, see docs/remote-access.md):
+   cloudflared-ui      ebooks.culture.dev -> api:8780  (Cloudflare Access SSO)
+   cloudflared-device  xteink.culture.dev -> api:8781  (device app only)
+```
+
+The main app and the device app are separate processes on separate ports on
+purpose. A tunnel points at port 8781 only, so remote exposure is limited by
+port: the device app does not mount any library, admin or docs route.
+
+## Quickstart
+
+You need Docker with the compose plugin and `git`. Nothing else: the image
+builds the web UI and bundles pandoc (Markdown/HTML to EPUB).
+
+```bash
+git clone https://github.com/agentculture/xteink.git
+cd xteink
+
+# 1. Start the server (builds the image on first run; takes a few minutes).
+docker compose up -d api
+
+# 2. Mint the first API key. It is printed once and only its hash is stored.
+docker compose run --rm api python -m xteink.server create-key admin
+# -> xtk_...   (copy it now)
+
+# 3. Open the web UI and connect this browser with that key.
+#    http://<host>:8780   (use http://localhost:8780 on the same machine)
+
+# 4. Upload a book or article in the UI, or via the API:
+curl -H "Authorization: Bearer <api-key>" \
+     -F "file=@my-article.md" -F "title=My article" \
+     http://localhost:8780/api/library
+curl -H "Authorization: Bearer <api-key>" http://localhost:8780/api/library
+```
+
+Uploads accept EPUB, BMP and TXT as-is, and Markdown/HTML converted to EPUB.
+PDF is not supported yet. See [`docs/api.md`](docs/api.md) for every endpoint and
+error code.
+
+### Ports and settings
+
+Copy `.env.example` to `.env` (`cp .env.example .env`) to change anything, or
+export the variables in your shell for one-off runs (for example a scratch stack
+on other ports: `COMPOSE_PROJECT_NAME=scratch XTEINK_PUBLISH_PORT=18780
+XTEINK_PUBLISH_DEVICE_PORT=18781 XTEINK_PUBLISH_MCP_PORT=18782 docker compose up -d api`). The useful variables:
+
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `XTEINK_PUBLISH_PORT` | `8780` | Host port for the web UI and main API |
+| `XTEINK_PUBLISH_DEVICE_PORT` | `8781` | Host port for the device app |
+| `XTEINK_PUBLISH_MCP_PORT` | `8782` | Host port for the MCP server |
+| `XTEINK_PUBLISH_BIND` | `0.0.0.0` | Interface to publish on; `127.0.0.1` keeps it host-local |
+| `XTEINK_DATA_DIR` | named volume | Host directory for the library (writable by uid 10001) |
+| `COMPOSE_PROJECT_NAME` | `xteink` | Prefix for containers and the volume |
+
+Every port is protected by keys, including on the LAN. Binding to `0.0.0.0`
+exposes the web UI shell (not your data) to your network; set
+`XTEINK_PUBLISH_BIND=127.0.0.1` if that is not what you want.
+
+### MCP for agents (optional)
+
+`docker compose up -d` also starts the `mcp` service. It holds no key: mint one
+key per agent and give it to that agent's MCP client, which sends it as
+`Authorization: Bearer <key>`:
+
+```bash
+docker compose run --rm api python -m xteink.server create-key my-agent
+```
+
+The MCP endpoint is `http://<host>:8782/mcp/` (with the trailing slash). A request
+without a key gets 401, and a revoked key is refused. See
+[`docs/mcp.md`](docs/mcp.md). MCP is for LAN, Tailscale and mesh use; it is
+never routed through the tunnel.
+
+### Remote access (optional)
+
+`docker compose --profile remote up -d` adds two cloudflared connectors, one for
+the web UI behind Cloudflare Access and one for device-only sync. Tunnels, DNS
+and Access policy are provisioned separately with cultureflare. Behind Access the
+web UI needs no API key once `XTEINK_ACCESS_TEAM_DOMAIN` and `XTEINK_ACCESS_AUD`
+are set in `.env`. The full steps,
+including the hidden-secret handling for the tunnel tokens, are in
+[`docs/remote-access.md`](docs/remote-access.md).
+
+### Provisioning a device (pending hardware verification)
+
+The commands exist and are dry-run by default; the end-to-end flow has not been
+run on real hardware yet.
+
+```bash
+# 1. Back up the stock flash over USB first (reads only; dry-run without --apply).
+uv run xteink device backup --port /dev/ttyACM0 --apply
+
+# 2. Flash the firmware fork from agentculture/xteink-firmware (see that repo).
+
+# 3. Mint a device key and send Wi-Fi, server URLs and the key over USB.
+export XTEINK_URL=http://localhost:8780 XTEINK_API_KEY=<api-key>
+uv run xteink device provision --port /dev/ttyACM0 --name my-reader \
+    --lan-url http://<host>:8781 --apply
+```
+
+`xteink` here is the CLI from this repo (see Development below). Wi-Fi
+passwords are read from a per-user networks file outside the repo
+(`--networks-file`; `xteink explain device provision` shows the default
+location; keep it `chmod 600`, never commit it) or prompted, never passed as
+flags. The device speaks to the
+device app on port 8781 with its own `xtd_` key; it can only download what you
+queued for it. Queue an item with `xteink device queue` or the web UI. See
+[`docs/device-protocol.md`](docs/device-protocol.md).
+
+### Local name
+
+Containers do not do mDNS, so `xteink.local` is not provided by compose. See
+[`docker/avahi/`](docker/avahi/) for running an Avahi publisher on the host, or
+use the host's IP or a DNS name.
+
+## Development
+
+```bash
+uv sync --extra server              # runtime + server + dev deps
+uv run pytest -n auto               # test suite
+uv run python -m xteink.server serve   # run both apps locally (data in the default data dir)
+cd web && npm ci && npm run build   # build the web UI into xteink/server/_webassets
+```
+
+[`CLAUDE.md`](CLAUDE.md) has the full command list, lint gates and conventions.
 
 ## What you get
 
@@ -84,7 +249,7 @@ you can invoke interactively in (1). See
 writeup, including who reads this config and why existing siblings are not
 retrofitted by this arc.
 
-## Quickstart
+## Agent scaffold quickstart
 
 ```bash
 uv sync
@@ -104,6 +269,14 @@ uv run teken cli doctor . --strict    # the agent-first rubric gate CI runs
 | `overview` | Read-only descriptive snapshot of the agent. |
 | `doctor` | Check the agent-identity invariants (prompt-file-present, backend-consistency). |
 | `cli overview` | Describe the CLI surface itself. |
+| `server status` | Probe the API, the key and the device app. |
+| `library list \| add \| rm` | List/search, upload, remove items. `add` and `rm` are dry-run unless `--apply`. |
+| `device list \| queue \| revoke \| backup \| provision` | Manage readers. Mutating verbs are dry-run unless `--apply`. |
+| `tunnel status \| plan` | Probe the public hostnames; print the cultureflare commands (never executed). |
+| `mcp serve` | Run the MCP server (stdio, or `--http`). |
+
+The `server`, `library`, `device` and `mcp` nouns talk to the API using
+`XTEINK_URL` (default `http://127.0.0.1:8780`) and `XTEINK_API_KEY`.
 
 Every command supports `--json`. Results go to stdout, errors/diagnostics to
 stderr (never mixed). Exit codes: `0` success, `1` user error, `2` environment

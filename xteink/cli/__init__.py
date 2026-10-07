@@ -63,15 +63,20 @@ def _argv_has_json(argv: list[str] | None) -> bool:
 
 def _build_parser() -> argparse.ArgumentParser:
     from xteink.cli._commands import cli as _cli_group
+    from xteink.cli._commands import device as _device_group
     from xteink.cli._commands import doctor as _doctor_cmd
     from xteink.cli._commands import explain as _explain_cmd
     from xteink.cli._commands import learn as _learn_cmd
+    from xteink.cli._commands import library as _library_group
+    from xteink.cli._commands import mcp as _mcp_group
     from xteink.cli._commands import overview as _overview_cmd
+    from xteink.cli._commands import server as _server_group
+    from xteink.cli._commands import tunnel as _tunnel_group
     from xteink.cli._commands import whoami as _whoami_cmd
 
     parser = _CliArgumentParser(
         prog="xteink",
-        description="xteink — a clonable template for AgentCulture mesh agents.",
+        description="xteink — private, local-first control for Xteink e-ink readers.",
     )
     parser.add_argument(
         "--version",
@@ -88,9 +93,13 @@ def _build_parser() -> argparse.ArgumentParser:
     _overview_cmd.register(sub)
     _doctor_cmd.register(sub)
     _cli_group.register(sub)
-    # Register your own noun groups here:
-    #   from xteink.cli._commands import my_noun as _my_noun_group
-    #   _my_noun_group.register(sub)
+    # Product noun groups (thin clients of the HTTP API; see xteink/client.py):
+    _server_group.register(sub)
+    _library_group.register(sub)
+    _device_group.register(sub)
+    _tunnel_group.register(sub)
+    _mcp_group.register(sub)
+    # Register further noun groups here.
 
     return parser
 

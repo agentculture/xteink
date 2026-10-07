@@ -34,9 +34,16 @@ update this section so the docs keep matching what's actually on disk.
 `xteink` lets you control Xteink e-ink readers privately: a local server
 with a file/book service, optional remote access via Cloudflare Tunnel, and
 custom device firmware that joins Wi-Fi to sync books locally, so reading works
-fully offline. Your library never leaves hardware you own. **Only the agent
-scaffold exists so far.** The server, tunnel, and firmware are *(planned)*.
-See `CLAUDE.md` § "Current state vs. roadmap".
+fully offline. Your library never leaves hardware you own. **Landed:** the local
+server (main app :8780 with web UI + API, device-only app :8781, both key-gated),
+an MCP server (`push_file`, `list_library`, `send_to_device`; stdio or :8782),
+Docker/compose packaging, an opt-in two-tunnel Cloudflare setup, and CLI nouns
+`server`, `library`, `device`, `tunnel`, `mcp`. The device
+firmware (separate repo, `agentculture/xteink-firmware`) is hardware-verified on
+the X3: books sync over the home LAN or a phone hotspot and read offline. Other
+Xteink models are build-verified only; large (≥ 5 MB) EPUB syncs over HTTPS are
+**not verified**. PDF ingest is *(planned)*. User docs: `README.md`, `docs/api.md`,
+`docs/mcp.md`. See `CLAUDE.md` § "Current state vs. roadmap".
 
 It is also an AgentCulture mesh agent (suffix `xteink`), scaffolded from
 `culture-agent-template`. It follows the sibling pattern every Culture agent

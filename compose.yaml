@@ -1,0 +1,119 @@
+# xteink stack.  Fresh clone:  cp .env.example .env && docker compose up -d
+#
+# Services
+#   api         main app :8780 (web UI + API) and device app :8781 (key-gated device protocol)
+#   mcp         MCP streamable-http :8782, talks to api over the compose network
+#   cloudflared-ui + cloudflared-device ONLY with `--profile remote`
+#   (need TUNNEL_TOKEN_UI and TUNNEL_TOKEN_DEVICE in .env)
+#
+# Remote access: cloudflared runs inside this compose network, so the Cloudflare ingress
+# targets (configured separately with cultureflare; this stack never touches Cloudflare)
+# must be reachable from it, i.e. use the service names:
+#   ebooks.culture.dev -> http://api:8780
+#   xteink.culture.dev -> http://api:8781
+# (http://127.0.0.1:... would point at the cloudflared container itself.)
+#
+# mDNS (xteink.local) is NOT done here: containers do not do mDNS. See docker/avahi/.
+
+# Override XTEINK_IMAGE for throwaway stacks (e2e, README checks) so they never retag the
+# production image.
+x-image: &image ${XTEINK_IMAGE:-xteink:local}
+
+services:
+  api:
+    build: .
+    image: *image
+    command: ["python", "-m", "xteink.server", "serve"]
+    restart: unless-stopped
+    environment:
+      XTEINK_DATA_DIR: /data
+      XTEINK_BIND: 0.0.0.0
+      XTEINK_PORT: "8780"
+      XTEINK_DEVICE_PORT: "8781"
+      # Cloudflare Access SSO for the web UI (main app only; the device app never accepts
+      # it). Set both or neither: a partial pair makes the api refuse to start. Unset = off,
+      # and no JWKS fetch ever happens. See docs/remote-access.md.
+      XTEINK_ACCESS_TEAM_DOMAIN: ${XTEINK_ACCESS_TEAM_DOMAIN:-}
+      XTEINK_ACCESS_AUD: ${XTEINK_ACCESS_AUD:-}
+    volumes:
+      # Named volume by default; set XTEINK_DATA_DIR=/host/dir in .env for a bind mount.
+      - ${XTEINK_DATA_DIR:-xteink-data}:/data
+    ports:
+      - "${XTEINK_PUBLISH_BIND:-0.0.0.0}:${XTEINK_PUBLISH_PORT:-8780}:8780"
+      - "${XTEINK_PUBLISH_BIND:-0.0.0.0}:${XTEINK_PUBLISH_DEVICE_PORT:-8781}:8781"
+    healthcheck:
+      # main app: GET / -> 200; device app: whoami -> 401 (alive and key-gated)
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import urllib.request, urllib.error, sys
+          urllib.request.urlopen("http://127.0.0.1:8780/", timeout=3)
+          try:
+              urllib.request.urlopen("http://127.0.0.1:8781/api/device/whoami", timeout=3)
+              sys.exit(1)
+          except urllib.error.HTTPError as e:
+              sys.exit(0 if e.code == 401 else 1)
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  mcp:
+    image: *image
+    command: ["python", "-m", "xteink.mcp", "--http"]
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      XTEINK_URL: http://api:8780
+      # No server-side key: every MCP client sends its own `Authorization: Bearer xtk_...`.
+      XTEINK_MCP_BIND: 0.0.0.0
+      XTEINK_MCP_PORT: "8782"
+    ports:
+      - "${XTEINK_PUBLISH_BIND:-0.0.0.0}:${XTEINK_PUBLISH_MCP_PORT:-8782}:8782"
+    healthcheck:
+      # TCP accept on the MCP port (the endpoint itself needs an MCP handshake).
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket; socket.create_connection(('127.0.0.1', 8782), timeout=3).close()"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # Two tunnels, one per hostname: cultureflare's remote-login setup replaces a tunnel's
+  # whole ingress list, so ebooks.culture.dev and xteink.culture.dev cannot share one
+  # tunnel (devague deviation d1). Each connector gets its own token from .env.
+  cloudflared-ui: &cloudflared
+    profiles: [remote]
+    image: cloudflare/cloudflared:2025.9.1
+    command: tunnel --no-autoupdate run
+    restart: unless-stopped
+    environment:
+      # ebooks.culture.dev -> http://api:8780 (web UI, behind Cloudflare Access)
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN_UI:-}
+      TUNNEL_METRICS: 127.0.0.1:20241
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "cloudflared", "tunnel", "--metrics", "127.0.0.1:20241", "ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  cloudflared-device:
+    <<: *cloudflared
+    environment:
+      # xteink.culture.dev -> http://api:8781 (device app only; xteink checks device keys)
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN_DEVICE:-}
+      TUNNEL_METRICS: 127.0.0.1:20241
+
+volumes:
+  xteink-data:
