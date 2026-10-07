@@ -2,7 +2,7 @@
   "plan_slug": "xteink-end-to-end-issue-1",
   "schema_version": 2,
   "created": "2026-10-06T18:14:16Z",
-  "updated": "2026-10-07T00:33:42Z",
+  "updated": "2026-10-07T00:41:37Z",
   "deviations": [
     {
       "id": "d1",
@@ -105,7 +105,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 7
     },
@@ -124,7 +124,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 8
     },
@@ -143,7 +143,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 9
     },
@@ -162,7 +162,7 @@
         "commit": "1c58a24b"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 10
     },
@@ -181,7 +181,7 @@
         "commit": "1c58a24b"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 11
     },
@@ -200,7 +200,7 @@
         "commit": "1c58a24b"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 12
     },
@@ -219,7 +219,7 @@
         "commit": "1c58a24b"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 13
     },
@@ -238,7 +238,7 @@
         "commit": "1c58a24b"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 14
     },
@@ -257,7 +257,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 15
     },
@@ -276,7 +276,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 16
     },
@@ -295,7 +295,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 17
     },
@@ -314,7 +314,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 18
     },
@@ -333,7 +333,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 19
     },
@@ -352,7 +352,7 @@
         "commit": "1c58a24b"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 20
     },
@@ -371,7 +371,7 @@
         "commit": "1c58a24b"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 21
     },
@@ -390,7 +390,7 @@
         "commit": "1c58a24b"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 22
     },
@@ -409,7 +409,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 23
     },
@@ -428,7 +428,7 @@
         "commit": "1c58a24b"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 24
     },
@@ -447,7 +447,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 25
     },
@@ -466,7 +466,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 26
     },
@@ -485,7 +485,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 27
     },
@@ -504,7 +504,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 28
     },
@@ -523,7 +523,7 @@
         "commit": "1c58a24b"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 29
     },
@@ -542,7 +542,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 30
     },
@@ -561,7 +561,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 31
     },
@@ -580,7 +580,7 @@
         "commit": "1c58a24b"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 32
     },
@@ -599,7 +599,7 @@
         "commit": "1c58a24b"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 33
     },
@@ -618,7 +618,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 34
     },
@@ -637,7 +637,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 35
     },
@@ -656,7 +656,7 @@
         "commit": "1c58a24b"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 36
     },
@@ -675,7 +675,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 37
     },
@@ -694,7 +694,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 38
     },
@@ -713,7 +713,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 39
     },
@@ -732,7 +732,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 40
     },
@@ -751,7 +751,7 @@
         "commit": "4eacfc2"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 41
     }
@@ -768,7 +768,7 @@
         "e29"
       ],
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false
     },
     {
@@ -782,7 +782,7 @@
         "e6"
       ],
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false
     },
     {
@@ -797,7 +797,7 @@
         "e17"
       ],
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false
     },
     {
@@ -811,7 +811,7 @@
         "e6"
       ],
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false
     },
     {
@@ -825,7 +825,7 @@
         "e6"
       ],
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false
     },
     {
@@ -839,7 +839,7 @@
         "e6"
       ],
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false
     },
     {
@@ -853,7 +853,7 @@
         "e5"
       ],
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false
     },
     {
@@ -867,7 +867,7 @@
         "e15"
       ],
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false
     }
   ],

@@ -208,9 +208,9 @@ Hardware and live evidence (`docs/evidence/`):
 
 devague records:
 
-- evidence `e1`–`e35`, deltas `b1`–`b8` (all `proposed`, `llm` origin);
-  deviations `d1`–`d6` (approved); lapses `l1`–`l35` (`l1` and `l2` approved,
-  the rest proposed).
+- evidence `e1`–`e35` and deltas `b1`–`b8` (filed `llm` origin, approved by
+  the operator 2026-10-07); deviations `d1`–`d6` (approved); lapses
+  `l1`–`l35` (all approved).
 
 Commits and issues:
 
@@ -219,23 +219,23 @@ Commits and issues:
 
 ## Delivery Claims
 
-Confidence follows the evidence. Proposed lapses are pending, not evidence;
-where one bears on a claim, the claim lists it under "pending" and its
-confidence doesn't lean on it.
+Confidence follows the evidence. All lapses `l1`–`l35` are approved (the
+operator confirmed `l3`–`l35` on 2026-10-07), so they count as evidence here.
+Where a lapse bears on a claim, the claim names it.
 
 | Claim | Confidence | Evidence |
 |-------|------------|----------|
 | `c2` — Four front doors (CLI, API, MCP, web UI) over one core, served on startup | high | test `tests/cli/test_nouns.py::test_cli_never_imports_core_or_server`, `tests/core/test_isolation.py` · evidence `e1` |
-| `c3` — docker compose deployment that comes back after a host reboot | high | `docs/evidence/c49-reboot.md` · Playwright and privacy throwaway stacks · `e2`, `e19`. A literal fresh-clone run was not repeated (`l24` pending). |
+| `c3` — docker compose deployment that comes back after a host reboot | high | `docs/evidence/c49-reboot.md` · Playwright and privacy throwaway stacks · `e2`, `e19`. A literal fresh-clone run was not repeated (`l24` approved). |
 | `c4` — ebooks.culture.dev behind SSO; xteink.culture.dev device-key only | high | `docs/evidence/t11-remote-access-curl.txt`, `docs/evidence/d4-sso-web-ui.md`, `docs/evidence/c49-reboot.md` · `e3` |
-| `c5` — Our own themed firmware on the X3 | medium | operator observation, `docs/evidence/t19-x3-bringup.md` · `e4`. No screenshots (`l20` pending). |
-| `c6` — Auto-joins the hotspot or home Wi-Fi; reads with Wi-Fi off | high | `docs/evidence/t20-first-sync.md`, `t20-x3-key-profile.md` ("Fallback works"), `t20-phone-upload-lan-sync.md` · `e5`, `b7`. Fix E has no unit test (`l35` pending). |
+| `c5` — Our own themed firmware on the X3 | medium | operator observation, `docs/evidence/t19-x3-bringup.md` · `e4`. No screenshots (`l20` approved). |
+| `c6` — Auto-joins the hotspot or home Wi-Fi; reads with Wi-Fi off | high | `docs/evidence/t20-first-sync.md`, `t20-x3-key-profile.md` ("Fallback works"), `t20-phone-upload-lan-sync.md` · `e5`, `b7`. Fix E has no unit test (`l35` approved). |
 | `c7` — Button map, as amended by `d5`/`d6` | high | `docs/evidence/t20-x3-key-profile.md` (every row confirmed by the operator) · fork test `test/x3_key_profile` · `e6`, `b4`, `b6` |
 | `c8` — Reader menu covers zoom and go-to | medium | zoom: `docs/evidence/t20-zoom-mode.md` · `e7`. Go-to exists in code only and was not exercised on the X3. |
 | `c9` — Every Xteink model builds; X3 first | high (builds) / unverified (X4, X4 Pro, X4C on hardware) | fork Actions "Xteink CI" green at `1c58a24b` · `e8`. No other model was run on hardware (`r7`). |
 | `c13` — xteink never handles `CLOUDFLARE_API_TOKEN` | high | test `tests/server/test_app_config.py::test_no_cloudflare_token_reads_in_package` · `e9` |
-| `c17` — CLI is a thin API client with `--json`, explain and dry-run | high | `teken cli doctor --strict` PASS · `tests/cli/test_nouns.py` · `e10`. Its stubs were not captured from the live app (`l13` pending). |
-| `c18` — Path-filtered web/image CI jobs | medium | local run of the web job's steps · `e11`. The GitHub web, image and changes jobs have not run (`l25` pending). |
+| `c17` — CLI is a thin API client with `--json`, explain and dry-run | high | `teken cli doctor --strict` PASS · `tests/cli/test_nouns.py` · `e10`. Its stubs were not captured from the live app (`l13` approved). |
+| `c18` — Path-filtered web/image CI jobs | medium | local run of the web job's steps · `e11`. The GitHub web, image and changes jobs have not run (`l25` approved). |
 | `c19` — No secrets in tracked files | high | `scripts/scan-secrets.py` clean · `tests/test_scan_secrets.py` · `e12` |
 | `c21` — MCP tools over the same core | high | `tests/mcp/test_mcp_integration.py` (8) · production `push_file` in `docs/evidence/t20-first-sync.md` · `e13` |
 | `c27` — Model differences behind HAL/build flags | medium | source review of the d5 diff (`HalGPIO::deviceIsX3`) · `e14` |
@@ -251,7 +251,7 @@ confidence doesn't lean on it.
 | `c55` — Versioned device protocol, same over LAN and tunnel | high | `tests/server/test_device_protocol.py` · both hardware paths · `e24` |
 | `c56` — Five web UI flows verified by Playwright | high | `web/e2e/*.spec.ts` 5/5 · `e25` |
 | `c61` — HTTPS sync within C3 RAM, for a ≥ 5 MB EPUB | unverified | (no evidence; only ~7 KB EPUBs were synced over TLS. Not claimed done.) |
-| `c62` — Pinned-certificate verification, MITM fails closed | medium | `scripts/xteink-tls/run.sh` PASS (host wolfSSL, same flags and bundle) · device TLS sync in `t20-first-sync.md` · `e26`. MITM not run on the X3 (`l19` pending). |
+| `c62` — Pinned-certificate verification, MITM fails closed | medium | `scripts/xteink-tls/run.sh` PASS (host wolfSSL, same flags and bundle) · device TLS sync in `t20-first-sync.md` · `e26`. MITM not run on the X3 (`l19` approved). |
 | `c63` — OTA never offers upstream releases | medium | static guard rule "upstream OTA release feed" · `src/network/OtaUpdater.cpp` · `e27`. No on-device OTA check. |
 | `c66` — Stock backup before the first flash; restore documented | medium | `docs/evidence/t19-x3-bringup.md` (sha256 verified) · `e28`. The restore was not rehearsed. |
 | `c67` — Two cultureflare hostnames in front of the same origin | high | `docs/evidence/t11-remote-access-curl.txt` · `e29`, `b1` |
@@ -262,10 +262,38 @@ confidence doesn't lean on it.
 | `c81` — LAN/tailnet reachable with a key; tunnel routes only `/api/device/*` | medium | `t11-remote-access-curl.txt`, `c49-reboot.md`, `test_device_app_404_everywhere_else` · `e34`. A tailnet IP was not tested. |
 | `c82` — Articles become EPUBs tagged article and read on the X3 | high | `tests/mcp/test_client.py::test_upload_markdown_is_article` · both device syncs · `e35` |
 
-Lapse ledger: `l1` (assumption-for-measurement) and `l2` (provenance-missing)
-are approved. Both concern the `/scope` reasoning behind the original hybrid
-auth choice, which `d4` replaced; neither caps a claim above. `l3`–`l35` are
-pending your adjudication and are not yet evidence.
+Lapse ledger: all 35 lapses are approved. How they bear on the claims above:
+
+- **Cap a claim's confidence:**
+  - `l20`: no panel screenshots of the theme, so `c5` is medium.
+  - `l25`: the GitHub web, image and changes jobs haven't run, so `c18` is
+    medium.
+  - `l19`: TLS was measured on a host build, not on the C3, so `c62` is medium.
+- **Noted but don't lower confidence**, because hardware or live evidence
+  covers the claim directly:
+  - `l24`: the fresh-clone build path, for `c3`; the reboot run covers it.
+  - `l35`: fix E has no unit test, for `c6`; the operator confirmed the
+    fallback.
+  - `l13`: CLI test stubs, for `c17`; the CLI was used live for backup and
+    provisioning, and `teken doctor` checks the real CLI.
+- **Superseded by later evidence:**
+  - `l6` and `l14`: the real pandoc test passes in the image.
+  - `l26`: the sync client now has two hardware syncs.
+  - `l12`, `l15` and `l34`: the x4pro and x4c builds are green in fork CI.
+- **About this run's process, not the delivered behaviour:** `l1`, `l2`, `l3`,
+  `l9`, `l10`, `l17`, `l18`, `l21`, `l22`, `l27`, `l29` and `l30`.
+- **Assumptions still standing, carried into the follow-ups:**
+  - `l4`: SQLite under concurrent threads.
+  - `l5`: `rotate_key` re-enables a revoked device.
+  - `l7`: ingest limits were chosen, not measured.
+  - `l8`: Python 3.13 locally vs 3.12 in CI, and `serve()` is untested.
+  - `l11`: socket-drop resume was only simulated.
+  - `l16`: compose interpolation (fixed).
+  - `l23`: MCP size field (fixed).
+  - `l28`: the LAN probe root cause.
+  - `l31`: battery thresholds for the reset boot.
+  - `l32`: element yPos ordering for paragraph scroll.
+  - `l33`: heap use while scrolling.
 
 ## Remaining Work / Follow-up
 
@@ -284,8 +312,8 @@ Blocking before the PRs:
   PRs through `cicd` for xteink and the fork. The first GitHub CI run will
   cover `l25` (web, image and changes jobs). Close `#1` only when every
   success signal has passing evidence; today `c61` does not.
-- **Adjudication:** confirm or reject evidence `e1`–`e35`, deltas `b1`–`b8`
-  and lapses `l3`–`l35`. Owner: operator.
+- **Adjudication:** done 2026-10-07. The operator confirmed evidence
+  `e1`–`e35`, deltas `b1`–`b8` and lapses `l3`–`l35`.
 
 Hardware checks still open:
 
