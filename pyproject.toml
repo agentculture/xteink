@@ -1,6 +1,6 @@
 [project]
 name = "xteink"
-version = "0.9.2"
+version = "0.10.0"
 description = "Control Xteink e-ink readers privately: a local server with a file/book service, optional remote access via Cloudflare Tunnel, and custom device firmware that joins Wi-Fi to sync books locally so reading works fully offline. Your library never leaves hardware you own."
 readme = "README.md"
 license = "Apache-2.0"

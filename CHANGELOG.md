@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-10-07
+
+### Added
+
+- Core library (xteink/core): SQLite store, content-addressed blobs, library, devices and queue, API/device keys, and ingest with size, magic-byte and zip-bomb limits plus Markdown/HTML to EPUB conversion through pandoc --sandbox
+- HTTP server: main app on :8780 (library, devices, keys, whoami, web UI) and a device-only app on :8781 implementing device protocol v1 (docs/device-protocol.md); Cloudflare Access JWT verification for SSO on ebooks.culture.dev
+- MCP server on the official mcp SDK with push_file, list_library and send_to_device (stdio or streamable HTTP on :8782)
+- CLI nouns server, library, device (list, queue, revoke, backup, provision over USB), tunnel and mcp, as thin clients of the HTTP API through xteink/client.py
+- Web UI (web/, Vite + React): upload, library, send to device, devices and settings flows, with Playwright end-to-end tests
+- Dockerfile (pandoc 3.12) and compose.yaml with api and mcp services, plus two cloudflared connectors under the remote profile
+- CI jobs: web (vitest, build, Playwright), arm64 image build, and an egress-denied privacy check
+- Docs: README quickstart, docs/api.md, docs/mcp.md, docs/remote-access.md, docs/device-protocol.md, hardware evidence in docs/evidence/ and the issue 1 delivery summary in docs/deliveries/
+
+### Changed
+
+- Prompt files, README and CLI strings describe the firmware as hardware-verified on the X3 (agentculture/xteink-firmware) and build-verified for the other Xteink models
+
 ## [0.9.2] - 2026-10-06
 
 ### Changed
