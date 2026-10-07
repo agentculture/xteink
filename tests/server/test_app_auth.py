@@ -45,7 +45,8 @@ def test_device_app_has_no_library_routes_mounted():
 
     # openapi_url is None (not served), but the schema can still be generated in-process.
     paths = set(create_device_app().openapi()["paths"])
-    assert paths and all(p.startswith("/api/device/") for p in paths), paths
+    assert paths
+    assert all(p.startswith("/api/device/") for p in paths), paths
 
 
 def test_device_whoami_with_device_key(device_client, store):

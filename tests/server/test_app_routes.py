@@ -47,7 +47,8 @@ def test_upload_list_get_download_delete(main_client, h, store):
     )
 
     again = upload(main_client, h, b"hello world", "notes.txt")
-    assert again.status_code == 200 and again.json()["created"] is False
+    assert again.status_code == 200
+    assert again.json()["created"] is False
 
     listing = main_client.get("/api/library", headers=h).json()
     assert [i["id"] for i in listing["items"]] == [item["id"]]
@@ -59,7 +60,8 @@ def test_upload_list_get_download_delete(main_client, h, store):
     assert meta.json() == item
 
     f = main_client.get(f"/api/library/{item['id']}/file", headers=h)
-    assert f.status_code == 200 and f.content == b"hello world"
+    assert f.status_code == 200
+    assert f.content == b"hello world"
     assert "attachment" in f.headers["content-disposition"]
     assert "Notes.txt" in f.headers["content-disposition"]
 
@@ -148,7 +150,8 @@ def test_upload_goes_through_ingest(main_client, h, monkeypatch):
 
     monkeypatch.setattr(routes_library, "ingest_and_add", spy)
     assert upload(main_client, h, b"txt", "x.txt", kind="article").status_code == 201
-    assert seen["filename"] == "x.txt" and seen["kind"] == "article"
+    assert seen["filename"] == "x.txt"
+    assert seen["kind"] == "article"
 
 
 def test_upload_requires_file(main_client, h):
@@ -162,7 +165,8 @@ def test_device_admin_flow(main_client, h, store):
     r = main_client.post("/api/devices", json={"name": "kindle-ish", "mirror": True}, headers=h)
     assert r.status_code == 201
     dev, raw = r.json()["device"], r.json()["key"]
-    assert raw.startswith("xtd_") and dev["mirror"] is True
+    assert raw.startswith("xtd_")
+    assert dev["mirror"] is True
     assert "key_hash" not in dev
 
     listing = main_client.get("/api/devices", headers=h).json()["devices"]
@@ -175,7 +179,8 @@ def test_device_admin_flow(main_client, h, store):
 
     item = LibraryService(store).add(b"book", title="B", kind="book", format="txt").item
     q = main_client.post(f"/api/devices/{dev['id']}/queue", json={"item_id": item.id}, headers=h)
-    assert q.status_code == 201 and q.json()["item_id"] == item.id
+    assert q.status_code == 201
+    assert q.json()["item_id"] == item.id
     queued = main_client.get(f"/api/devices/{dev['id']}/queue", headers=h).json()["entries"]
     assert [e["item_id"] for e in queued] == [item.id]
     assert (
@@ -218,12 +223,14 @@ def test_keys_flow(main_client, h, store):
     r = main_client.post("/api/keys", json={"name": "laptop"}, headers=h)
     assert r.status_code == 201
     new_raw, meta = r.json()["key"], r.json()["api_key"]
-    assert new_raw.startswith("xtk_") and meta["name"] == "laptop"
+    assert new_raw.startswith("xtk_")
+    assert meta["name"] == "laptop"
 
     listing = main_client.get("/api/keys", headers=h)
     names = [k["name"] for k in listing.json()["keys"]]
     assert names == ["test", "laptop"]
-    assert new_raw not in listing.text and "key_hash" not in listing.text
+    assert new_raw not in listing.text
+    assert "key_hash" not in listing.text
 
     assert main_client.get("/api/keys", headers=bearer(new_raw)).status_code == 200
     assert main_client.post(f"/api/keys/{meta['id']}/revoke", headers=h).status_code == 204

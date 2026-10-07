@@ -252,7 +252,8 @@ def test_unknown_free_space_does_not_filter(device_client, lib, devs):
     a = add(lib, b"a" * 600, "A")
     devs.queue_item(dev.id, a.id)
     q = device_client.get("/api/device/queue", headers=h(raw)).json()
-    assert [i["id"] for i in q["items"]] == [a.id] and q["skipped"] == []
+    assert [i["id"] for i in q["items"]] == [a.id]
+    assert q["skipped"] == []
 
 
 def _deliver_two_then_delete(device_client, lib, devs, *, mirror):

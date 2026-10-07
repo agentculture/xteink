@@ -33,15 +33,18 @@ def run(capsys, argv):
 @pytest.mark.parametrize("noun", NOUNS)
 def test_overview_verb_text_and_json(capsys, noun):
     rc, out, _ = run(capsys, [noun, "overview"])
-    assert rc == 0 and f"# xteink {noun}" in out
+    assert rc == 0
+    assert f"# xteink {noun}" in out
     rc, out, _ = run(capsys, [noun, "overview", "--json"])
     payload = json.loads(out)
-    assert rc == 0 and payload["subject"] == f"xteink {noun}"
+    assert rc == 0
+    assert payload["subject"] == f"xteink {noun}"
     items = " ".join(i for s in payload["sections"] for i in s["items"])
     for verb in NOUNS[noun]:
         assert verb in items
     rc, out, _ = run(capsys, [noun])  # bare noun == overview
-    assert rc == 0 and f"# xteink {noun}" in out
+    assert rc == 0
+    assert f"# xteink {noun}" in out
 
 
 def test_explain_entries_exist(capsys):
@@ -50,7 +53,8 @@ def test_explain_entries_exist(capsys):
         for p in [(noun,), (noun, "overview"), *[(noun, v) for v in verbs]]:
             assert p in paths, p
             rc, out, _ = run(capsys, ["explain", *p])
-            assert rc == 0 and out.strip()
+            assert rc == 0
+            assert out.strip()
 
 
 # --- read verbs ---------------------------------------------------------------
@@ -58,7 +62,8 @@ def test_explain_entries_exist(capsys):
 
 def test_library_list_text_and_json(api, capsys):
     rc, out, _ = run(capsys, ["library", "list", "--q", "dune", "--kind", "book", "--limit", "5"])
-    assert rc == 0 and "Dune" in out
+    assert rc == 0
+    assert "Dune" in out
     assert any("q=dune" in p and "kind=book" in p and "limit=5" in p for _, p in api.requests)
     rc, out, _ = run(capsys, ["library", "list", "--json"])
     assert [i["id"] for i in json.loads(out)["items"]] == [1, 2]
@@ -66,7 +71,8 @@ def test_library_list_text_and_json(api, capsys):
 
 def test_device_list(api, capsys):
     rc, out, _ = run(capsys, ["device", "list"])
-    assert rc == 0 and "Reader One" in out
+    assert rc == 0
+    assert "Reader One" in out
     rc, out, _ = run(capsys, ["device", "list", "--json"])
     assert len(json.loads(out)["devices"]) == 2
 
@@ -84,28 +90,35 @@ def test_server_status(api, capsys):
 def test_server_status_bad_key_and_unreachable(api, capsys, monkeypatch):
     monkeypatch.setenv("XTEINK_API_KEY", "wrong")
     rc, out, _ = run(capsys, ["server", "status", "--json"])
-    assert rc == 1 and json.loads(out)["api_key"]["valid"] is False
+    assert rc == 1
+    assert json.loads(out)["api_key"]["valid"] is False
     monkeypatch.setenv("XTEINK_URL", "http://127.0.0.1:1")
     rc, out, _ = run(capsys, ["server", "status", "--json"])
-    assert rc == 2 and json.loads(out)["server"]["reachable"] is False
+    assert rc == 2
+    assert json.loads(out)["server"]["reachable"] is False
 
 
 def test_missing_key_is_environment_error(capsys, monkeypatch):
     monkeypatch.delenv("XTEINK_API_KEY", raising=False)
     rc, out, err = run(capsys, ["library", "list"])
-    assert rc == 2 and err.startswith("error:") and "hint:" in err and out == ""
+    assert rc == 2
+    assert err.startswith("error:")
+    assert "hint:" in err
+    assert out == ""
 
 
 def test_unreachable_is_environment_error(capsys, monkeypatch):
     monkeypatch.setenv("XTEINK_URL", "http://127.0.0.1:1")
     monkeypatch.setenv("XTEINK_API_KEY", KEY)
     rc, _, err = run(capsys, ["device", "list"])
-    assert rc == 2 and "hint:" in err
+    assert rc == 2
+    assert "hint:" in err
 
 
 def test_api_4xx_is_user_error(api, capsys):
     rc, _, err = run(capsys, ["library", "rm", "99"])
-    assert rc == 1 and err.startswith("error:")
+    assert rc == 1
+    assert err.startswith("error:")
     rc, out, _ = run(capsys, ["library", "list", "--json"])
     assert KEY not in out
 
@@ -120,10 +133,13 @@ def test_library_add_dry_run_no_write(api, capsys, tmp_path):
         capsys, ["library", "add", str(f), "--title", "T", "--device", "reader two", "--json"]
     )
     rep = json.loads(out)
-    assert rc == 0 and rep["applied"] is False and rep["device"]["name"] == "Reader Two"
+    assert rc == 0
+    assert rep["applied"] is False
+    assert rep["device"]["name"] == "Reader Two"
     assert api.writes == []
     rc, out, _ = run(capsys, ["library", "add", str(f)])
-    assert "would" in out.lower() and "--apply" in out
+    assert "would" in out.lower()
+    assert "--apply" in out
     assert api.writes == []
 
 
@@ -132,22 +148,28 @@ def test_library_add_apply_uploads_and_queues(api, capsys, tmp_path):
     f.write_bytes(b"PK data")
     rc, out, _ = run(capsys, ["library", "add", str(f), "--device", "2", "--apply", "--json"])
     rep = json.loads(out)
-    assert rc == 0 and rep["applied"] is True and rep["item"]["id"] == 1
+    assert rc == 0
+    assert rep["applied"] is True
+    assert rep["item"]["id"] == 1
     assert api.writes == [("POST", "/api/library"), ("POST", "/api/devices/2/queue")]
 
 
 def test_library_add_bad_path_and_bad_device(api, capsys, tmp_path):
     rc, _, err = run(capsys, ["library", "add", str(tmp_path / "nope.epub")])
-    assert rc == 1 and "hint:" in err
+    assert rc == 1
+    assert "hint:" in err
     f = tmp_path / "b.epub"
     f.write_bytes(b"x")
     rc, _, err = run(capsys, ["library", "add", str(f), "--device", "ghost", "--apply"])
-    assert rc == 1 and api.writes == []
+    assert rc == 1
+    assert api.writes == []
 
 
 def test_library_rm_dry_run_then_apply(api, capsys):
     rc, out, _ = run(capsys, ["library", "rm", "1"])
-    assert rc == 0 and "Dune" in out and "--apply" in out
+    assert rc == 0
+    assert "Dune" in out
+    assert "--apply" in out
     assert api.writes == []
     rc, out, _ = run(capsys, ["library", "rm", "1", "--apply", "--json"])
     assert json.loads(out)["applied"] is True
@@ -157,16 +179,21 @@ def test_library_rm_dry_run_then_apply(api, capsys):
 def test_device_queue_dry_run_then_apply(api, capsys):
     rc, out, _ = run(capsys, ["device", "queue", "Reader One", "2", "--json"])
     rep = json.loads(out)
-    assert rc == 0 and rep["applied"] is False
-    assert rep["device"]["name"] == "Reader One" and rep["item"]["title"] == "Essay"
+    assert rc == 0
+    assert rep["applied"] is False
+    assert rep["device"]["name"] == "Reader One"
+    assert rep["item"]["title"] == "Essay"
     assert api.writes == []
     rc, out, _ = run(capsys, ["device", "queue", "Reader One", "2", "--apply"])
-    assert rc == 0 and api.writes == [("POST", "/api/devices/1/queue")]
+    assert rc == 0
+    assert api.writes == [("POST", "/api/devices/1/queue")]
 
 
 def test_device_revoke_dry_run_then_apply(api, capsys):
     rc, out, _ = run(capsys, ["device", "revoke", "reader one"])
-    assert rc == 0 and "Reader One" in out and "--apply" in out
+    assert rc == 0
+    assert "Reader One" in out
+    assert "--apply" in out
     assert api.writes == []
     rc, out, _ = run(capsys, ["device", "revoke", "1", "--apply", "--json"])
     assert json.loads(out)["applied"] is True
@@ -187,10 +214,12 @@ def test_tunnel_plan_prints_two_commands(capsys):
         "cultureflare remote-login setup --hostname xteink.culture.dev "
         "--service http://127.0.0.1:8781 --no-access --shushu"
     ) in out
-    assert "dry-run" in out and "--apply" in out
+    assert "dry-run" in out
+    assert "--apply" in out
     rc, out, _ = run(capsys, ["tunnel", "plan", "--json", "--ui-host", "a.example"])
     rep = json.loads(out)
-    assert len(rep["commands"]) == 2 and "a.example" in rep["commands"][0]
+    assert len(rep["commands"]) == 2
+    assert "a.example" in rep["commands"][0]
 
 
 def test_tunnel_status_uses_injected_probe(capsys, monkeypatch):
@@ -207,7 +236,9 @@ def test_tunnel_status_uses_injected_probe(capsys, monkeypatch):
     monkeypatch.setattr(tunnel, "probe", fake)
     rc, out, _ = run(capsys, ["tunnel", "status", "--json"])
     rep = json.loads(out)
-    assert rc == 0 and rep["ui"]["status"] == "reachable" and rep["device"]["status"] == "reachable"
+    assert rc == 0
+    assert rep["ui"]["status"] == "reachable"
+    assert rep["device"]["status"] == "reachable"
     assert seen == [
         "https://ebooks.culture.dev/",
         "https://xteink.culture.dev/api/device/whoami",
@@ -219,12 +250,14 @@ def test_tunnel_status_down_never_fails_hard_unless_strict(capsys, monkeypatch):
 
     monkeypatch.setattr(tunnel, "probe", lambda url, timeout=5.0: (None, "refused"))
     rc, out, _ = run(capsys, ["tunnel", "status", "--json"])
-    assert rc == 0 and json.loads(out)["ui"]["status"] == "unreachable"
+    assert rc == 0
+    assert json.loads(out)["ui"]["status"] == "unreachable"
     rc, _, _ = run(capsys, ["tunnel", "status", "--strict"])
     assert rc == 2
     monkeypatch.setattr(tunnel, "probe", lambda url, timeout=5.0: (200, ""))
     rc, out, _ = run(capsys, ["tunnel", "status", "--json"])
-    assert rc == 0 and json.loads(out)["ui"]["status"] == "unexpected"
+    assert rc == 0
+    assert json.loads(out)["ui"]["status"] == "unexpected"
 
 
 # --- mcp --------------------------------------------------------------------------
@@ -236,7 +269,8 @@ def test_mcp_serve_delegates(capsys, monkeypatch):
     calls = []
     monkeypatch.setattr(mcp_main, "main", lambda argv=None, env=None: calls.append(argv) or 0)
     rc, _, _ = run(capsys, ["mcp", "serve", "--http", "--port", "9"])
-    assert rc == 0 and calls == [["--http", "--port", "9"]]
+    assert rc == 0
+    assert calls == [["--http", "--port", "9"]]
 
 
 # --- criterion 3: import hygiene -----------------------------------------------------

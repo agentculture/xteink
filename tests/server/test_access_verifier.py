@@ -292,7 +292,8 @@ def test_access_config_partial_is_refused(missing):
     env = {k: v for k, v in ENV.items() if k != missing}
     with pytest.raises(AccessConfigError) as ei:
         AccessConfig.from_env(env)
-    assert "XTEINK_ACCESS_TEAM_DOMAIN" in str(ei.value) and "XTEINK_ACCESS_AUD" in str(ei.value)
+    assert "XTEINK_ACCESS_TEAM_DOMAIN" in str(ei.value)
+    assert "XTEINK_ACCESS_AUD" in str(ei.value)
 
 
 def test_load_config_carries_access_config():
@@ -316,4 +317,5 @@ def test_serve_refuses_to_start_with_partial_access_config(monkeypatch, capsys, 
             monkeypatch.setenv(name, value)
     assert server_main(["serve"]) == 2
     err = capsys.readouterr().err
-    assert "error:" in err and missing in err
+    assert "error:" in err
+    assert missing in err

@@ -54,7 +54,8 @@ def test_push_markdown_list_and_queue(api_url, api_key, store, device):
     pushed, listed, sent, item_id = run_session(
         {"XTEINK_URL": api_url, "XTEINK_API_KEY": api_key}, fn
     )
-    assert not pushed.isError and json.loads(text(pushed))["item"]["kind"] == "article"
+    assert not pushed.isError
+    assert json.loads(text(pushed))["item"]["kind"] == "article"
     items = json.loads(text(listed))["items"]
     assert [(i["id"], i["kind"]) for i in items] == [(item_id, "article")]
     assert not sent.isError
@@ -90,7 +91,8 @@ def test_invalid_key_is_tool_error_with_code(api_url):
 
     res = run_session({"XTEINK_URL": api_url, "XTEINK_API_KEY": "xtk_bogus"}, fn)
     assert res.isError
-    assert "401" in text(res) and "bogus" not in text(res)
+    assert "401" in text(res)
+    assert "bogus" not in text(res)
 
 
 def test_unknown_device_and_api_error_mapping(api_url, api_key):
@@ -100,8 +102,11 @@ def test_unknown_device_and_api_error_mapping(api_url, api_key):
         return a, b
 
     a, b = run_session({"XTEINK_URL": api_url, "XTEINK_API_KEY": api_key}, fn)
-    assert a.isError and "unknown_device" in text(a)
-    assert b.isError and "415" in text(b) and "Traceback" not in text(b)
+    assert a.isError
+    assert "unknown_device" in text(a)
+    assert b.isError
+    assert "415" in text(b)
+    assert "Traceback" not in text(b)
 
 
 def test_missing_key_refuses_to_start(api_url):
@@ -114,7 +119,8 @@ def test_missing_key_refuses_to_start(api_url):
         timeout=30,
         stdin=subprocess.DEVNULL,
     )
-    assert r.returncode == 2 and "XTEINK_API_KEY" in r.stderr
+    assert r.returncode == 2
+    assert "XTEINK_API_KEY" in r.stderr
 
 
 def test_streamable_http_transport(api_url, api_key):
@@ -147,7 +153,8 @@ def test_streamable_http_transport(api_url, api_key):
                     return await s.call_tool("list_library", {})
 
         res = anyio.run(go)
-        assert not res.isError and json.loads(text(res)) == {"items": []}
+        assert not res.isError
+        assert json.loads(text(res)) == {"items": []}
     finally:
         proc.terminate()
         proc.wait(timeout=10)

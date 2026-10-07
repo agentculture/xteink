@@ -57,8 +57,9 @@ def test_ingest_error_is_core_error():
 
 
 def test_oversized_rejected():
+    data, limits = b"a" * 20, IngestLimits(max_bytes=10)
     with pytest.raises(IngestError) as e:
-        ingest(b"a" * 20, filename="a.txt", limits=IngestLimits(max_bytes=10))
+        ingest(data, filename="a.txt", limits=limits)
     assert e.value.code == "too_large"
 
 
@@ -67,26 +68,30 @@ def test_wrong_magic():
         with pytest.raises(IngestError) as e:
             ingest(data, filename=name)
         assert e.value.code == "bad_magic"
+    data = make_epub(first="other")
     with pytest.raises(IngestError) as e:
-        ingest(make_epub(first="other"), filename="a.epub")
+        ingest(data, filename="a.epub")
     assert e.value.code == "bad_magic"
+    data = (FIX / "bad.md").read_bytes()
     with pytest.raises(IngestError) as e:
-        ingest((FIX / "bad.md").read_bytes(), filename="bad.md")
+        ingest(data, filename="bad.md")
     assert e.value.code == "bad_magic"
 
 
 def test_zip_bomb_uncompressed_size():
     data = make_epub({"big.txt": b"\x00" * (5 * 1024 * 1024)})
     assert len(data) < 100_000
+    limits = IngestLimits(max_uncompressed_bytes=1024 * 1024)
     with pytest.raises(IngestError) as e:
-        ingest(data, filename="b.epub", limits=IngestLimits(max_uncompressed_bytes=1024 * 1024))
+        ingest(data, filename="b.epub", limits=limits)
     assert e.value.code == "zip_bomb"
 
 
 def test_zip_bomb_entry_count():
     data = make_epub({f"f{i}.txt": b"x" for i in range(50)})
+    limits = IngestLimits(max_zip_entries=10)
     with pytest.raises(IngestError) as e:
-        ingest(data, filename="b.epub", limits=IngestLimits(max_zip_entries=10))
+        ingest(data, filename="b.epub", limits=limits)
     assert e.value.code == "zip_bomb"
 
 
@@ -97,12 +102,15 @@ def test_passthrough_unchanged():
     for name, fmt in [("note.txt", "txt"), ("pic.bmp", "bmp")]:
         raw = (FIX / name).read_bytes()
         r = ingest(raw, filename=name, title="T")
-        assert r.data == raw and r.format == fmt and r.title == "T"
+        assert r.data == raw
+        assert r.format == fmt
+        assert r.title == "T"
 
 
 def test_pdf_rejected():
+    data = (FIX / "doc.pdf").read_bytes()
     with pytest.raises(IngestError) as e:
-        ingest((FIX / "doc.pdf").read_bytes(), filename="doc.pdf")
+        ingest(data, filename="doc.pdf")
     assert e.value.code == "pdf_not_supported"
     assert "not supported yet" in str(e.value)
 
@@ -121,7 +129,9 @@ def test_markup_converts_via_pandoc(tmp_path, monkeypatch, name):
     assert (r.format, r.kind, r.title, r.author) == ("epub", "article", "Title", "Au")
     assert zipfile.ZipFile(io.BytesIO(r.data)).read("mimetype") == b"application/epub+zip"
     argv = log.read_text()
-    assert "title=Title" in argv and "author=Au" in argv and "--sandbox" in argv
+    assert "title=Title" in argv
+    assert "author=Au" in argv
+    assert "--sandbox" in argv
     assert "http" not in argv
 
 
@@ -134,8 +144,9 @@ def test_missing_pandoc(tmp_path, monkeypatch):
 
 def test_pandoc_timeout(tmp_path, monkeypatch):
     fake_pandoc(tmp_path, monkeypatch, "import time\ntime.sleep(30)\n")
+    limits = IngestLimits(convert_timeout_s=0.5)
     with pytest.raises(IngestError) as e:
-        ingest(b"# hi", filename="a.md", limits=IngestLimits(convert_timeout_s=0.5))
+        ingest(b"# hi", filename="a.md", limits=limits)
     assert e.value.code == "conversion_timeout"
 
 
@@ -157,11 +168,14 @@ def test_pandoc_garbage_output(tmp_path, monkeypatch):
 def test_ingest_and_add_stores_article(tmp_path, monkeypatch, library):
     fake_pandoc(tmp_path, monkeypatch, WRITE_EPUB % str(tmp_path / "log"))
     res = ingest_and_add(library, b"# hi", filename="a.md", title="T")
-    assert res.created and res.item.kind == "article" and res.item.format == "epub"
+    assert res.created
+    assert res.item.kind == "article"
+    assert res.item.format == "epub"
 
 
 @pytest.mark.skipif(shutil.which("pandoc") is None, reason="pandoc not installed")
 def test_real_pandoc():
     r = ingest((FIX / "article.md").read_bytes(), filename="article.md", title="Real", author="X")
-    assert r.format == "epub" and r.data.startswith(b"PK")
+    assert r.format == "epub"
+    assert r.data.startswith(b"PK")
     assert os.path.exists(FIX / "article.md")

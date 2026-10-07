@@ -107,7 +107,8 @@ def test_invalid_claims_are_401(sso_client, caplog, body, expected):
     assert r.status_code == 401
     assert r.headers["www-authenticate"] == "Bearer"
     assert expected in caplog.text
-    assert tok not in caplog.text and tok not in r.text
+    assert tok not in caplog.text
+    assert tok not in r.text
 
 
 def test_bad_signature_is_401(sso_client):

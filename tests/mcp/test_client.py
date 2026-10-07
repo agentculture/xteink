@@ -42,10 +42,12 @@ def test_upload_arg_validation(api_url, api_key):
 
 
 def test_unsupported_format_error_code(api_url, api_key):
+    client = make(api_url, api_key)
     with pytest.raises(c.ApiError) as e:
-        make(api_url, api_key).upload(b"x", "a.xyz")
+        client.upload(b"x", "a.xyz")
     assert e.value.status == 415
-    assert e.value.code and e.value.detail
+    assert e.value.code
+    assert e.value.detail
 
 
 def test_devices_and_queue(api_url, api_key, device):
@@ -62,12 +64,15 @@ def test_bad_key_is_authentication_error_without_leaking(api_url):
     with pytest.raises(c.AuthenticationError) as e:
         cl.list_library()
     assert e.value.status == 401
-    assert secret not in str(e.value) and secret not in repr(e.value) and secret not in repr(cl)
+    assert secret not in str(e.value)
+    assert secret not in repr(e.value)
+    assert secret not in repr(cl)
 
 
 def test_unreachable():
+    client = c.Client("http://127.0.0.1:1", "k", timeout=2)
     with pytest.raises(c.ServerUnreachable) as e:
-        c.Client("http://127.0.0.1:1", "k", timeout=2).list_library()
+        client.list_library()
     assert e.value.code == "server_unreachable"
 
 
@@ -87,6 +92,7 @@ def test_from_env():
 def test_register_and_revoke_device(api_url, api_key):
     cl = make(api_url, api_key)
     minted = cl.register_device("pocket", mirror=True)
-    assert minted["key"].startswith("xtd_") and minted["device"]["mirror"] is True
+    assert minted["key"].startswith("xtd_")
+    assert minted["device"]["mirror"] is True
     cl.revoke_device(minted["device"]["id"])
     assert any(d["id"] == minted["device"]["id"] and d["revoked_at"] for d in cl.list_devices())

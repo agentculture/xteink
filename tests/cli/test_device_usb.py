@@ -69,11 +69,14 @@ def test_backup_dry_run_prints_commands_runs_nothing(capsys, data):
     rc, out, _ = run(capsys, ["device", "backup", "--port", "/dev/ttyACM0"])
     assert rc == 0
     assert "uvx esptool@latest --port /dev/ttyACM0 --chip esp32c3 read-mac" in out
-    assert "read-flash 0x0" in out and "dry-run" in out and str(data) in out
+    assert "read-flash 0x0" in out
+    assert "dry-run" in out
+    assert str(data) in out
     assert not data.exists()
     rc, out, _ = run(capsys, ["device", "backup", "--port", "/dev/ttyACM0", "--json"])
     rep = json.loads(out)
-    assert rep["applied"] is False and rep["commands"]["flash_id"][0] == "uvx"
+    assert rep["applied"] is False
+    assert rep["commands"]["flash_id"][0] == "uvx"
 
 
 def test_backup_apply_stores_dump_and_sha(capsys, data, esptool):
@@ -82,10 +85,13 @@ def test_backup_apply_stores_dump_and_sha(capsys, data, esptool):
         ["device", "backup", "--port", "/dev/null", "--esptool", esptool, "--apply", "--json"],
     )
     rep = json.loads(out)
-    assert rc == 0 and rep["mac"] == MAC and rep["bytes"] == SIZE
+    assert rc == 0
+    assert rep["mac"] == MAC
+    assert rep["bytes"] == SIZE
     dump = Path(rep["path"])
     assert dump.parent == data / "backups" / MAC.replace(":", "")
-    assert dump.name.endswith("-full.bin") and dump.stat().st_size == SIZE
+    assert dump.name.endswith("-full.bin")
+    assert dump.stat().st_size == SIZE
     digest = hashlib.sha256(dump.read_bytes()).hexdigest()
     assert rep["sha256"] == digest
     assert Path(rep["sha256_path"]).read_text().startswith(digest)
@@ -96,14 +102,16 @@ def test_backup_apply_esptool_failure_is_env_error(capsys, data, esptool):
     rc, _, err = run(
         capsys, ["device", "backup", "--port", "x", "--esptool", f"{esptool} --fail", "--apply"]
     )
-    assert rc == 2 and "failed" in err
+    assert rc == 2
+    assert "failed" in err
 
 
 def test_backup_missing_esptool_is_env_error(capsys, data):
     rc, _, err = run(
         capsys, ["device", "backup", "--port", "x", "--esptool", "/nonexistent/esptool", "--apply"]
     )
-    assert rc == 2 and "esptool" in err
+    assert rc == 2
+    assert "esptool" in err
 
 
 def test_parsers():
@@ -135,7 +143,9 @@ class FakeTransport(du.Transport):
             if not line:  # like the firmware: empty lines are ignored
                 return
             prefix, ver, payload = line.split(b" ")
-            assert prefix == b"XTEINK-PROV" and ver == b"1" and len(line) <= 3072
+            assert prefix == b"XTEINK-PROV"
+            assert ver == b"1"
+            assert len(line) <= 3072
             req = json.loads(base64.b64decode(payload))
             self.requests.append(req)
             self.queue += self.replies.pop(0)(req)
@@ -203,7 +213,9 @@ def fakes(monkeypatch, data):
 
 def assert_no_secrets(*texts):
     for t in texts:
-        assert KEY not in t and "SECRETSECRET" not in t and PASSWORD not in t
+        assert KEY not in t
+        assert "SECRETSECRET" not in t
+        assert PASSWORD not in t
 
 
 # --- provision ----------------------------------------------------------------------------
@@ -214,8 +226,12 @@ def test_provision_dry_run_no_io(capsys, fakes, nets):
     rc, out, err_ = run(
         capsys, ["device", "provision", "--port", "/dev/ttyACM0", "--networks-file", str(nets)]
     )
-    assert rc == 0 and "dry-run" in out and "Provision via USB" in out and "masked" in out
-    assert tp.requests == [] and fakes.client.calls == []
+    assert rc == 0
+    assert "dry-run" in out
+    assert "Provision via USB" in out
+    assert "masked" in out
+    assert tp.requests == []
+    assert fakes.client.calls == []
     assert_no_secrets(out, err_)
     rc, out, _ = run(
         capsys, ["device", "provision", "--port", "p", "--networks-file", str(nets), "--json"]
@@ -240,16 +256,20 @@ def test_provision_apply_happy_path(capsys, fakes, nets):
         ],
     )
     rep = json.loads(out)
-    assert (
-        rc == 0 and rep["key_id"] == "0a1b2c3d" and rep["mac"] == MAC and rep["networks_saved"] == 1
-    )
+    assert rc == 0
+    assert rep["key_id"] == "0a1b2c3d"
+    assert rep["mac"] == MAC
+    assert rep["networks_saved"] == 1
     assert rep["name"] == "xteink-ddeeff"
     assert_no_secrets(out, err_)
     hello, msg = tp.requests
     assert hello == {}
-    assert msg["device_key"] == KEY and msg["networks"] == [{"ssid": "home", "password": PASSWORD}]
-    assert msg["lan_url"] == du.DEFAULT_LAN_URL and msg["tunnel_url"] == du.DEFAULT_TUNNEL_URL
-    assert tp.max_chunk <= 128 and tp.closed
+    assert msg["device_key"] == KEY
+    assert msg["networks"] == [{"ssid": "home", "password": PASSWORD}]
+    assert msg["lan_url"] == du.DEFAULT_LAN_URL
+    assert msg["tunnel_url"] == du.DEFAULT_TUNNEL_URL
+    assert tp.max_chunk <= 128
+    assert tp.closed
     assert [c[:2] for c in fakes.client.calls] == [("POST", "/api/devices")]
 
 
@@ -258,7 +278,8 @@ def test_provision_apply_text_hides_key(capsys, fakes, nets):
     rc, out, err_ = run(
         capsys, ["device", "provision", "--port", "p", "--networks-file", str(nets), "--apply"]
     )
-    assert rc == 0 and "0a1b2c3d" in out
+    assert rc == 0
+    assert "0a1b2c3d" in out
     assert_no_secrets(out, err_)
 
 
@@ -267,7 +288,9 @@ def test_provision_not_in_mode_fails_before_minting(capsys, fakes, nets):
     rc, out, err_ = run(
         capsys, ["device", "provision", "--port", "p", "--networks-file", str(nets), "--apply"]
     )
-    assert rc == 1 and "Provision via USB" in err_ and fakes.client.calls == []
+    assert rc == 1
+    assert "Provision via USB" in err_
+    assert fakes.client.calls == []
 
 
 def test_provision_error_after_mint_revokes(capsys, fakes, nets):
@@ -275,7 +298,9 @@ def test_provision_error_after_mint_revokes(capsys, fakes, nets):
     rc, out, err_ = run(
         capsys, ["device", "provision", "--port", "p", "--networks-file", str(nets), "--apply"]
     )
-    assert rc == 1 and "invalid_field" in err_ and "revoked" in err_
+    assert rc == 1
+    assert "invalid_field" in err_
+    assert "revoked" in err_
     assert fakes.client.calls[-1][:2] == ("POST", "/api/devices/7/revoke")
     assert_no_secrets(out, err_)
 
@@ -285,7 +310,8 @@ def test_provision_key_id_mismatch_revokes(capsys, fakes, nets):
     rc, _, err_ = run(
         capsys, ["device", "provision", "--port", "p", "--networks-file", str(nets), "--apply"]
     )
-    assert rc == 2 and "does not match" in err_
+    assert rc == 2
+    assert "does not match" in err_
     assert fakes.client.calls[-1][1] == "/api/devices/7/revoke"
 
 
@@ -294,7 +320,9 @@ def test_provision_storage_error_retries(capsys, fakes, nets):
     rc, *_ = run(
         capsys, ["device", "provision", "--port", "p", "--networks-file", str(nets), "--apply"]
     )
-    assert rc == 0 and len(tp.requests) == 3 and len(fakes.client.calls) == 1
+    assert rc == 0
+    assert len(tp.requests) == 3
+    assert len(fakes.client.calls) == 1
 
 
 def test_provision_networks_file_must_be_private(capsys, fakes, nets):
@@ -302,7 +330,9 @@ def test_provision_networks_file_must_be_private(capsys, fakes, nets):
     rc, _, err_ = run(
         capsys, ["device", "provision", "--port", "p", "--networks-file", str(nets), "--apply"]
     )
-    assert rc == 1 and "chmod 600" in err_ and fakes.client.calls == []
+    assert rc == 1
+    assert "chmod 600" in err_
+    assert fakes.client.calls == []
 
 
 def test_provision_prompt_uses_getpass(capsys, fakes, monkeypatch, tmp_path):
@@ -313,7 +343,8 @@ def test_provision_prompt_uses_getpass(capsys, fakes, monkeypatch, tmp_path):
     monkeypatch.setattr(du.getpass, "getpass", lambda prompt="": PASSWORD)
     tp = fakes([lambda r: ack(), lambda r: ack(key_id="0a1b2c3d")])
     rc, out, err_ = run(capsys, ["device", "provision", "--port", "p", "--apply"])
-    assert rc == 0 and tp.requests[1]["networks"] == [{"ssid": "cafe", "password": PASSWORD}]
+    assert rc == 0
+    assert tp.requests[1]["networks"] == [{"ssid": "cafe", "password": PASSWORD}]
     assert_no_secrets(out, err_)
 
 

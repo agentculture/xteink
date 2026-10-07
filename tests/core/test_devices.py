@@ -12,8 +12,11 @@ def _item(library, data=b"book"):
 
 def test_register_returns_key_once_and_stores_hash(devices, store):
     dev, raw = devices.register("reader", mirror=True)
-    assert dev.name == "reader" and dev.mirror is True and dev.revoked_at is None
-    assert raw.startswith("xtd_") and dev.key_id in raw
+    assert dev.name == "reader"
+    assert dev.mirror is True
+    assert dev.revoked_at is None
+    assert raw.startswith("xtd_")
+    assert dev.key_id in raw
     row = sqlite3.connect(store.db_path).execute("select * from devices").fetchone()
     assert raw not in repr(row)
     assert hashlib.sha256(raw.encode()).hexdigest() in repr(row)
@@ -23,7 +26,8 @@ def test_authenticate_and_last_seen(devices):
     dev, raw = devices.register("r")
     assert dev.last_seen is None
     got = devices.authenticate(raw)
-    assert got.id == dev.id and got.last_seen is not None
+    assert got.id == dev.id
+    assert got.last_seen is not None
 
 
 def test_authenticate_rejects_bad_keys(devices):
@@ -62,7 +66,8 @@ def test_queue_and_deliver(devices, library):
         (item.id, item.sha256, item.size, "T")
     ]
     done = devices.mark_delivered(dev.id, item.id, item.sha256)
-    assert done.state == "delivered" and done.delivered_at is not None
+    assert done.state == "delivered"
+    assert done.delivered_at is not None
     assert devices.queue(dev.id) == []
     assert len(devices.queue(dev.id, state="delivered")) == 1
 
@@ -82,8 +87,9 @@ def test_queue_unknown_refs(devices, library):
     dev, _ = devices.register("r")
     with pytest.raises(NotFoundError):
         devices.queue_item(dev.id, 42)
+    item_id = _item(library).id
     with pytest.raises(NotFoundError):
-        devices.queue_item(999, _item(library).id)
+        devices.queue_item(999, item_id)
 
 
 def test_status_report(devices):
