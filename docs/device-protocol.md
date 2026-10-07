@@ -60,8 +60,10 @@ and delete decisions use the most recent report.
 }
 ```
 
-All fields are optional. Each report replaces the previous one, and the server
-records `last_seen`. `inventory` lists **only files the server delivered**. For
+All fields are optional. `last_sync_result` and `last_error` describe this report
+and replace the previous ones; `free_sd_bytes` and `firmware_version` are kept
+from an earlier report when a report leaves them out. The server records
+`last_seen`. `inventory` lists **only files the server delivered**. For
 each, the device re-hashes the file and sets `unmodified` to whether it still
 matches the delivered sha256. Files the user sideloaded are never in the
 inventory, so the server can never ask for them to be deleted. If `inventory` is

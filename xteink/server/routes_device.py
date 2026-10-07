@@ -177,7 +177,7 @@ def get_queue(
                 "title": entry.title,
                 "size": entry.size,
                 "sha256": entry.sha256,
-                "format": services.library.get(entry.item_id).format,
+                "format": entry.format,
                 "url": f"/api/device/items/{entry.item_id}",
             }
         )

@@ -44,7 +44,8 @@ WRITE_EPUB = """
 import sys, zipfile
 a = sys.argv
 out = a[a.index("-o") + 1]
-open(%r, "w").write(" ".join(a))
+meta = open(a[a.index("--metadata-file") + 1]).read() if "--metadata-file" in a else ""
+open(%r, "w").write(" ".join(a) + chr(10) + meta)
 with zipfile.ZipFile(out, "w") as z:
     z.writestr("mimetype", "application/epub+zip")
 """
@@ -129,8 +130,8 @@ def test_markup_converts_via_pandoc(tmp_path, monkeypatch, name):
     assert (r.format, r.kind, r.title, r.author) == ("epub", "article", "Title", "Au")
     assert zipfile.ZipFile(io.BytesIO(r.data)).read("mimetype") == b"application/epub+zip"
     argv = log.read_text()
-    assert "title=Title" in argv
-    assert "author=Au" in argv
+    assert '"title": "Title"' in argv
+    assert '"author": "Au"' in argv
     assert "--sandbox" in argv
     assert "http" not in argv
 
@@ -179,3 +180,14 @@ def test_real_pandoc():
     assert r.format == "epub"
     assert r.data.startswith(b"PK")
     assert os.path.exists(FIX / "article.md")
+
+
+@pytest.mark.skipif(shutil.which("pandoc") is None, reason="pandoc not installed")
+def test_real_pandoc_keeps_yaml_looking_titles_as_text():
+
+    r = ingest(b"# hi", filename="true.md", title="true", author="no")
+    with zipfile.ZipFile(io.BytesIO(r.data)) as z:
+        opf = next(n for n in z.namelist() if n.endswith(".opf"))
+        meta = z.read(opf).decode()
+    assert ">true</dc:title>" in meta
+    assert ">no</dc:creator>" in meta

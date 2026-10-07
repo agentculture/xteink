@@ -217,7 +217,8 @@ unknown.
 ### POST /api/devices/{device_id}/queue
 
 Queue a library item so the device downloads it on its next sync. Body:
-`{"item_id": 1}`. Idempotent. Response `201`: the Queue entry. `404` if the
+`{"item_id": 1}`. Idempotent while the item is queued; queueing an item the device
+already has (`delivered`) queues it again, so it is re-sent on the next sync. Response `201`: the Queue entry. `404` if the
 device or the item does not exist.
 
 ## API keys

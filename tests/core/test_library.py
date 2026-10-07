@@ -93,3 +93,44 @@ def test_search_title_author_and_wildcards(library):
     assert [i.title for i in library.search("100%")] == ["100% Pure"]
     assert library.search("%") == [i for i in library.list() if "%" in i.title]
     assert library.search("zzz") == []
+
+
+def test_search_filters_kind_before_the_limit_and_honours_offset(library):
+    for n in range(5):
+        library.add(f"book {n}".encode(), title=f"The book {n}", kind="book", format="txt")
+    art = library.add(b"article", title="The article", kind="article", format="txt").item
+    assert [i.id for i in library.search("the", kind="article", limit=2)] == [art.id]
+    first = library.search("the", kind="book", limit=2)
+    second = library.search("the", kind="book", limit=2, offset=2)
+    assert len(first) == 2
+    assert len(second) == 2
+    assert not {i.id for i in first} & {i.id for i in second}
+
+
+def test_add_survives_a_concurrent_insert_of_the_same_bytes(library, monkeypatch):
+    first = library.add(b"same", title="A", kind="book", format="txt").item
+    real_connect = library.store.connect
+
+    class MissFirstLookup:
+        """The SELECT finds nothing, as if another upload had not committed yet."""
+
+        def __init__(self, conn):
+            self.conn, self.missed = conn, False
+
+        def __enter__(self):
+            self.inner = self.conn.__enter__()
+            return self
+
+        def __exit__(self, *exc):
+            return self.conn.__exit__(*exc)
+
+        def execute(self, sql, params=()):
+            if "WHERE sha256 = ?" in sql and not self.missed:
+                self.missed = True
+                return self.inner.execute(sql, ("0" * 64,))
+            return self.inner.execute(sql, params)
+
+    monkeypatch.setattr(library.store, "connect", lambda: MissFirstLookup(real_connect()))
+    again = library.add(b"same", title="B", kind="book", format="txt")
+    assert again.created is False
+    assert again.item.id == first.id

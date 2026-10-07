@@ -15,7 +15,7 @@ from xteink.cli._commands.server import add_json, call, json_mode, make_client
 from xteink.cli._errors import EXIT_USER_ERROR, CliError
 from xteink.cli._output import emit_result
 
-KINDS = ("book", "article", "image")
+KINDS = ("book", "article")  # the server's item kinds (xteink.core.models.KINDS)
 
 
 def _emit(args: argparse.Namespace, payload: dict[str, Any], text: str) -> None:

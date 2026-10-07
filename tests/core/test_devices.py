@@ -125,3 +125,30 @@ def test_api_keys(keys):
     with pytest.raises(AuthError):
         keys.authenticate("xtk_nope_nope")
     assert len(keys.list()) == 1
+
+
+def test_requeueing_a_delivered_item_queues_it_again(devices, library):
+    dev, _ = devices.register("r")
+    item = _item(library)
+    devices.queue_item(dev.id, item.id)
+    devices.mark_delivered(dev.id, item.id, item.sha256)
+    again = devices.queue_item(dev.id, item.id)
+    assert again.state == "queued"
+    assert again.delivered_at is None
+    assert [e.item_id for e in devices.queue(dev.id)] == [item.id]
+
+
+def test_status_report_keeps_device_facts_it_leaves_out(devices):
+    dev, _ = devices.register("r")
+    devices.report_status(dev.id, free_sd_bytes=1000, firmware_version="1.2")
+    after = devices.report_status(dev.id, last_sync_result="ok")
+    assert after.free_sd_bytes == 1000
+    assert after.firmware_version == "1.2"
+    assert after.last_sync_result == "ok"
+
+
+def test_queue_entries_carry_the_item_format(devices, library):
+    dev, _ = devices.register("r")
+    item = _item(library)
+    entry = devices.queue_item(dev.id, item.id)
+    assert entry.format == "epub"

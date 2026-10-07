@@ -311,3 +311,10 @@ def test_only_mcp_module_imports_xteink_mcp_and_lazily():
                 else []
             ):
                 assert not name.startswith(("xteink.mcp", "mcp")), (py.name, name)
+
+
+def test_library_kind_choices_match_the_server():
+    from xteink.cli._commands import library as cli_library
+    from xteink.core.models import KINDS
+
+    assert tuple(cli_library.KINDS) == tuple(KINDS)

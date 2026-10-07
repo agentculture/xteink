@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+import sqlite3
+import uuid
 from pathlib import Path
 
 from .errors import NotFoundError, ValidationError
@@ -55,22 +57,31 @@ class LibraryService:
             blob = self.store.blob_path(sha)
             blob.parent.mkdir(parents=True, exist_ok=True)
             if not blob.exists():
-                tmp = blob.with_suffix(".tmp")
+                # A per-call temp name: two uploads of the same bytes never share one.
+                tmp = blob.with_name(f"{blob.name}.{uuid.uuid4().hex}.tmp")
                 tmp.write_bytes(content)
                 tmp.replace(blob)
-            cur = c.execute(
-                "INSERT INTO items (sha256, kind, title, author, format, size, created_at)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (
-                    sha,
-                    kind,
-                    title.strip(),
-                    author.strip(),
-                    format.strip().lower(),
-                    len(content),
-                    now(),
-                ),
-            )
+            try:
+                cur = c.execute(
+                    "INSERT INTO items (sha256, kind, title, author, format, size, created_at)"
+                    " VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        sha,
+                        kind,
+                        title.strip(),
+                        author.strip(),
+                        format.strip().lower(),
+                        len(content),
+                        now(),
+                    ),
+                )
+            except sqlite3.IntegrityError:
+                # A concurrent upload of the same bytes committed first: same answer
+                # as finding it up front.
+                row = c.execute(_SEL + " WHERE sha256 = ?", (sha,)).fetchone()
+                if row is None:
+                    raise
+                return AddResult(_item(row), False)
             row = c.execute(_SEL + " WHERE id = ?", (cur.lastrowid,)).fetchone()
         return AddResult(_item(row), True)
 
@@ -92,14 +103,17 @@ class LibraryService:
         with self.store.connect() as c:
             return [_item(r) for r in c.execute(sql, params)]
 
-    def search(self, query: str, *, limit: int = 100) -> list[Item]:
+    def search(
+        self, query: str, *, kind: str | None = None, limit: int = 100, offset: int = 0
+    ) -> list[Item]:
         pat = f"%{_like_escape(query.strip().lower())}%"
+        sql = _SEL + " WHERE (lower(title) LIKE ? ESCAPE '\\' OR lower(author) LIKE ? ESCAPE '\\')"
+        params: list = [pat, pat]
+        if kind is not None:
+            sql += " AND kind = ?"
+            params.append(kind)
         with self.store.connect() as c:
-            rows = c.execute(
-                _SEL + " WHERE lower(title) LIKE ? ESCAPE '\\'"
-                " OR lower(author) LIKE ? ESCAPE '\\' ORDER BY id LIMIT ?",
-                (pat, pat, limit),
-            )
+            rows = c.execute(sql + " ORDER BY id LIMIT ? OFFSET ?", (*params, limit, offset))
             return [_item(r) for r in rows]
 
     def delete(self, item_id: int) -> None:

@@ -58,9 +58,7 @@ def list_items(
 ) -> dict:
     """List items (optionally by kind) or search them with ``q``."""
     if q is not None and q.strip():
-        items = services.library.search(q, limit=limit)
-        if kind is not None:
-            items = [i for i in items if i.kind == kind]
+        items = services.library.search(q, kind=kind, limit=limit, offset=offset)
     else:
         items = services.library.list(kind=kind, limit=limit, offset=offset)
     return {"items": [asdict(i) for i in items]}

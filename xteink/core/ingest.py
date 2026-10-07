@@ -8,6 +8,7 @@ timeout-bounded ``pandoc`` subprocess with ``shell=False`` and no network access
 from __future__ import annotations
 
 import io
+import json
 import os
 import shutil
 import subprocess  # nosec B404 - shell=False, fixed argv (pandoc)
@@ -103,6 +104,11 @@ def _convert(data: bytes, ext: str, title: str, author: str, limits: IngestLimit
         src = Path(tmp) / f"input{ext}"
         out = Path(tmp) / "output.epub"
         src.write_bytes(data)
+        # A metadata file with quoted JSON strings (JSON is YAML): `--metadata title=true`
+        # would make pandoc read the value as a YAML boolean.
+        meta = Path(tmp) / "metadata.yaml"
+        fields = {"title": title, **({"author": author} if author else {})}
+        meta.write_text(json.dumps(fields, ensure_ascii=False), encoding="utf-8")
         argv = [
             pandoc,
             "--sandbox",
@@ -110,12 +116,12 @@ def _convert(data: bytes, ext: str, title: str, author: str, limits: IngestLimit
             _PANDOC_FROM[ext],
             "-t",
             "epub",
-            "--metadata",
-            f"title={title}",
+            "--metadata-file",
+            str(meta),
+            "-o",
+            str(out),
+            str(src),
         ]
-        if author:
-            argv += ["--metadata", f"author={author}"]
-        argv += ["-o", str(out), str(src)]
         try:
             proc = subprocess.run(  # nosec B603 - shell=False, argv list, no URLs
                 argv,

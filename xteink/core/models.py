@@ -50,6 +50,7 @@ class QueueEntry:
     title: str
     size: int
     sha256: str
+    format: str
     state: str  # 'queued' | 'delivered'
     queued_at: str
     delivered_at: str | None

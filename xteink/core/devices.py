@@ -10,7 +10,7 @@ from .store import Store, now
 PREFIX = "xtd"
 
 _Q = (
-    "SELECT q.id, q.device_id, q.item_id, i.title, i.size, i.sha256, q.state,"
+    "SELECT q.id, q.device_id, q.item_id, i.title, i.size, i.sha256, i.format, q.state,"
     " q.queued_at, q.delivered_at FROM queue q JOIN items i ON i.id = q.item_id"
 )
 
@@ -92,13 +92,20 @@ class DeviceService:
             return _device(self._get(c, device_id))
 
     def queue_item(self, device_id: int, item_id: int) -> QueueEntry:
-        """Queue an item for a device (idempotent)."""
+        """Queue an item for a device (idempotent while queued).
+
+        Re-queueing a delivered item queues it again, so a book removed from the reader
+        can be sent back.
+        """
         with self.store.connect() as c:
             self._get(c, device_id)
             if c.execute("SELECT 1 FROM items WHERE id = ?", (item_id,)).fetchone() is None:
                 raise NotFoundError(f"item {item_id} not found")
             c.execute(
-                "INSERT OR IGNORE INTO queue (device_id, item_id, queued_at) VALUES (?, ?, ?)",
+                "INSERT INTO queue (device_id, item_id, queued_at) VALUES (?, ?, ?)"
+                " ON CONFLICT (device_id, item_id) DO UPDATE SET state = 'queued',"
+                " queued_at = excluded.queued_at, delivered_at = NULL"
+                " WHERE queue.state = 'delivered'",
                 (device_id, item_id, now()),
             )
             row = c.execute(
@@ -142,12 +149,18 @@ class DeviceService:
         firmware_version: str | None = None,
         last_error: str | None = None,
     ) -> Device:
-        """Record a device status report (also bumps last_seen)."""
+        """Record a device status report (also bumps last_seen).
+
+        ``last_sync_result`` and ``last_error`` describe this report and replace the
+        previous ones. ``free_sd_bytes`` and ``firmware_version`` are device facts: a
+        report that leaves them out keeps the stored values.
+        """
         with self.store.connect() as c:
             self._get(c, device_id)
             c.execute(
-                "UPDATE devices SET last_seen = ?, last_sync_result = ?, free_sd_bytes = ?,"
-                " firmware_version = ?, last_error = ? WHERE id = ?",
+                "UPDATE devices SET last_seen = ?, last_sync_result = ?,"
+                " free_sd_bytes = COALESCE(?, free_sd_bytes),"
+                " firmware_version = COALESCE(?, firmware_version), last_error = ? WHERE id = ?",
                 (now(), last_sync_result, free_sd_bytes, firmware_version, last_error, device_id),
             )
             return _device(self._get(c, device_id))
