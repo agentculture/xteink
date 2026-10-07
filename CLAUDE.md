@@ -50,15 +50,20 @@ Landed and in the tree (read the code, not this list, when in doubt):
   `whoami`, `learn`, `explain`, `overview`, `doctor`, `cli overview`. Mutating
   verbs are dry-run unless `--apply`.
 - User docs: `README.md` (quickstart), `docs/api.md`, `docs/mcp.md`.
+- **Device firmware** (separate repo, `agentculture/xteink-firmware`, a
+  CrossPoint Reader fork): xteink theme, USB provisioning, pinned-root TLS, OTA
+  from fork releases, the sync client (protocol v1, LAN first with tunnel
+  fallback), and the X3 key profile (edge keys turn pages, hold OK = zoom, hold
+  Back = rotate, 4.3/4.4 = paragraph scroll). **Hardware-verified on the X3
+  only**: books pushed via MCP or the web UI reach the device over the home LAN
+  and over the iPhone hotspot through `xteink.culture.dev`, and read offline
+  (evidence in `docs/evidence/`, summary in `docs/deliveries/`). X4, X4 Pro and
+  X4 Classic are build-verified in the fork's CI, not run on hardware.
 
 Still **(planned)** or unverified:
 
-- **(in progress, unverified)** Custom device firmware. It lives in a separate
-  repo, `agentculture/xteink-firmware` (a CrossPoint Reader fork: theme, zoom mode,
-  USB provisioning, pinned-root TLS, OTA from fork releases). Its sync client is
-  still being built and nothing has been verified on hardware. Do not claim that a
-  device syncs end to end. The server side of the protocol is implemented and tested
-  against a fake device.
+- **(unverified)** Syncing a large (≥ 5 MB) EPUB over HTTPS on the X3. Only
+  small articles have synced over TLS so far.
 - **(planned)** PDF ingest (rejected today with `pdf_not_supported`).
 
 Some CLI strings (`xteink/cli/_commands/learn.py`, `xteink/explain/catalog.py`)

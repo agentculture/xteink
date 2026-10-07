@@ -21,8 +21,8 @@ xteink is also an AgentCulture mesh agent. It ships the library server (HTTP
 API on port 8780, a device-only sync app on 8781, and the web UI), an MCP server
 (`push_file`, `list_library`, `send_to_device`), and this agent-first CLI (cited
 from the teken `python-cli` reference), plus a docker compose stack. The reader
-firmware is a separate fork (agentculture/xteink-firmware) and is pending
-hardware verification. See `xteink learn` for the command map.
+firmware is a separate fork (agentculture/xteink-firmware), hardware-verified
+on the X3 and build-verified for the other Xteink models. See `xteink learn` for the command map.
 
 ## Verbs
 

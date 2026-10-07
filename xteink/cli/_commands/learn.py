@@ -21,7 +21,8 @@ remote access through a Cloudflare Tunnel, and custom reader firmware that syncs
 books over Wi-Fi so reading works fully offline. xteink is also an AgentCulture
 mesh agent. The library server (HTTP API, device-only sync app, web UI), the MCP
 server and this CLI ship today; the reader firmware lives in the
-agentculture/xteink-firmware fork and is pending hardware verification.
+agentculture/xteink-firmware fork, hardware-verified on the X3 and
+build-verified for the other Xteink models.
 
 Commands
 --------

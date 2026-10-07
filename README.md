@@ -25,10 +25,12 @@ What is **not** verified yet:
 - **The device side.** The firmware lives in a separate repo,
   [`agentculture/xteink-firmware`](https://github.com/agentculture/xteink-firmware)
   (a CrossPoint Reader fork: theme, zoom mode, USB provisioning, pinned-root
-  TLS, OTA from fork releases). Its sync client is still being built, and
-  nothing has been verified on real hardware. Treat "a reader syncs books from
-  this server" as **firmware fork in progress; hardware verification pending**.
-  The server side of the protocol is implemented and tested without a device.
+  TLS, OTA from fork releases, the X3 key profile). On an **Xteink X3** it is
+  hardware-verified: a book pushed via MCP or the web UI reaches the reader
+  over the home LAN, or over a phone hotspot through the tunnel, and reads with
+  Wi-Fi off (see `docs/evidence/`). X4, X4 Pro and X4 Classic are
+  build-verified only. Large (≥ 5 MB) EPUB syncs over HTTPS are not verified
+  yet.
 
 ## Architecture
 
