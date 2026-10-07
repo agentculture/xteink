@@ -43,21 +43,20 @@ def _emit(args: argparse.Namespace, payload: dict[str, Any], text: str) -> None:
     emit_result(payload if json_mode(args) else text, json_mode=json_mode(args))
 
 
-def cmd_list(args: argparse.Namespace) -> int:
+def cmd_list(args: argparse.Namespace) -> None:
     devices = call(make_client().list_devices)
     if json_mode(args):
         emit_result({"devices": devices}, json_mode=True)
-        return 0
+        return
     lines = [
         f"{d['id']}\t{d['name']}\t{'REVOKED' if d.get('revoked_at') else 'active'}"
         f"\tlast seen: {d.get('last_seen') or 'never'}"
         for d in devices
     ]
     emit_result("\n".join(lines) or "no devices registered", json_mode=False)
-    return 0
 
 
-def cmd_queue(args: argparse.Namespace) -> int:
+def cmd_queue(args: argparse.Namespace) -> None:
     client = make_client()
     dev = resolve_device(client, args.device)
     item = call(lambda: client.get_item(args.item_id))
@@ -70,26 +69,24 @@ def cmd_queue(args: argparse.Namespace) -> int:
     }
     if not args.apply:
         _emit(args, payload, f"would {what}\n{DRY_RUN_HINT}")
-        return 0
+        return
     payload["entry"] = call(lambda: client.queue_item(dev["id"], item["id"]))
     _emit(args, payload, f"queued: {what}")
-    return 0
 
 
-def cmd_revoke(args: argparse.Namespace) -> int:
+def cmd_revoke(args: argparse.Namespace) -> None:
     client = make_client()
     dev = resolve_device(client, args.device)
     what = f"revoke the key of device {dev['id']} ({dev['name']})"
     payload = {"action": "revoke", "applied": bool(args.apply), "device": short(dev)}
     if not args.apply:
         _emit(args, payload, f"would {what}\n{DRY_RUN_HINT}")
-        return 0
+        return
     payload["result"] = call(lambda: client.revoke_device(int(dev["id"])))
     _emit(args, payload, f"revoked: {what}")
-    return 0
 
 
-def cmd_overview(args: argparse.Namespace) -> int:
+def cmd_overview(args: argparse.Namespace) -> None:
     emit_overview(
         "xteink device",
         [
@@ -114,7 +111,6 @@ def cmd_overview(args: argparse.Namespace) -> int:
         ],
         json_mode=json_mode(args),
     )
-    return 0
 
 
 def register(sub: argparse._SubParsersAction) -> None:

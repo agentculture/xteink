@@ -13,14 +13,12 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request  # nosec B404 - scheme restricted to http/https in probe()
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable
 
 from xteink import client as api
 from xteink.cli._commands.overview import emit_overview
 from xteink.cli._errors import EXIT_ENV_ERROR, EXIT_USER_ERROR, CliError
 from xteink.cli._output import emit_result
-
-T = TypeVar("T")
 
 DEVICE_URL_ENV = "XTEINK_DEVICE_URL"
 DEFAULT_DEVICE_URL = "http://127.0.0.1:8781"
@@ -45,7 +43,7 @@ def make_client() -> api.Client:
         ) from None
 
 
-def call(fn: Callable[[], T]) -> T:
+def call[T](fn: Callable[[], T]) -> T:
     """Run an API call, mapping client errors onto the CLI exit-code policy."""
     try:
         return fn()
@@ -93,7 +91,7 @@ def probe(url: str, timeout: float = 5.0) -> tuple[int | None, str]:
             return resp.status, ""
     except urllib.error.HTTPError as exc:
         return exc.code, ""
-    except (urllib.error.URLError, OSError, ValueError) as exc:
+    except (OSError, ValueError) as exc:  # URLError is an OSError
         return None, str(getattr(exc, "reason", exc))
 
 

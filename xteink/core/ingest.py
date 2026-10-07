@@ -164,19 +164,23 @@ def ingest(
         epub = _convert(data, ext, final_title, author, limits)
         return PreparedUpload(epub, "epub", kind or "article", final_title, author)
 
-    if ext == ".epub":
-        if not _check_epub(data, limits):
-            raise IngestError("not a valid EPUB", "bad_magic")
-        return PreparedUpload(data, "epub", kind or "book", final_title, author)
-    if ext == ".bmp":
-        if not data.startswith(BMP_MAGIC):
-            raise IngestError("not a valid BMP", "bad_magic")
-        return PreparedUpload(data, "bmp", kind or "book", final_title, author)
-    if ext == ".txt":
-        if not _is_text(data):
-            raise IngestError("not valid UTF-8 text", "bad_magic")
-        return PreparedUpload(data, "txt", kind or "book", final_title, author)
-    raise IngestError(f"unsupported file type {ext or '(none)'}", "unsupported_format")
+    fmt = _passthrough_format(data, ext, limits)
+    return PreparedUpload(data, fmt, kind or "book", final_title, author)
+
+
+def _passthrough_format(data: bytes, ext: str, limits: IngestLimits) -> str:
+    """The stored format of a file kept as uploaded, after its content check."""
+    checks = {
+        ".epub": (lambda: _check_epub(data, limits), "not a valid EPUB"),
+        ".bmp": (lambda: data.startswith(BMP_MAGIC), "not a valid BMP"),
+        ".txt": (lambda: _is_text(data), "not valid UTF-8 text"),
+    }
+    if ext not in checks:
+        raise IngestError(f"unsupported file type {ext or '(none)'}", "unsupported_format")
+    valid, message = checks[ext]
+    if not valid():
+        raise IngestError(message, "bad_magic")
+    return ext[1:]
 
 
 def ingest_and_add(

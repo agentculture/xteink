@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import base64
-import binascii
 from typing import Any
 
 from xteink.client import ApiError, Client, ConfigError
@@ -92,6 +91,18 @@ def _brief(item: dict) -> dict:
     return {k: item[k] for k in keys if k in item}
 
 
+def _inline_bytes(a: dict) -> bytes:
+    """The file bytes of a push given inline as ``content`` or ``content_base64``."""
+    if not a.get("filename"):
+        raise ToolError("invalid_arguments: filename is required with content")
+    if a.get("content") is not None:
+        return a["content"].encode("utf-8")
+    try:
+        return base64.b64decode(a["content_base64"], validate=True)
+    except ValueError:  # binascii.Error is a ValueError
+        raise ToolError("invalid_arguments: content_base64 is not valid base64") from None
+
+
 def _push_file(client: Client, a: dict) -> dict:
     given = [k for k in ("path", "content", "content_base64") if a.get(k) is not None]
     if len(given) != 1:
@@ -104,16 +115,7 @@ def _push_file(client: Client, a: dict) -> dict:
         except OSError as exc:
             raise ToolError(f"unreadable_path: {exc.strerror or exc}") from None
     else:
-        if not a.get("filename"):
-            raise ToolError("invalid_arguments: filename is required with content")
-        if "content" in given:
-            data = a["content"].encode("utf-8")
-        else:
-            try:
-                data = base64.b64decode(a["content_base64"], validate=True)
-            except (binascii.Error, ValueError):
-                raise ToolError("invalid_arguments: content_base64 is not valid base64") from None
-        res = client.upload(data, a["filename"], **kw)
+        res = client.upload(_inline_bytes(a), a["filename"], **kw)
     out = {"item": _brief(res["item"]), "created": res["created"]}
     if a.get("device") is not None:
         device_id = _resolve_device(client, a["device"])

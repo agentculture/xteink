@@ -44,7 +44,7 @@ DEFAULT_CHIP = "esp32c3"
 # Plain HTTP on purpose: the LAN device app has no TLS certificate to pin. Requests
 # carry the per-device key and the device verifies each download by sha256; off the
 # LAN the device uses DEFAULT_TUNNEL_URL (HTTPS, pinned roots). docs/device-protocol.md
-DEFAULT_LAN_URL = "http://xteink.local:8781"  # NOSONAR(python:S5332) LAN-only, see above
+DEFAULT_LAN_URL = "http://xteink.local:8781"  # NOSONAR
 DEFAULT_TUNNEL_URL = "https://xteink.culture.dev"
 DEFAULT_NETWORKS_FILE = "~/.config/xteink/networks.json"
 PROV_INSTRUCTION = (
@@ -433,46 +433,73 @@ def _key_id(key: Any) -> str:
     return m.group(1)
 
 
-def cmd_provision(args: argparse.Namespace) -> int:
+def _networks_description(args: argparse.Namespace, src: Path | None) -> str:
+    if args.no_networks:
+        return "none"
+    if src:
+        return f"from {src}"
+    return "prompted at --apply (passwords hidden)"
+
+
+def _provision_dry_run(args: argparse.Namespace, src: Path | None) -> None:
+    payload = {
+        "action": "provision",
+        "applied": False,
+        "port": args.port,
+        "name": args.name or "xteink-<mac suffix>",
+        "networks": _networks_description(args, src),
+        "lan_url": args.lan_url,
+        "tunnel_url": args.tunnel_url,
+        "device_key": "<minted via API at --apply; never printed>",
+        "replace_networks": bool(args.replace_networks),
+    }
+    text = "\n".join(
+        [
+            "would mint a device key via the API, then send over USB:",
+            f"  port: {args.port}",
+            f"  device name: {payload['name']}",
+            f"  networks: {payload['networks']} (passwords masked)",
+            f"  lan_url: {args.lan_url}",
+            f"  tunnel_url: {args.tunnel_url}",
+            "  device_key: <masked>",
+            PROV_INSTRUCTION,
+            DRY_RUN_HINT,
+        ]
+    )
+    emit_result(payload if json_mode(args) else text, json_mode=json_mode(args))
+
+
+def _provision_networks(args: argparse.Namespace, src: Path | None) -> list[dict[str, str]]:
+    if args.no_networks:
+        return []
+    if src:
+        return load_networks_file(src)
+    return prompt_networks()
+
+
+def _revoke_after_failure(client: Any, minted: dict[str, Any], exc: BaseException) -> None:
+    """Best-effort revoke of a key minted for a provisioning run that then failed.
+
+    Re-raises ``exc`` as a :class:`CliError` carrying the outcome when it is one;
+    otherwise only reports the outcome (the caller re-raises).
+    """
+    try:
+        client.revoke_device(int(minted["device"]["id"]))
+        note = "the freshly minted key was revoked"
+    except Exception:  # best effort; reported below
+        note = "COULD NOT revoke the minted key: run 'xteink device revoke' for it"
+    if isinstance(exc, CliError):
+        remediation = f"{note}; {exc.remediation}" if exc.remediation else note
+        raise CliError(exc.code, exc.message, remediation) from None
+    emit_diagnostic(note)
+
+
+def cmd_provision(args: argparse.Namespace) -> None:
     src = _networks_source(args)
     if not args.apply:
-        payload = {
-            "action": "provision",
-            "applied": False,
-            "port": args.port,
-            "name": args.name or "xteink-<mac suffix>",
-            "networks": (
-                "none"
-                if args.no_networks
-                else f"from {src}" if src else "prompted at --apply (passwords hidden)"
-            ),
-            "lan_url": args.lan_url,
-            "tunnel_url": args.tunnel_url,
-            "device_key": "<minted via API at --apply; never printed>",
-            "replace_networks": bool(args.replace_networks),
-        }
-        text = "\n".join(
-            [
-                "would mint a device key via the API, then send over USB:",
-                f"  port: {args.port}",
-                f"  device name: {payload['name']}",
-                f"  networks: {payload['networks']} (passwords masked)",
-                f"  lan_url: {args.lan_url}",
-                f"  tunnel_url: {args.tunnel_url}",
-                "  device_key: <masked>",
-                PROV_INSTRUCTION,
-                DRY_RUN_HINT,
-            ]
-        )
-        emit_result(payload if json_mode(args) else text, json_mode=json_mode(args))
-        return 0
-
-    if args.no_networks:
-        networks: list[dict[str, str]] = []
-    elif src:
-        networks = load_networks_file(src)
-    else:
-        networks = prompt_networks()
+        _provision_dry_run(args, src)
+        return
+    networks = _provision_networks(args, src)
 
     client = make_client()
     tp = open_transport(args.port)
@@ -496,24 +523,8 @@ def cmd_provision(args: argparse.Namespace) -> int:
         if ack.get("key_id") != expect_id:
             raise CliError(EXIT_ENV_ERROR, "device ACK key id does not match the minted key")
     except BaseException as exc:
-        revoked = False
         if minted is not None:
-            try:
-                dev_id = int(minted["device"]["id"])
-                client.revoke_device(dev_id)
-                revoked = True
-            except Exception:  # best effort; reported below
-                revoked = False
-            note = (
-                "the freshly minted key was revoked"
-                if revoked
-                else "COULD NOT revoke the minted key: run 'xteink device revoke' for it"
-            )
-            if isinstance(exc, CliError):
-                raise CliError(
-                    exc.code, exc.message, f"{note}; {exc.remediation}" if exc.remediation else note
-                ) from None
-            emit_diagnostic(note)
+            _revoke_after_failure(client, minted, exc)
         raise
     finally:
         tp.close()
@@ -535,7 +546,6 @@ def cmd_provision(args: argparse.Namespace) -> int:
         "Press Back on the device to leave the provisioning screen."
     )
     emit_result(payload if json_mode(args) else text, json_mode=json_mode(args))
-    return 0
 
 
 # --- registration -----------------------------------------------------------------------

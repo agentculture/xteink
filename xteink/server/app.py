@@ -54,13 +54,13 @@ the HTTP API is under <code>/api/</code> (see <a href="/docs">/docs</a>).</p></b
 
 
 def _install_error_handlers(app: FastAPI) -> None:
-    async def not_found(_: Request, exc: Exception) -> JSONResponse:
+    def not_found(_: Request, exc: Exception) -> JSONResponse:
         return JSONResponse(status_code=404, content={"detail": str(exc)})
 
-    async def invalid(_: Request, exc: Exception) -> JSONResponse:
+    def invalid(_: Request, exc: Exception) -> JSONResponse:
         return JSONResponse(status_code=422, content={"detail": str(exc)})
 
-    async def unauthorized(_: Request, __: Exception) -> JSONResponse:
+    def unauthorized(_: Request, __: Exception) -> JSONResponse:
         return JSONResponse(
             status_code=401,
             content={"detail": "invalid or missing key"},

@@ -254,7 +254,10 @@ def download_item(
     )
 
 
-@router.post("/ack")
+@router.post(
+    "/ack",
+    responses={409: {"description": "sha256 does not match the queued item; re-download"}},
+)
 def ack(
     body: Ack,
     device: Device = Depends(require_device_key),

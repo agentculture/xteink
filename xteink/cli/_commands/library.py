@@ -27,17 +27,16 @@ def _line(i: dict[str, Any]) -> str:
     return f"{i['id']}\t{i['kind']}\t{i['title']}{by}\t({i['format']}, {i['size']} bytes)"
 
 
-def cmd_list(args: argparse.Namespace) -> int:
+def cmd_list(args: argparse.Namespace) -> None:
     client = make_client()
     items = call(lambda: client.list_library(args.q, args.kind, args.limit))
     if json_mode(args):
         emit_result({"items": items}, json_mode=True)
     else:
         emit_result("\n".join(_line(i) for i in items) or "library is empty", json_mode=False)
-    return 0
 
 
-def cmd_add(args: argparse.Namespace) -> int:
+def cmd_add(args: argparse.Namespace) -> None:
     path = Path(args.path)
     if not path.is_file():
         raise CliError(EXIT_USER_ERROR, f"not a file: {path}", "pass the path of a local book file")
@@ -58,7 +57,7 @@ def cmd_add(args: argparse.Namespace) -> int:
     }
     if not args.apply:
         _emit(args, payload, f"would {what}\n{DRY_RUN_HINT}")
-        return 0
+        return
     res = call(
         lambda: client.upload(
             title=args.title, author=args.author or "", kind=args.kind, path=str(path)
@@ -70,10 +69,9 @@ def cmd_add(args: argparse.Namespace) -> int:
         payload["entry"] = call(lambda: client.queue_item(dev["id"], res["item"]["id"]))
         text += f"\nqueued for device {dev['id']} ({dev['name']})"
     _emit(args, payload, text)
-    return 0
 
 
-def cmd_rm(args: argparse.Namespace) -> int:
+def cmd_rm(args: argparse.Namespace) -> None:
     client = make_client()
     item = call(lambda: client.get_item(args.item_id))
     what = f"remove library item {item['id']} ({item['title']!r})"
@@ -84,13 +82,12 @@ def cmd_rm(args: argparse.Namespace) -> int:
     }
     if not args.apply:
         _emit(args, payload, f"would {what}\n{DRY_RUN_HINT}")
-        return 0
+        return
     call(lambda: client.delete_item(item["id"]))
     _emit(args, payload, f"removed: {what}")
-    return 0
 
 
-def cmd_overview(args: argparse.Namespace) -> int:
+def cmd_overview(args: argparse.Namespace) -> None:
     emit_overview(
         "xteink library",
         [
@@ -108,7 +105,6 @@ def cmd_overview(args: argparse.Namespace) -> int:
         ],
         json_mode=json_mode(args),
     )
-    return 0
 
 
 def register(sub: argparse._SubParsersAction) -> None:

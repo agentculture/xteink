@@ -130,7 +130,7 @@ class Client:
                 payload = resp.read()
         except urllib.error.HTTPError as exc:
             raise self._error(exc.code, exc.read()) from None
-        except (urllib.error.URLError, OSError) as exc:
+        except OSError as exc:  # includes URLError
             reason = getattr(exc, "reason", exc)
             raise ServerUnreachable(f"cannot reach {self.base_url}: {reason}") from None
         return json.loads(payload) if payload else None
