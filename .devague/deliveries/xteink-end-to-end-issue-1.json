@@ -2,7 +2,7 @@
   "plan_slug": "xteink-end-to-end-issue-1",
   "schema_version": 2,
   "created": "2026-10-06T18:14:16Z",
-  "updated": "2026-10-06T22:34:52Z",
+  "updated": "2026-10-07T00:33:42Z",
   "deviations": [
     {
       "id": "d1",
@@ -89,7 +89,787 @@
       "seq": 6
     }
   ],
-  "evidence": [],
-  "deltas": [],
+  "evidence": [
+    {
+      "id": "e1",
+      "obligation_ref": "o1",
+      "test_ref": "tests/cli/test_nouns.py::test_cli_never_imports_core_or_server; tests/core/test_isolation.py; tests/cli/test_nouns.py::test_only_mcp_module_imports_xteink_mcp_and_lazily",
+      "behavior_text": "CLI and MCP import only xteink.client (never core/server); core has no network imports",
+      "contract_text": "Every library/device operation is implemented once in the core; CLI, MCP and web UI reach it only through the HTTP API client",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "pytest -n auto at the run commit: 444 passed, 2 skipped",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 7
+    },
+    {
+      "id": "e2",
+      "obligation_ref": "o2",
+      "test_ref": "Playwright stack + .github/scripts/privacy-check.sh + c49 reboot (docs/evidence/c49-reboot.md)",
+      "behavior_text": "compose up starts api healthy from the repo; production api/mcp run with restart: unless-stopped and healthchecks; arm64 host (spark, linux 6.17 nvidia arm64)",
+      "contract_text": "'docker compose up -d' from a fresh clone + .env starts api/web and mcp healthy on linux/arm64, each with restart: unless-stopped and a healthcheck",
+      "evidence_type": "integration",
+      "strength": "execution",
+      "strength_basis": "throwaway stacks came up healthy (e2e, privacy); production containers show restart=unless-stopped and (healthy) after reboot. Not run: a literal fresh clone",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 8
+    },
+    {
+      "id": "e3",
+      "obligation_ref": "o3",
+      "test_ref": "docs/evidence/t11-remote-access-curl.txt; docs/evidence/c49-reboot.md",
+      "behavior_text": "anon ebooks -> 302 Access login; device queue no key -> 401; with a device key -> 200",
+      "contract_text": "Anonymous GET https://ebooks.culture.dev -> Access login; GET https://xteink.culture.dev/api/device/queue without key -> 401, with a valid device key -> 200",
+      "evidence_type": "integration",
+      "strength": "execution",
+      "strength_basis": "live curl matrix 2026-10-06 (key -> 200) and again after reboot 2026-10-07 (302/401)",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 9
+    },
+    {
+      "id": "e4",
+      "obligation_ref": "o4",
+      "test_ref": "docs/evidence/t19-x3-bringup.md (operator)",
+      "behavior_text": "boot/home/library render the xteink theme, distinct from stock",
+      "contract_text": "Boot, home and library screens render our theme, visibly distinct from stock CrossPoint",
+      "evidence_type": "manual",
+      "strength": "execution",
+      "strength_basis": "operator confirmed the xteink theme on the X3 after first flash",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "1c58a24b"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 10
+    },
+    {
+      "id": "e5",
+      "obligation_ref": "o5",
+      "test_ref": "docs/evidence/t20-first-sync.md; t20-x3-key-profile.md; t20-phone-upload-lan-sync.md (operator)",
+      "behavior_text": "auto-joins iPhone (5) when in range; falls back to the home network on its own after fix E; reading works with no network",
+      "contract_text": "With home LAN and 'iPhone (5)' saved, the device auto-joins whichever is in range; with neither, reading still works without prompts",
+      "evidence_type": "manual",
+      "strength": "execution",
+      "strength_basis": "serial log shows auto-join to iPhone (5); operator confirmed 'Fallback works' on the fix E build and offline reading/book switching",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "1c58a24b"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 11
+    },
+    {
+      "id": "e6",
+      "obligation_ref": "o6",
+      "test_ref": "docs/evidence/t20-x3-key-profile.md; test/x3_key_profile (operator + host ctest 556/556)",
+      "behavior_text": "as amended by d5/d6: edges page back/forward; 4.1 Back, 4.2 Menu/OK; hold 4.2 zoom mode with edges stepping size; 4.3/4.4 paragraph",
+      "contract_text": "Left/Right page back/forward; Confirm=Menu/OK; Back=Back/Cancel; top key toggles zoom mode, in which Left/Right step font size down/up",
+      "evidence_type": "manual",
+      "strength": "execution",
+      "strength_basis": "operator confirmed every row on the device; the original 'top key toggles zoom' is impossible (top key = hardware reset, d5)",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "1c58a24b"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 12
+    },
+    {
+      "id": "e7",
+      "obligation_ref": "o7",
+      "test_ref": "docs/evidence/t20-zoom-mode.md (operator); EpubReaderMenuActivity",
+      "behavior_text": "zoom scale shown while zoom mode is on; menu offers zoom and go-to",
+      "contract_text": "Menu offers go-to position/progress and zoom; zoom scale is shown while zoom mode is on",
+      "evidence_type": "manual",
+      "strength": "coverage",
+      "strength_basis": "zoom scale/zoom mode confirmed by the operator; go-to position in the menu present in code (upstream Go to %), not exercised on the device",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "1c58a24b"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 13
+    },
+    {
+      "id": "e8",
+      "obligation_ref": "o8",
+      "test_ref": "agentculture/xteink-firmware Actions 'Xteink CI' on feat/issue-1; docs/xteink/README.md model table",
+      "behavior_text": "every Xteink env builds in CI; README records per-model verification level",
+      "contract_text": "Every upstream Xteink env (C3 X3/X4, S3 X4Pro/X4C) builds in the fork's CI; README records per-model verification level",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "Xteink CI green at 1c58a24b (and every earlier push); README table exists but its X3 row still says hardware verification planned (to be updated)",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "1c58a24b"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 14
+    },
+    {
+      "id": "e9",
+      "obligation_ref": "o9",
+      "test_ref": "tests/server/test_app_config.py::test_no_cloudflare_token_reads_in_package",
+      "behavior_text": "no xteink package code reads CLOUDFLARE_API_TOKEN; cloudflared gets TUNNEL_TOKEN via env only",
+      "contract_text": "No xteink code reads CLOUDFLARE_API_TOKEN or calls the Cloudflare API; cloudflared receives TUNNEL_TOKEN only via env",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "pytest at the run commit; compose passes TUNNEL_TOKEN_* only",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 15
+    },
+    {
+      "id": "e10",
+      "obligation_ref": "o10",
+      "test_ref": "uv run teken cli doctor . --strict; tests/cli/test_nouns.py (dry-run/apply), tests/test_cli.py (explain/json)",
+      "behavior_text": "every verb has --json and explain; mutating verbs dry-run without --apply",
+      "contract_text": "Every verb supports --json and has an explain entry; mutating verbs make no change without --apply; 'teken cli doctor --strict' passes",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "teken doctor --strict PASS and pytest green at the run commit",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 16
+    },
+    {
+      "id": "e11",
+      "obligation_ref": "o11",
+      "test_ref": "web/ vitest 63/63, typecheck, build; Playwright 5/5 against the built image; .github/workflows/tests.yml web job",
+      "behavior_text": "web changes run build+tests; the image serves the built index.html",
+      "contract_text": "PRs touching web/** run web build+tests; the image/wheel serves the built index.html",
+      "evidence_type": "integration",
+      "strength": "execution",
+      "strength_basis": "run locally at the run commit; the GitHub web job has not run yet (branch unpushed)",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 17
+    },
+    {
+      "id": "e12",
+      "obligation_ref": "o12",
+      "test_ref": "python3 scripts/scan-secrets.py; tests/test_scan_secrets.py",
+      "behavior_text": "scan clean; only example config tracked",
+      "contract_text": "scan-secrets.py is clean; only *.example config is tracked; .env, keys and secrets are gitignored",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "scan-secrets clean (263 files) at the run commit",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 18
+    },
+    {
+      "id": "e13",
+      "obligation_ref": "o13",
+      "test_ref": "tests/mcp/test_mcp_integration.py (8 tests); docs/evidence/t20-first-sync.md",
+      "behavior_text": "push_file/list_library/send_to_device work from an mcp SDK client with a key; invalid key -> tool error; missing key refuses to start",
+      "contract_text": "push_file, list_library and send_to_device work from an mcp SDK client with an API key; without a key they are refused",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "pytest at the run commit; production push_file used for the first device sync",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 19
+    },
+    {
+      "id": "e14",
+      "obligation_ref": "o14",
+      "test_ref": "fork source review: MappedInputManager/X3KeyProfile via HalGPIO::deviceIsX3(), platformio env flags",
+      "behavior_text": "model differences go through HAL (deviceIsX3) and build flags; no ad-hoc model branches",
+      "contract_text": "Model differences are behind HAL/build flags only (e.g. -DFREEINK_DEVICE_X3=1), no ad-hoc model branches",
+      "evidence_type": "observation",
+      "strength": "coverage",
+      "strength_basis": "read the d5 diff; X3 behaviour is keyed on the HAL probe only",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "1c58a24b"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 20
+    },
+    {
+      "id": "e15",
+      "obligation_ref": "o15",
+      "test_ref": "docs/evidence/t20-first-sync.md, t20-phone-upload-lan-sync.md, t20-x3-key-profile.md",
+      "behavior_text": "on Wi-Fi join the device fetches its queue, stores on SD, acks after sha256 verify, reads offline",
+      "contract_text": "On Wi-Fi join the device fetches its queue, stores each book on microSD, verifies sha256 before ACK, and reads offline afterwards",
+      "evidence_type": "integration",
+      "strength": "execution",
+      "strength_basis": "server delivered_at set by sha256-verified ack on both syncs; offline reading confirmed by the operator",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "1c58a24b"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 21
+    },
+    {
+      "id": "e16",
+      "obligation_ref": "o16",
+      "test_ref": "scripts/xteink-check-services.py (Xteink CI guards job)",
+      "behavior_text": "no listening service or open AP outside menu actions",
+      "contract_text": "No HTTP server listens and no open AP is up on the device unless explicitly enabled from the device menu",
+      "evidence_type": "automated",
+      "strength": "coverage",
+      "strength_basis": "static placement guard OK locally and in CI at 1c58a24b; not probed on the device with a port scan",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "1c58a24b"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 22
+    },
+    {
+      "id": "e17",
+      "obligation_ref": "o17",
+      "test_ref": "docs/evidence/t20-phone-upload-lan-sync.md; d4-sso-web-ui.md",
+      "behavior_text": "compose stack on spark; upload via the web UI; book reaches the X3; readable offline",
+      "contract_text": "Following the README on spark: compose up, upload via web, book reaches the X3, readable with Wi-Fi off",
+      "evidence_type": "integration",
+      "strength": "execution",
+      "strength_basis": "phone upload via SSO -> LAN sync -> offline reading, all on real hardware; the README was not followed from a fresh clone",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 23
+    },
+    {
+      "id": "e18",
+      "obligation_ref": "o18",
+      "test_ref": "docs/evidence/t20-first-sync.md",
+      "behavior_text": "MCP push_file -> book on device <= 60 s after Wi-Fi join",
+      "contract_text": "MCP push_file -> book on device <= 60 s after Wi-Fi join; >= 10 pages read in airplane mode",
+      "evidence_type": "integration",
+      "strength": "execution",
+      "strength_basis": "42.8 s from Wi-Fi join to sync done. The >= 10 pages in airplane mode part was not counted",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "1c58a24b"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 24
+    },
+    {
+      "id": "e19",
+      "obligation_ref": "o19",
+      "test_ref": "docs/evidence/c49-reboot.md",
+      "behavior_text": "after reboot all services healthy <= 120 s, no manual step; anon -> SSO; keyless device API over tunnel -> 401",
+      "contract_text": "After reboot, all services healthy <= 120 s with no manual step; anon -> SSO, keyless API over tunnel -> 401",
+      "evidence_type": "integration",
+      "strength": "execution",
+      "strength_basis": "boot 03:16:29, containers healthy ~47 s, endpoints checked at ~90 s",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 25
+    },
+    {
+      "id": "e20",
+      "obligation_ref": "o20",
+      "test_ref": "Xteink CI (fork) at 1c58a24b; local run of every xteink CI step at 4eacfc2",
+      "behavior_text": "fork CI builds all envs; xteink test/web/lint green with coverage >= 60%",
+      "contract_text": "Fork CI builds all Xteink envs; xteink CI test/web/lint green with coverage >= 60%",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "fork CI green on GitHub; xteink steps pass locally (coverage 90.09%) but GitHub CI has not run yet (branch unpushed)",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 26
+    },
+    {
+      "id": "e21",
+      "obligation_ref": "o21",
+      "test_ref": ".github/scripts/privacy-check.sh (COMPOSE_PROJECT_NAME=xteink-ci-val)",
+      "behavior_text": "with the tunnel profile off, core/server/mcp tests (281, no skips) and a fake-device sync pass on an internal-only network; negative control proves no outbound route",
+      "contract_text": "With the tunnel profile off, the stack's test suite + a fake-device sync pass on an egress-denied network (0 outbound connections)",
+      "evidence_type": "integration",
+      "strength": "sensitivity",
+      "strength_basis": "negative control 'no outbound route' ran first, so a test needing egress would have failed",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 27
+    },
+    {
+      "id": "e22",
+      "obligation_ref": "o22",
+      "test_ref": "scripts/check-compose.sh",
+      "behavior_text": "without --profile remote no cloudflared container runs",
+      "contract_text": "Without --profile remote, no cloudflared container runs",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "OK at the run commit",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 28
+    },
+    {
+      "id": "e23",
+      "obligation_ref": "o23",
+      "test_ref": "git diff merge-base(upstream/develop)..1c58a24b (89 files)",
+      "behavior_text": "fork diff touches theme/UI, input, Wi-Fi/sync config, sync client (+HalStorage free space), OTA URL, TLS; plus approved d2 tab nav, d3/d6 reader scroll, d5 key profile and reset boot (main.cpp)",
+      "contract_text": "git diff against upstream develop touches only theme/UI, input, Wi-Fi/sync config, sync client, OTA URL and TLS verification",
+      "evidence_type": "observation",
+      "strength": "coverage",
+      "strength_basis": "every touched path falls into a listed category or an approved deviation",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "1c58a24b"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 29
+    },
+    {
+      "id": "e24",
+      "obligation_ref": "o24",
+      "test_ref": "tests/server/test_device_protocol.py (unknown protocol 426, ack mismatch 409, revoked 401); t20 hardware syncs over tunnel and LAN",
+      "behavior_text": "versioned contract with device-key auth, queue, download, sha256 ack; unknown version -> explicit error; same over LAN and xteink.culture.dev",
+      "contract_text": "Versioned contract: auth by device key, queue fetch, download, sha256 ACK; unknown protocol version -> explicit error; identical over LAN and xteink.culture.dev",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "pytest at the run commit; the device synced over both paths with one client",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 30
+    },
+    {
+      "id": "e25",
+      "obligation_ref": "o25",
+      "test_ref": "web/e2e/*.spec.ts (Playwright 5/5) against compose stack xteink-e2e",
+      "behavior_text": "upload, library browse/search/delete, send-to-device with status, device pairing, settings",
+      "contract_text": "Upload, library browse/search/delete, send-to-device with status, device pairing, settings each pass a Playwright flow against the compose stack",
+      "evidence_type": "integration",
+      "strength": "execution",
+      "strength_basis": "npx playwright test: 5 passed against the throwaway stack built from the run commit",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 31
+    },
+    {
+      "id": "e26",
+      "obligation_ref": "o27",
+      "test_ref": "scripts/xteink-tls/run.sh (host wolfSSL with the firmware's flags and pinned bundle); t20-first-sync (device)",
+      "behavior_text": "MITM self-signed cert for xteink.culture.dev REFUSED; wrong name REFUSED; xteink.culture.dev VERIFIED; device sync over HTTPS succeeded",
+      "contract_text": "Sync against a MITM proxy with an untrusted cert fails closed; against xteink.culture.dev it succeeds",
+      "evidence_type": "automated",
+      "strength": "fidelity",
+      "strength_basis": "same wolfSSL release/config and bundle as the firmware, on the host; the MITM case was not run on the X3 itself",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "1c58a24b"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 32
+    },
+    {
+      "id": "e27",
+      "obligation_ref": "o28",
+      "test_ref": "scripts/xteink-check-services.py rule 'upstream OTA release feed'; src/network/OtaUpdater.cpp",
+      "behavior_text": "OTA feed points at this fork's releases; the upstream feed string is forbidden in OTA sources",
+      "contract_text": "OTA check on the fork never offers an upstream CrossPoint release",
+      "evidence_type": "automated",
+      "strength": "coverage",
+      "strength_basis": "static guard in CI; no OTA check was run on the device",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "1c58a24b"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 33
+    },
+    {
+      "id": "e28",
+      "obligation_ref": "o29",
+      "test_ref": "tests/cli/test_device_usb.py; docs/evidence/t19-x3-bringup.md",
+      "behavior_text": "device backup --apply wrote a 16 MB dump with sha256 before first flash; restore command documented",
+      "contract_text": "'xteink device backup --apply' writes a full-flash dump with sha256 before first flash; restore procedure documented and rehearsed once",
+      "evidence_type": "integration",
+      "strength": "execution",
+      "strength_basis": "real backup sha256-verified; the restore was NOT rehearsed",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 34
+    },
+    {
+      "id": "e29",
+      "obligation_ref": "o30",
+      "test_ref": "docs/evidence/t11-remote-access-curl.txt; docs/remote-access.md",
+      "behavior_text": "two remote-login setups: ebooks with Access allow-policy, xteink with --no-access; both reach the api container (two tunnels per d1)",
+      "contract_text": "Two remote-login setups exist: ebooks.culture.dev with Access allow-policy, xteink.culture.dev with --no-access; both route to the same origin",
+      "evidence_type": "integration",
+      "strength": "execution",
+      "strength_basis": "live routing verified; two tunnels instead of one (deviation d1)",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 35
+    },
+    {
+      "id": "e30",
+      "obligation_ref": "o31",
+      "test_ref": "test/zoom_mode (host ctest); docs/evidence/t20-zoom-mode.md (operator)",
+      "behavior_text": "zoom steps snap to available sizes; one reflow on leaving; same passage stays on screen",
+      "contract_text": "Zoom steps snap to available point sizes; reflow happens once on leaving zoom mode; the same passage remains on screen",
+      "evidence_type": "manual",
+      "strength": "execution",
+      "strength_basis": "host tests pass; operator: reflow keeps the reading position, 'Zoom works great'",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "1c58a24b"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 36
+    },
+    {
+      "id": "e31",
+      "obligation_ref": "o32",
+      "test_ref": "tests/server/test_device_protocol.py (mirror deletes, sd_full, revoked 401)",
+      "behavior_text": "mirror-only deletes of unmodified copies; low SD -> refused before download; revoked key -> 401",
+      "contract_text": "Deleting a delivered book removes the unmodified device copy only for mirror devices; low SD space -> refusal before download; revoked key -> 401",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "server side green at the run commit; mirror delete and sd_full not exercised on the X3",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 37
+    },
+    {
+      "id": "e32",
+      "obligation_ref": "o33",
+      "test_ref": "tests/core/test_devices.py, tests/server/test_device_protocol.py::test_device_status_via_admin_api, web devices e2e; HomeActivity drawHomeStatusLine",
+      "behavior_text": "server exposes last_seen/last result/queue per device via API, CLI --json, web; device draws a one-line status",
+      "contract_text": "Server exposes last_seen, last sync result and queue per device (API, CLI --json, web); device shows a one-line sync status",
+      "evidence_type": "automated",
+      "strength": "coverage",
+      "strength_basis": "server/CLI/web verified; the device status line exists in code but was not checked on the X3",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 38
+    },
+    {
+      "id": "e33",
+      "obligation_ref": "o34",
+      "test_ref": "tests/core/test_ingest.py (oversized, wrong magic, zip bomb x2); tests/server/test_app_routes.py::test_upload_too_large_413",
+      "behavior_text": "oversized, wrong magic and zip bombs rejected; every upload path (web, MCP, CLI) goes through the same API ingest",
+      "contract_text": "Oversized file, wrong magic bytes and EPUB zip bomb are all rejected with 4xx on every upload path",
+      "evidence_type": "automated",
+      "strength": "fidelity",
+      "strength_basis": "core rejection tested; only the size limit is asserted at the HTTP layer; MCP/web reach the same endpoint (o1)",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 39
+    },
+    {
+      "id": "e34",
+      "obligation_ref": "o35",
+      "test_ref": "docs/evidence/t11-remote-access-curl.txt; c49-reboot.md; tests/server/test_app_auth.py::test_device_app_404_everywhere_else",
+      "behavior_text": "LAN API/MCP with a key; tunnel routes only /api/device/*, other paths 404",
+      "contract_text": "API/MCP reachable via LAN and tailnet IPs with key; through the tunnel only /api/device/* is routed, any other path -> 404",
+      "evidence_type": "integration",
+      "strength": "execution",
+      "strength_basis": "LAN and tunnel verified live; a tailnet IP was not tested",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 40
+    },
+    {
+      "id": "e35",
+      "obligation_ref": "o36",
+      "test_ref": "tests/mcp/test_client.py::test_upload_markdown_is_article; docs/evidence/t20-first-sync.md, t20-phone-upload-lan-sync.md",
+      "behavior_text": "Markdown article via MCP or web becomes an EPUB tagged article, syncs and paginates on the X3",
+      "contract_text": "A Markdown/HTML article pushed via MCP or web becomes an EPUB tagged kind=article and syncs to and paginates on the X3",
+      "evidence_type": "integration",
+      "strength": "execution",
+      "strength_basis": "both device syncs delivered Markdown articles converted by pandoc; read on the X3",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-07T03:40:00+03:00",
+        "commit": "4eacfc2"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 41
+    }
+  ],
+  "deltas": [
+    {
+      "id": "b1",
+      "kind": "amended",
+      "behavior_text": "Remote access uses two Cloudflare tunnels (one per hostname, two cloudflared connectors) instead of one shared tunnel",
+      "caused_by": [
+        "d1"
+      ],
+      "evidence_refs": [
+        "e29"
+      ],
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false
+    },
+    {
+      "id": "b2",
+      "kind": "added",
+      "behavior_text": "Settings on the device: Left/Right switch tabs, Up/Down move rows (tab navigation)",
+      "caused_by": [
+        "d2"
+      ],
+      "evidence_refs": [
+        "e6"
+      ],
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false
+    },
+    {
+      "id": "b3",
+      "kind": "amended",
+      "behavior_text": "The web UI at ebooks.culture.dev needs Cloudflare Access SSO only, no xtk_ API key; the LAN UI still asks for a key",
+      "caused_by": [
+        "d4"
+      ],
+      "evidence_refs": [
+        "e3",
+        "e17"
+      ],
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false
+    },
+    {
+      "id": "b4",
+      "kind": "amended",
+      "behavior_text": "X3 key profile: side edge keys page back/forward (tabs in Settings), 4.3/4.4 Up/Down, hold 4.2 = zoom mode, hold 4.1 = rotate portrait<->landscape (CCW); the top regular key is a hardware reset and cannot toggle zoom",
+      "caused_by": [
+        "d5"
+      ],
+      "evidence_refs": [
+        "e6"
+      ],
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false
+    },
+    {
+      "id": "b5",
+      "kind": "added",
+      "behavior_text": "A top-key (EN) reset on battery boots normally to Home/the last book instead of sleeping; low or unreadable battery still sleeps; on USB charging it still charge-sleeps (operator accepted)",
+      "caused_by": [
+        "d5"
+      ],
+      "evidence_refs": [
+        "e6"
+      ],
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false
+    },
+    {
+      "id": "b6",
+      "kind": "amended",
+      "behavior_text": "In the EPUB reader 4.3/4.4 scroll by paragraph (next paragraph to the top / previous paragraph start to the top) instead of by line",
+      "caused_by": [
+        "d6"
+      ],
+      "evidence_refs": [
+        "e6"
+      ],
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false
+    },
+    {
+      "id": "b7",
+      "kind": "amended",
+      "behavior_text": "Saved-network auto-join waits up to 15 s per network within a 45 s budget (was 7 s), so the range extender (8.3 s) is joined without manual selection",
+      "caused_by": [
+        "c6"
+      ],
+      "evidence_refs": [
+        "e5"
+      ],
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false
+    },
+    {
+      "id": "b8",
+      "kind": "amended",
+      "behavior_text": "Sync status reports reuse a cached SD free-space value (24 h / 64 MB rules) instead of a 7 s scan on every sync",
+      "caused_by": [
+        "c28"
+      ],
+      "evidence_refs": [
+        "e15"
+      ],
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false
+    }
+  ],
   "supersessions": []
 }
