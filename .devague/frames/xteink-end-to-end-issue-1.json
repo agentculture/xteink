@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-07T01:13:54Z",
+  "updated": "2026-10-07T01:15:05Z",
   "claims": [
     {
       "id": "c1",
@@ -2104,6 +2104,18 @@
       "skipped_check": "harness-smoke --stage all with uvx steward; Sonar gate check before push",
       "refs": [
         "t24"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l37",
+      "code": "grader-unverified",
+      "what": "Fork format gate never ran this session: clang-format is not installed on spark, bin/clang-format-fix exited 1 with output discarded (>/dev/null), and 'git diff --exit-code' then reported clean; the d5 subagent's and the main agent's 'clang-format clean' claims (d5, d6, rotate) were unverified until PR CI's clang-format-21 job failed on one line",
+      "skipped_check": "check the formatter's exit status; install clang-format 21 (now via uv tool)",
+      "refs": [
+        "t24",
+        "fork:PR1"
       ],
       "origin": "llm",
       "status": "proposed"
