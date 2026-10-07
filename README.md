@@ -47,7 +47,7 @@ What is **not** verified yet:
  |   SQLite + files in /data (volume xteink-data)               |
  +--------------------------------------------------------------+
         ^
-        | XTEINK_URL + XTEINK_API_KEY
+        | XTEINK_URL + each caller's key
  +--------------+
  | mcp :8782    |  streamable-http for LAN / tailnet / mesh agents
  +--------------+
@@ -113,17 +113,16 @@ exposes the web UI shell (not your data) to your network; set
 
 ### MCP for agents (optional)
 
-Mint a second key for the MCP service, put it in `.env`, and start everything:
+`docker compose up -d` also starts the `mcp` service. It holds no key: mint one
+key per agent and give it to that agent's MCP client, which sends it as
+`Authorization: Bearer <key>`:
 
 ```bash
-docker compose run --rm api python -m xteink.server create-key mcp
-[ -f .env ] || cp .env.example .env   # keep your own .env if you already made one
-# edit .env: set XTEINK_API_KEY=<the printed key>
-docker compose up -d
+docker compose run --rm api python -m xteink.server create-key my-agent
 ```
 
-The MCP endpoint is then `http://<host>:8782/mcp/` (with the trailing slash). Without a key the `mcp`
-service refuses to start, which is why step 1 above starts only `api`. See
+The MCP endpoint is `http://<host>:8782/mcp/` (with the trailing slash). A request
+without a key gets 401, and a revoked key is refused. See
 [`docs/mcp.md`](docs/mcp.md). MCP is for LAN, Tailscale and mesh use; it is
 never routed through the tunnel.
 

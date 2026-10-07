@@ -69,7 +69,7 @@ services:
         condition: service_healthy
     environment:
       XTEINK_URL: http://api:8780
-      XTEINK_API_KEY: ${XTEINK_API_KEY:-}  # mcp exits 2 with a clear message if empty
+      # No server-side key: every MCP client sends its own `Authorization: Bearer xtk_...`.
       XTEINK_MCP_BIND: 0.0.0.0
       XTEINK_MCP_PORT: "8782"
     ports:

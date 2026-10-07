@@ -22,10 +22,12 @@ def main(argv: list[str] | None = None, env: dict[str, str] | None = None) -> in
     args = p.parse_args(argv)
     use_http = args.http or (env.get("XTEINK_MCP_TRANSPORT") or "").lower() in ("http", "https")
     try:
-        client.from_env(env)  # fail fast, with a clear message, when no key is configured
         if use_http:
+            # No server-side key: every HTTP caller sends its own (server.run_http).
+            client.from_env({**env, client.KEY_ENV: "unused"})  # still validate XTEINK_URL
             server.run_http(args.bind, args.port)
         else:
+            client.from_env(env)  # fail fast, with a clear message, when no key is configured
             server.run_stdio()
     except client.ConfigError as exc:
         print(f"error: {exc}", file=sys.stderr)

@@ -123,18 +123,19 @@ def test_missing_key_refuses_to_start(api_url):
     assert "XTEINK_API_KEY" in r.stderr
 
 
-def test_streamable_http_transport(api_url, api_key):
+@pytest.fixture
+def http_mcp(api_url):
+    """A streamable-http MCP server with NO server-side key: callers bring their own."""
     import socket
     import time
-
-    from mcp.client.streamable_http import streamablehttp_client
 
     with socket.socket() as sk:
         sk.bind(("127.0.0.1", 0))
         port = sk.getsockname()[1]
+    env = {k: v for k, v in os.environ.items() if k != "XTEINK_API_KEY"}
     proc = subprocess.Popen(
         [sys.executable, "-m", "xteink.mcp", "--http", "--bind", "127.0.0.1", "--port", str(port)],
-        env={**os.environ, "XTEINK_URL": api_url, "XTEINK_API_KEY": api_key},
+        env={**env, "XTEINK_URL": api_url},
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
@@ -145,16 +146,61 @@ def test_streamable_http_transport(api_url, api_key):
                 break
             except OSError:
                 time.sleep(0.1)
-
-        async def go():
-            async with streamablehttp_client(f"http://127.0.0.1:{port}/mcp") as (r, w, _):
-                async with ClientSession(r, w) as s:
-                    await s.initialize()
-                    return await s.call_tool("list_library", {})
-
-        res = anyio.run(go)
-        assert not res.isError
-        assert json.loads(text(res)) == {"items": []}
+        yield f"http://127.0.0.1:{port}/mcp"
     finally:
         proc.terminate()
         proc.wait(timeout=10)
+
+
+def _http_call(url, key, tool, args):
+    from mcp.client.streamable_http import streamablehttp_client
+
+    async def go():
+        async with streamablehttp_client(url, headers={"Authorization": f"Bearer {key}"}) as (
+            r,
+            w,
+            _,
+        ):
+            async with ClientSession(r, w) as s:
+                await s.initialize()
+                return await s.call_tool(tool, args)
+
+    return anyio.run(go)
+
+
+def test_streamable_http_uses_the_callers_key(http_mcp, api_key):
+    res = _http_call(http_mcp, api_key, "list_library", {})
+    assert not res.isError
+    assert json.loads(text(res)) == {"items": []}
+
+
+def test_streamable_http_without_a_key_is_401(http_mcp):
+    import urllib.error
+    import urllib.request
+
+    body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}).encode()
+    req = urllib.request.Request(
+        http_mcp + "/",  # the mount answers /mcp with a redirect to /mcp/
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/event-stream",
+        },
+    )
+    with pytest.raises(urllib.error.HTTPError) as e:
+        urllib.request.urlopen(req, timeout=10)  # nosec B310 - local test server
+    assert e.value.code == 401
+
+
+def test_streamable_http_wrong_key_is_refused_by_the_api(http_mcp):
+    res = _http_call(http_mcp, "xtk_wrong_wrong_wrong", "list_library", {})
+    assert res.isError
+    assert "invalid_key" in text(res) or "401" in text(res)
+
+
+def test_streamable_http_refuses_host_paths(http_mcp, api_key, tmp_path):
+    f = tmp_path / "secret.txt"
+    f.write_text("host file")
+    res = _http_call(http_mcp, api_key, "push_file", {"path": str(f), "filename": "x.txt"})
+    assert res.isError
+    assert "path" in text(res)

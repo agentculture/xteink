@@ -33,8 +33,10 @@ Landed and in the tree (read the code, not this list, when in doubt):
   verified Cloudflare Access JWT when `XTEINK_ACCESS_TEAM_DOMAIN` and
   `XTEINK_ACCESS_AUD` are set (`xteink/server/access.py`, cited from culture-rules).
 - **MCP** (`xteink/mcp`, official `mcp` SDK): tools `push_file`, `list_library`,
-  `send_to_device`; stdio by default, `--http` on :8782. LAN/tailnet/mesh only,
-  never tunnelled. `xteink/client.py` is the stdlib API client behind the CLI and MCP.
+  `send_to_device`; stdio by default (key from `XTEINK_API_KEY`), `--http` on
+  :8782 where every caller sends its own `Authorization: Bearer xtk_...` (401
+  without one; no server-side key; `path` refused). LAN/tailnet/mesh only, never
+  tunnelled. `xteink/client.py` is the stdlib API client behind the CLI and MCP.
 - **Web UI** (`web/`, Vite + React): built into `xteink/server/_webassets`
   (git-ignored, built by the Dockerfile). Behind Cloudflare Access it needs no
   key; on the LAN the first run asks for an API key.
