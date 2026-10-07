@@ -33,11 +33,13 @@ def test_add_records_metadata(library):
     assert library.read_bytes(item.id) == b"hello"
 
 
-def test_add_accepts_path(library, tmp_path):
+def test_add_rejects_a_path(library, tmp_path):
     p = tmp_path / "a.txt"
     p.write_bytes(b"from path")
-    item = library.add(p, title="A", kind="article", format="txt").item
-    assert item.size == 9
+    with pytest.raises(ValidationError):
+        library.add(p, title="A", kind="article", format="txt")
+    with pytest.raises(ValidationError):
+        library.add(str(p), title="A", kind="article", format="txt")
 
 
 def test_dedup_by_sha256(library):

@@ -41,7 +41,10 @@ from xteink.cli._output import emit_diagnostic, emit_result
 DRY_RUN_HINT = "dry-run: nothing was touched; re-run with --apply to do it."
 DEFAULT_ESPTOOL = "uvx esptool@latest"
 DEFAULT_CHIP = "esp32c3"
-DEFAULT_LAN_URL = "http://xteink.local:8781"
+# Plain HTTP on purpose: the LAN device app has no TLS certificate to pin. Requests
+# carry the per-device key and the device verifies each download by sha256; off the
+# LAN the device uses DEFAULT_TUNNEL_URL (HTTPS, pinned roots). docs/device-protocol.md
+DEFAULT_LAN_URL = "http://xteink.local:8781"  # NOSONAR(python:S5332) LAN-only, see above
 DEFAULT_TUNNEL_URL = "https://xteink.culture.dev"
 DEFAULT_NETWORKS_FILE = "~/.config/xteink/networks.json"
 PROV_INSTRUCTION = (

@@ -155,8 +155,10 @@ uv run xteink device provision --port /dev/ttyACM0 --name my-reader \
 ```
 
 `xteink` here is the CLI from this repo (see Development below). Wi-Fi
-passwords are read from `~/.config/xteink/networks.json` (keep it `chmod 600`,
-never commit it) or prompted, never passed as flags. The device speaks to the
+passwords are read from a per-user networks file outside the repo
+(`--networks-file`; `xteink explain device provision` shows the default
+location; keep it `chmod 600`, never commit it) or prompted, never passed as
+flags. The device speaks to the
 device app on port 8781 with its own `xtd_` key; it can only download what you
 queued for it. Queue an item with `xteink device queue` or the web UI. See
 [`docs/device-protocol.md`](docs/device-protocol.md).

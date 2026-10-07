@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import os
 from pathlib import Path
 
 from .errors import NotFoundError, ValidationError
@@ -27,21 +26,27 @@ class LibraryService:
 
     def add(
         self,
-        data: bytes | str | os.PathLike[str],
+        data: bytes,
         *,
         title: str,
         kind: str,
         format: str,  # noqa: A002 - public field name
         author: str = "",
     ) -> AddResult:
-        """Add already-validated bytes (or a file path). Dedups by sha256."""
+        """Add already-validated bytes. Dedups by sha256.
+
+        Bytes only: every caller hands over an upload it already holds in memory,
+        so the core never opens a caller-supplied path.
+        """
+        if not isinstance(data, bytes):
+            raise ValidationError("data must be bytes")
         if kind not in KINDS:
             raise ValidationError(f"kind must be one of {KINDS}")
         if not title or not title.strip():
             raise ValidationError("title is required")
         if not format or not format.strip():
             raise ValidationError("format is required")
-        content = data if isinstance(data, bytes) else Path(data).read_bytes()
+        content = data
         sha = hashlib.sha256(content).hexdigest()
         with self.store.connect() as c:
             row = c.execute(_SEL + " WHERE sha256 = ?", (sha,)).fetchone()

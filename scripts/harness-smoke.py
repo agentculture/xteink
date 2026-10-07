@@ -110,6 +110,13 @@ STEWARD_WAIVED_PORTABILITY_PATHS = frozenset(
     {
         ".claude/skills/recall/SKILL.md",
         ".claude/skills/remember/SKILL.md",
+        # Issue 1 scope-exploration provenance (devague entry s5): it records
+        # that cloudflared keeps its config under the operator's home and
+        # /etc/cloudflared. It is a historical finding quoted verbatim in the
+        # frame state and the exported spec, not a config lookup, and devague
+        # state is never hand-edited.
+        ".devague/frames/xteink-end-to-end-issue-1.json",
+        "docs/specs/2026-10-06-xteink-end-to-end-issue-1.md",
     }
 )
 
