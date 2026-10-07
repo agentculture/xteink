@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-07T00:41:39Z",
+  "updated": "2026-10-07T01:13:54Z",
   "claims": [
     {
       "id": "c1",
@@ -2096,6 +2096,17 @@
       ],
       "origin": "llm",
       "status": "approved"
+    },
+    {
+      "id": "l36",
+      "code": "control-absent",
+      "what": "Before opening PR #4 the local validation ran harness-smoke --stage config only (not toolchain with CI's newer steward) and never queried SonarCloud or GitGuardian, so the steward portability failure, the Sonar S2083/S5332 security rating and the GitGuardian false positive surfaced only in PR CI",
+      "skipped_check": "harness-smoke --stage all with uvx steward; Sonar gate check before push",
+      "refs": [
+        "t24"
+      ],
+      "origin": "llm",
+      "status": "proposed"
     }
   ],
   "obligations": [
