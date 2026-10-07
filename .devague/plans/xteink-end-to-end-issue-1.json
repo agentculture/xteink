@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-06T17:40:22Z",
-  "updated": "2026-10-07T00:18:25Z",
+  "updated": "2026-10-07T01:50:33Z",
   "targets": [
     {
       "id": "c1",
@@ -1290,6 +1290,22 @@
       "text": "Injected secrets (TUNNEL_TOKEN_UI/DEVICE, XTEINK_API_KEY) persist in Docker's saved container config on spark; that is what lets restart: unless-stopped bring the stack back after a reboot (c49), but any docker-group user can read them with docker inspect. Acceptable on a single-operator host; revisit with Docker secrets or a grant-backed entrypoint if spark gains users",
       "kind": "follow_up",
       "task_id": "t11",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r29",
+      "text": "LibraryService.delete() unlinks the blob after its row deletion commits, so a concurrent re-upload of the same bytes can insert a row whose blob is then removed (download fails). Found by /code-review on PR #4; rare on a single-operator library. Fix: serialize delete/add on the sha256 (BEGIN IMMEDIATE) or rewrite a missing blob on add",
+      "kind": "follow_up",
+      "task_id": "t1",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r30",
+      "text": "xteink device provision revokes the minted key after any failure, including a lost or late ACK after the device already saved it (device then gets 401 until re-provisioned), and failed runs leave revoked device rows with no delete endpoint. Found by /code-review on PR #4; deliberate fail-safe today. Options: verify via a device status call before revoking; add device deletion",
+      "kind": "follow_up",
+      "task_id": "t18",
       "resolved": false,
       "resolution": ""
     }

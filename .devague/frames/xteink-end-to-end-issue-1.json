@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-06T17:07:48Z",
-  "updated": "2026-10-07T01:15:05Z",
+  "updated": "2026-10-07T01:46:34Z",
   "claims": [
     {
       "id": "c1",
@@ -2116,6 +2116,18 @@
       "refs": [
         "t24",
         "fork:PR1"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l38",
+      "code": "grader-unverified",
+      "what": "Evidence e13 (o13: MCP tools refused without a key) was filed as pass from tests that only covered stdio; the streamable-http transport had no auth while holding the operator's key on 0.0.0.0:8782, found by /code-review on PR #4 and fixed in 7d6264f",
+      "skipped_check": "an HTTP-transport test without a key",
+      "refs": [
+        "o13",
+        "e13"
       ],
       "origin": "llm",
       "status": "proposed"

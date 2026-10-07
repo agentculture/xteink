@@ -2,7 +2,7 @@
   "plan_slug": "xteink-end-to-end-issue-1",
   "schema_version": 2,
   "created": "2026-10-06T18:14:16Z",
-  "updated": "2026-10-07T00:41:37Z",
+  "updated": "2026-10-07T01:50:34Z",
   "deviations": [
     {
       "id": "d1",
@@ -868,6 +868,20 @@
       ],
       "origin": "llm",
       "status": "approved",
+      "superseded": false
+    },
+    {
+      "id": "b9",
+      "kind": "amended",
+      "behavior_text": "The streamable-http MCP server requires each caller's Authorization: Bearer xtk_ key (401 without; no server-side key; push_file path refused over HTTP); stdio keeps XTEINK_API_KEY",
+      "caused_by": [
+        "c21"
+      ],
+      "evidence_refs": [
+        "e13"
+      ],
+      "origin": "llm",
+      "status": "proposed",
       "superseded": false
     }
   ],
