@@ -226,6 +226,9 @@ class Client:
     def get_firmware(self, firmware_id: int) -> dict:
         return self._request("GET", f"/api/firmware/{int(firmware_id)}")
 
+    def firmware_rollbacks(self, firmware_id: int) -> list[dict]:
+        return self._request("GET", f"/api/firmware/{int(firmware_id)}/rollbacks")["rollbacks"]
+
     def upload_firmware(
         self,
         path: str | os.PathLike,

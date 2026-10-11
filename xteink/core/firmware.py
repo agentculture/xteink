@@ -214,3 +214,15 @@ class FirmwareStore:
                 (device_id,),
             )
             return [_fw(r) for r in rows]
+
+    def rollbacks_of(self, firmware_id: int) -> list[dict]:
+        """Devices that rolled this image back, oldest first (id, name, rolled_back_at)."""
+        with self.store.connect() as c:
+            self._get(c, firmware_id)
+            rows = c.execute(
+                "SELECT d.id AS device_id, d.name AS device_name, r.rolled_back_at"
+                " FROM firmware_rollbacks r JOIN devices d ON d.id = r.device_id"
+                " WHERE r.firmware_id = ? ORDER BY r.rolled_back_at, d.id",
+                (firmware_id,),
+            )
+            return [dict(r) for r in rows]

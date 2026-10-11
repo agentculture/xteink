@@ -94,6 +94,9 @@ def _handler(api: FakeApi, device_app: bool):
                 return self._send(200, {"devices": api.devices})
             if method == "GET" and path == "/api/firmware":
                 return self._send(200, {"firmware": FIRMWARE})
+            if method == "GET" and path == "/api/firmware/1/rollbacks":
+                row = {"device_id": 2, "device_name": "Reader Two", "rolled_back_at": "t"}
+                return self._send(200, {"rollbacks": [row]})
             if method == "POST" and path == "/api/firmware":
                 if b"BADIMAGE" in body:
                     msg = {"detail": "not an ESP image: bad magic byte", "code": "bad_magic"}

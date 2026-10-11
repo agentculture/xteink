@@ -258,6 +258,13 @@ Response `201`: `{"firmware": Firmware, "created": true, "image": {...}}`. `200`
 
 Response `200`: the Firmware. `404` if unknown.
 
+### GET /api/firmware/{firmware_id}/rollbacks
+
+Response `200`: `{"rollbacks": [{"device_id", "device_name", "rolled_back_at"}, ...]}`,
+the devices that rolled this image back, oldest first. `404` if unknown. Read-only; the
+firmware release script uses it to refuse a build that already rolled back and to report
+rollbacks on the PR that shipped it.
+
 ### POST /api/firmware/{firmware_id}/offer
 
 Body: `{"device_id": 3}` or `{"all": true}` (exactly one), plus optional

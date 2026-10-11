@@ -842,6 +842,56 @@
         ]
       }
     },
+    "/api/firmware/{firmware_id}/rollbacks": {
+      "get": {
+        "description": "Devices that rolled this image back (read-only; used by the release flow).",
+        "operationId": "firmware_rollbacks_api_firmware__firmware_id__rollbacks_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "firmware_id",
+            "required": true,
+            "schema": {
+              "title": "Firmware Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Firmware Rollbacks Api Firmware  Firmware Id  Rollbacks Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Firmware Rollbacks",
+        "tags": [
+          "firmware"
+        ]
+      }
+    },
     "/api/keys": {
       "get": {
         "operationId": "list_keys_api_keys_get",

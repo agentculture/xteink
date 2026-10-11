@@ -16,7 +16,7 @@ NOUNS = {
     "server": ["status"],
     "library": ["add", "list", "rm"],
     "device": ["list", "queue", "revoke", "backup", "provision"],
-    "firmware": ["list", "upload", "offer"],
+    "firmware": ["list", "upload", "offer", "rollbacks"],
     "tunnel": ["status", "plan"],
     "mcp": ["serve"],
 }

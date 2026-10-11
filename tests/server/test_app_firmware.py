@@ -134,3 +134,16 @@ def test_offer_all(main_client, h, store):
     assert res["offered"] == [ok.id]
     assert res["skipped_revoked"] == [revoked.id] and res["skipped_rolled_back"] == [rolled.id]
     assert FirmwareStore(store).offered(ok.id).id == fid
+
+
+def test_rollbacks_route(main_client, h, store):
+    rolled = DeviceService(store).register("rolled")[0]
+    fid = upload(main_client, h).json()["firmware"]["id"]
+    url = f"/api/firmware/{fid}/rollbacks"
+    assert main_client.get(url).status_code == 401
+    assert main_client.get(url, headers=h).json() == {"rollbacks": []}
+    FirmwareStore(store).record_rollback(rolled.id, fid)
+    (row,) = main_client.get(url, headers=h).json()["rollbacks"]
+    assert row["device_id"] == rolled.id and row["device_name"] == "rolled"
+    assert row["rolled_back_at"]
+    assert main_client.get("/api/firmware/99/rollbacks", headers=h).status_code == 404

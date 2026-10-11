@@ -137,6 +137,15 @@ def cmd_offer(args: argparse.Namespace) -> None:
     _emit(args, payload, f"offered: {what}{extra}")
 
 
+def cmd_rollbacks(args: argparse.Namespace) -> None:
+    client = make_client()
+    fw = resolve_firmware(client, args.firmware)
+    items = call(lambda: client.firmware_rollbacks(fw["id"]))
+    payload = {"firmware": {"id": fw["id"], "version": fw["version"]}, "rollbacks": items}
+    text = "\n".join(f"{r['device_id']}\t{r['device_name']}\t{r['rolled_back_at']}" for r in items)
+    _emit(args, payload, text or f"no device rolled back firmware {fw['id']} ({fw['version']})")
+
+
 def cmd_overview(args: argparse.Namespace) -> None:
     emit_overview(
         "xteink firmware",
@@ -149,6 +158,7 @@ def cmd_overview(args: argparse.Namespace) -> None:
                     "store an image",
                     "offer FIRMWARE (--device ID|NAME | --all) [--apply] — offer an image to "
                     "devices (FIRMWARE is an id or version)",
+                    "rollbacks FIRMWARE — devices that rolled an image back",
                     "overview — this description",
                 ],
             },
@@ -192,6 +202,11 @@ def register(sub: argparse._SubParsersAction) -> None:
     o.add_argument("--apply", action="store_true", help="Actually offer it.")
     add_json(o)
     o.set_defaults(func=cmd_offer)
+
+    rb = nsub.add_parser("rollbacks", help="List devices that rolled an image back.")
+    rb.add_argument("firmware", metavar="FIRMWARE", help="Firmware id or version.")
+    add_json(rb)
+    rb.set_defaults(func=cmd_rollbacks)
 
     ov = nsub.add_parser("overview", help="Describe the firmware noun.")
     add_json(ov)

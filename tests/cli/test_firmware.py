@@ -156,3 +156,12 @@ def test_device_list_json_has_ota_and_daily_run_fields(api, capsys):
         assert k in d2 and d2[k] is None
     rc, out, _ = run(capsys, ["device", "list"])
     assert "offered: 1.6.5-dev" in out and "fw: 1.6.4" in out
+
+
+def test_rollbacks_lists_devices(api, capsys):
+    rc, out, _ = run(capsys, ["firmware", "rollbacks", "1", "--json"])
+    assert rc == 0
+    payload = json.loads(out)
+    assert payload["firmware"]["id"] == 1 and payload["rollbacks"][0]["device_id"] == 2
+    rc, out, _ = run(capsys, ["firmware", "rollbacks", "1"])
+    assert rc == 0 and "Reader Two" in out

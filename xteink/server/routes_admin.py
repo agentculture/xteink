@@ -183,6 +183,12 @@ def get_firmware(firmware_id: int, services: Services = Depends(get_services)) -
     return asdict(services.firmware.get(firmware_id))
 
 
+@firmware_router.get("/{firmware_id}/rollbacks")
+def firmware_rollbacks(firmware_id: int, services: Services = Depends(get_services)) -> dict:
+    """Devices that rolled this image back (read-only; used by the release flow)."""
+    return {"rollbacks": services.firmware.rollbacks_of(firmware_id)}
+
+
 @firmware_router.post("/{firmware_id}/offer")
 def offer_firmware(
     firmware_id: int, body: OfferRequest, services: Services = Depends(get_services)

@@ -216,8 +216,10 @@ validate the image (or check the offer) but stores and offers nothing.
     xteink firmware list [--json]
     xteink firmware upload IMAGE --commit SHA --pr URL [--version V] [--apply] [--json]
     xteink firmware offer FIRMWARE (--device ID|NAME | --all) [--apply] [--json]
+    xteink firmware rollbacks FIRMWARE [--json]
     xteink firmware overview
 
+- `rollbacks` lists the devices that rolled that image back (device id, name, time); read-only.
 - `upload` validates the ESP image header, the ESP32-C3 chip id and the board tag before
   anything is stored. The version is read from the image; `--version` is needed only when the
   image carries none (and overrides it otherwise). `--commit` is the firmware fork commit and
@@ -303,6 +305,7 @@ ENTRIES: dict[tuple[str, ...], str] = {
     ("firmware", "list"): _FIRMWARE,
     ("firmware", "upload"): _FIRMWARE,
     ("firmware", "offer"): _FIRMWARE,
+    ("firmware", "rollbacks"): _FIRMWARE,
     ("tunnel",): _TUNNEL,
     ("tunnel", "overview"): _TUNNEL,
     ("tunnel", "status"): _TUNNEL,
