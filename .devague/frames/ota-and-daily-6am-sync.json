@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-11T16:28:00Z",
-  "updated": "2026-10-11T18:09:43Z",
+  "updated": "2026-10-11T18:26:34Z",
   "claims": [
     {
       "id": "c1",
@@ -1626,6 +1626,18 @@
       "skipped_check": "on-device validation in t17 (scenarios a and b)",
       "refs": [
         "t12",
+        "t17"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l11",
+      "code": "assumption-for-measurement",
+      "what": "d7-fix: the ESD root cause is inferred, not observed (no SdFat error code or write-duration measurement); retry safety rests on reading SdFat code; the display/SD link is weak (about a 12% chance coincidence)",
+      "skipped_check": "on-device runs in t17 with the new 'SD write ... failed after X ms' diagnostic, repeated 2-3 times",
+      "refs": [
+        "d7",
         "t17"
       ],
       "origin": "llm",
