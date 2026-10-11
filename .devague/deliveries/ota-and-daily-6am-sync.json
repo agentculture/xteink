@@ -2,7 +2,7 @@
   "plan_slug": "ota-and-daily-6am-sync",
   "schema_version": 2,
   "created": "2026-10-11T17:17:51Z",
-  "updated": "2026-10-11T17:37:48Z",
+  "updated": "2026-10-11T18:14:49Z",
   "deviations": [
     {
       "id": "d1",
@@ -53,6 +53,48 @@
       "status": "approved",
       "classification": "acceptable",
       "seq": 4
+    },
+    {
+      "id": "d5",
+      "what": "t1 (RTC power-off bench test) is skipped and deferred into t17. t12 no longer depends on t1; instead of 'clock source per t1's verdict', t12 self-validates on every start: trust the RTC when its time is plausible (>= the TrustedTime floor, and not near epoch 0), otherwise WifiJoin + SNTP before deciding. t17 records whether the RTC held through the power-off (scenario b)",
+      "task_ref": "t1",
+      "reason": "the user can't run the 30-minute power-off test right now; the self-validating gate is correct either way, and only changes how often a start pays the ~10 s SNTP join, which t17 measures on device",
+      "affects": [
+        "t12",
+        "t17"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 5
+    },
+    {
+      "id": "d6",
+      "what": "c27's 'the server marks the offer as needing a human' is dropped: no server-side needs-human flag. 'Can't complete unattended' means the device-side cases only (tunnel-only offer, OTA battery floor, failed download/verify). t17 scenario (d) uses a tunnel-only offer (deferred:tunnel) instead of a server-flagged one",
+      "task_ref": "t17",
+      "reason": "user decision: the agent publishes unattended (c55), so no offer is server-marked as needing a human; the flag would have been unused surface",
+      "affects": [
+        "t12"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 6
+    },
+    {
+      "id": "d7",
+      "what": "New fork task (d7-fix): large book downloads fail with ESD (SD write short) at about 1.0-1.4 MB, shortly after an e-ink progress refresh. Investigate, fix and host-test where possible before t14/t16, so the bootstrap build carries the fix; t17 validates with a real >1 MB book. t2 (the tunnel TLS test) is no longer a staged hotspot run: it happens naturally the next time the owner syncs away from home, using the server log as evidence",
+      "task_ref": "t2",
+      "reason": "t2 bench run found any download >~1 MB fails on the current issue-1 firmware even over LAN HTTP, breaking c1 ('the queued books arrive'); the owner doesn't want to stage hotspot runs",
+      "affects": [
+        "t14",
+        "t16",
+        "t17"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "needs-follow-up",
+      "seq": 7
     }
   ],
   "evidence": [],

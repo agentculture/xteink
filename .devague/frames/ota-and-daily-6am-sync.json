@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-11T16:28:00Z",
-  "updated": "2026-10-11T17:47:57Z",
+  "updated": "2026-10-11T18:09:43Z",
   "claims": [
     {
       "id": "c1",
@@ -1614,6 +1614,18 @@
       "skipped_check": "check the screens on device in t17 (scenario f)",
       "refs": [
         "t13",
+        "t17"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l10",
+      "code": "grader-unverified",
+      "what": "t12: the start routine is verified on the host only: the RTC conversion, whether the X3 RTC holds time across a power-off, the popup on Splash boots, and whether the longer Home status line fits are all unverified on the device",
+      "skipped_check": "on-device validation in t17 (scenarios a and b)",
+      "refs": [
+        "t12",
         "t17"
       ],
       "origin": "llm",
