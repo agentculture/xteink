@@ -643,3 +643,26 @@ def test_rolled_back_version_prefers_offered_then_newest(device_client, devs, fw
     other, raw2 = register(devs, "other")
     status(device_client, raw2, rolled_back_version="dup").raise_for_status()
     assert [f.id for f in fws.rolled_back(other.id)] == [new.id]
+
+
+def test_real_version_formats_match_without_the_device_prefix(device_client, devs, fws):
+    """An uploaded image stores the bare version read from the image; the device reports
+    it with the ``xteink-fw `` prefix. They must compare as the same build."""
+    dev, raw = register(devs)
+    fw = add_fw(fws, version="1.6.5+xteink.f96ca3c6", data=b"release")
+    fws.offer(dev.id, fw.id)
+    old = status(device_client, raw, firmware_version="xteink-fw 1.6.5+xteink.0badc0de")
+    assert old.json()["firmware"]["version"] == "1.6.5+xteink.f96ca3c6"
+    installed = status(device_client, raw, firmware_version="xteink-fw 1.6.5+xteink.f96ca3c6")
+    assert "firmware" not in installed.json()
+
+
+def test_prefixed_rolled_back_version_finds_the_bare_upload(device_client, devs, fws):
+    dev, raw = register(devs)
+    fw = add_fw(fws, version="1.6.5+xteink.f96ca3c6", data=b"release")
+    fws.offer(dev.id, fw.id)
+    r = status(device_client, raw, rolled_back_version="xteink-fw 1.6.5+xteink.f96ca3c6")
+    assert r.status_code == 200
+    assert "firmware" not in r.json()
+    assert [f.id for f in fws.rolled_back(dev.id)] == [fw.id]
+    assert fws.offered(dev.id) is None

@@ -144,14 +144,33 @@ def _missing_shas(services: Services, shas: list[str]) -> set[str]:
         }
 
 
+_FW_PREFIX = "xteink-fw "
+
+
+def _same_build(a: str | None, b: str | None) -> bool:
+    """True when two firmware version strings name the same build.
+
+    Devices report ``xteink-fw <version>`` while an uploaded image stores the bare
+    ``<version>`` read from the image, so the prefix is ignored on both sides (the
+    firmware's own ``sameFirmwareVersion`` does the same).
+    """
+    if a is None or b is None:
+        return False
+
+    def bare(v: str) -> str:
+        v = v.strip()
+        return v[len(_FW_PREFIX) :] if v.startswith(_FW_PREFIX) else v
+
+    return bare(a) == bare(b)
+
+
 def _rollback_target(fws: FirmwareStore, device_id: int, version: str) -> Firmware | None:
     """The image a reported ``rolled_back_version`` refers to, or None if unknown.
 
     Several uploads may share a version string: prefer the device's current offer, else
     the newest upload with that version.
     """
-    version = version.strip()
-    matches = [f for f in fws.list() if f.version == version]
+    matches = [f for f in fws.list() if _same_build(f.version, version)]
     if not matches:
         return None
     offered = fws.offered(device_id)
@@ -164,7 +183,7 @@ def _firmware_offer(fws: FirmwareStore, device: Device) -> dict | None:
     """The status response's ``firmware`` object: only when the offer differs from the
     firmware the device runs (as just reported, or as stored)."""
     fw = fws.offered(device.id)
-    if fw is None or fw.version == device.firmware_version:
+    if fw is None or _same_build(fw.version, device.firmware_version):
         return None
     return {
         "id": fw.id,

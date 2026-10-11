@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-11T16:28:00Z",
-  "updated": "2026-10-11T18:26:34Z",
+  "updated": "2026-10-11T19:45:01Z",
   "claims": [
     {
       "id": "c1",
@@ -1639,6 +1639,18 @@
       "refs": [
         "d7",
         "t17"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l12",
+      "code": "control-absent",
+      "what": "t5's tests stored firmware versions already prefixed ('xteink-fw 0.2.0'), but real uploads store the bare version read from the image, so the raw offer and rollback comparisons never matched a real device's prefixed report; the bug was invisible to the suite until the fork review exposed the format",
+      "skipped_check": "a test fixture using the real upload format (bare version from fwimage) against the device's real report format",
+      "refs": [
+        "t5",
+        "t3"
       ],
       "origin": "llm",
       "status": "proposed"
