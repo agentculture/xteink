@@ -50,3 +50,36 @@ test("devices: pair, one-time key, mirror, rotate, revoke", async ({ page }) => 
   expect((await probe(newKey)).status).toBe(401);
   await expect(deviceCard(page, reader).getByRole("button", { name: "Issue a new key" })).toBeVisible();
 });
+
+test("devices: card shows the offered firmware and the last daily run (fixture data)", async ({ page }) => {
+  const base = {
+    key_id: "kid", mirror: false, created_at: "2026-10-06T10:00:00Z", revoked_at: null,
+    last_seen: null, last_sync_result: null, free_sd_bytes: null, firmware_version: null, last_error: null,
+    offered_firmware_id: null, last_run_at: null, last_run_trigger: null,
+    last_fw_outcome: null, last_content_outcome: null,
+  };
+  await page.route("**/api/devices", (route) =>
+    route.request().method() === "GET"
+      ? route.fulfill({
+          json: {
+            devices: [
+              { ...base, id: 1, name: "fixture-run", offered_firmware_id: 3, last_run_at: "2026-10-06T09:00:00Z",
+                last_run_trigger: "daily", last_fw_outcome: "updated", last_content_outcome: "synced" },
+              { ...base, id: 2, name: "fixture-plain" },
+            ],
+          },
+        })
+      : route.continue(),
+  );
+  await page.route("**/api/firmware", (route) =>
+    route.fulfill({ json: { firmware: [{ id: 3, version: "1.4.2" }] } }),
+  );
+  await page.route("**/api/devices/*/queue*", (route) => route.fulfill({ json: { entries: [] } }));
+  await connect(page, "#/readers");
+  const run = deviceCard(page, "fixture-run");
+  await expect(run).toContainText("Offered: 1.4.2");
+  await expect(run).toContainText(/Last run: .* - updated \/ synced/);
+  const plain = deviceCard(page, "fixture-plain");
+  await expect(plain).not.toContainText("Offered:");
+  await expect(plain).not.toContainText("Last run:");
+});
