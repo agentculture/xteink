@@ -2,7 +2,7 @@
   "plan_slug": "ota-and-daily-6am-sync",
   "schema_version": 2,
   "created": "2026-10-11T17:17:51Z",
-  "updated": "2026-10-11T19:18:20Z",
+  "updated": "2026-10-11T19:50:12Z",
   "deviations": [
     {
       "id": "d1",
@@ -124,6 +124,19 @@
       "status": "approved",
       "classification": "acceptable",
       "seq": 9
+    },
+    {
+      "id": "d10",
+      "what": "New step before t16: redeploy the LIVE stack (compose project 'xteink') from ota/daily-sync, so the server offers firmware; back up the xteink-data volume first; the store migrates the live library.db in place; verify the library, devices and queue afterwards. This also lands the pending MCP bearer-key change from issue 1 (7d6264f)",
+      "task_ref": "t16",
+      "reason": "the X3 talks to the live server, which still runs the issue-1 code with no firmware routes, so t16/t17 could not validate OTA; the plan had no explicit redeploy step; approved by the user",
+      "affects": [
+        "t17"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "risky",
+      "seq": 10
     }
   ],
   "evidence": [],
