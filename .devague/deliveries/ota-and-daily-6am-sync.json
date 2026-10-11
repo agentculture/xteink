@@ -2,7 +2,7 @@
   "plan_slug": "ota-and-daily-6am-sync",
   "schema_version": 2,
   "created": "2026-10-11T17:17:51Z",
-  "updated": "2026-10-11T17:32:28Z",
+  "updated": "2026-10-11T17:37:48Z",
   "deviations": [
     {
       "id": "d1",
@@ -29,6 +29,30 @@
       "status": "approved",
       "classification": "acceptable",
       "seq": 2
+    },
+    {
+      "id": "d3",
+      "what": "d2 withdrawn: no GitHub fallback. t9 ships as built (e113b5d4): OtaUpdater is server-only, unprovisioned devices report NOT_PROVISIONED, and xteink-check-services.py bans api.github.com in OtaUpdater. t9's original acceptance criterion stands",
+      "task_ref": "t9",
+      "reason": "user decision after review: the fork publishes no releases and isUpdateNewer can't see 1.6.5-dev builds, so the fallback would be dead code; unprovisioned devices are already on USB; it phones out to GitHub, against xteink's local-only goal; and server-only keeps the api.github.com guard",
+      "affects": [],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 3
+    },
+    {
+      "id": "d4",
+      "what": "t10 and t12 each add one add_subdirectory line to the fork's test/CMakeLists.txt (same as d1)",
+      "task_ref": "t10",
+      "reason": "new googletest suites only run when registered in test/CMakeLists.txt; user approved extending d1",
+      "affects": [
+        "t12"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 4
     }
   ],
   "evidence": [],

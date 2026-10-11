@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-11T16:28:00Z",
-  "updated": "2026-10-11T17:27:07Z",
+  "updated": "2026-10-11T17:47:57Z",
   "claims": [
     {
       "id": "c1",
@@ -1591,6 +1591,30 @@
       "refs": [
         "t9",
         "t5"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l8",
+      "code": "grader-unverified",
+      "what": "t10: device-side health/rollback (ESP-IDF calls, NVS, Wi-Fi join, real status POST, rollback reboot, rb_version capture) is compile-checked only; the X3's on-device bootloader rollback support is unverified (app-only flashes since issue 1); early deep-sleep paths before the hook are reasoned, not tested; 'display OK' only means the framebuffer was allocated",
+      "skipped_check": "on-device rollback test (t17 scenario e) plus a bootloader rollback-config check before relying on it",
+      "refs": [
+        "t10",
+        "t17"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l9",
+      "code": "grader-unverified",
+      "what": "t13: the Settings update screens are compile-checked only (no host test), and the two longest messages may be clipped on the narrow panel",
+      "skipped_check": "check the screens on device in t17 (scenario f)",
+      "refs": [
+        "t13",
+        "t17"
       ],
       "origin": "llm",
       "status": "proposed"
