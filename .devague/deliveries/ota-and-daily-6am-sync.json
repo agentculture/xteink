@@ -2,7 +2,7 @@
   "plan_slug": "ota-and-daily-6am-sync",
   "schema_version": 2,
   "created": "2026-10-11T17:17:51Z",
-  "updated": "2026-10-11T18:14:49Z",
+  "updated": "2026-10-11T19:08:15Z",
   "deviations": [
     {
       "id": "d1",
@@ -95,6 +95,19 @@
       "status": "approved",
       "classification": "needs-follow-up",
       "seq": 7
+    },
+    {
+      "id": "d8",
+      "what": "c47 amended: the post-update health check passes when the new image gets ANY HTTP answer from the xteink server (2xx, 4xx or 5xx); only no answer within the window rolls back",
+      "task_ref": "t10",
+      "reason": "user decision after the colleague review: the check exists to prove the new image boots and reaches the network; a server hiccup (5xx while restarting) or a key problem (401) shouldn't roll back a good build. LAN and tunnel reach the same server, so failing over wouldn't help",
+      "affects": [
+        "t17"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 8
     }
   ],
   "evidence": [],
