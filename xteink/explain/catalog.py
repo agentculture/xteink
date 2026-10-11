@@ -32,6 +32,12 @@ on the X3 and build-verified for the other Xteink models. See `xteink learn` for
 - `xteink overview` — descriptive snapshot of the agent.
 - `xteink doctor` — check the agent-identity invariants.
 - `xteink cli overview` — describe the CLI surface.
+- `xteink server` — HTTP API health (`status`).
+- `xteink library` — list, add, rm library items.
+- `xteink device` — list, queue, revoke, backup, provision readers.
+- `xteink firmware` — list, upload, offer reader firmware (OTA).
+- `xteink tunnel` — Cloudflare Tunnel status and plan.
+- `xteink mcp` — serve the MCP tools.
 
 ## Exit-code policy
 
@@ -44,6 +50,7 @@ on the X3 and build-verified for the other Xteink models. See `xteink learn` for
 
 - `xteink explain whoami`
 - `xteink explain doctor`
+- `xteink explain firmware`
 """
 
 _WHOAMI = """\
@@ -172,7 +179,7 @@ or a name. `queue` and `revoke` are **dry-run unless `--apply`**.
 
 ## Usage
 
-    xteink device list [--json]
+    xteink device list [--json]     # incl. firmware_version, offered_firmware, last daily run
     xteink device queue DEVICE ITEM_ID [--apply]
     xteink device revoke DEVICE [--apply]
     xteink device backup --port PORT [--esptool CMD] [--chip C] [--apply] [--json]
@@ -195,6 +202,35 @@ Both are **dry-run unless `--apply`** and never touch hardware without it.
 - Wi-Fi networks come from `--networks-file` (default `~/.config/xteink/networks.json`: a JSON
   list of `{ssid, password}`, must be `chmod 600`, never commit it) or an interactive prompt.
   Passwords are never accepted as flags, and the device key and passwords are never printed.
+"""
+
+_FIRMWARE = """\
+# xteink firmware
+
+Upload reader firmware and offer it to devices (over-the-air), through the HTTP API.
+`upload` and `offer` are **dry-run unless `--apply`**. A dry-run still has the server
+validate the image (or check the offer) but stores and offers nothing.
+
+## Usage
+
+    xteink firmware list [--json]
+    xteink firmware upload IMAGE --commit SHA --pr URL [--version V] [--apply] [--json]
+    xteink firmware offer FIRMWARE (--device ID|NAME | --all) [--apply] [--json]
+    xteink firmware overview
+
+- `upload` validates the ESP image header, the ESP32-C3 chip id and the board tag before
+  anything is stored. The version is read from the image; `--version` is needed only when the
+  image carries none (and overrides it otherwise). `--commit` is the firmware fork commit and
+  `--pr` the pull request URL. Re-uploading identical bytes returns the existing record.
+- `offer` takes a firmware id or version. `--device` offers to one device; `--all` to every
+  provisioned (non-revoked) device that has not rolled that image back (skipped devices are
+  reported). Offering to a revoked device, or to one that rolled the image back, exits 1.
+- `xteink device list --json` shows each device's `firmware_version`, `offered_firmware`
+  (`{id, version}` or null) and last daily run (`last_run_at`, `last_run_trigger`,
+  `last_fw_outcome`, `last_content_outcome`).
+
+Exit codes: `0` success, `1` user error (bad image, unknown firmware/device, rolled-back
+offer), `2` server unreachable or no key set.
 """
 
 _TUNNEL = """\
@@ -262,6 +298,11 @@ ENTRIES: dict[tuple[str, ...], str] = {
     ("device", "revoke"): _DEVICE,
     ("device", "backup"): _DEVICE,
     ("device", "provision"): _DEVICE,
+    ("firmware",): _FIRMWARE,
+    ("firmware", "overview"): _FIRMWARE,
+    ("firmware", "list"): _FIRMWARE,
+    ("firmware", "upload"): _FIRMWARE,
+    ("firmware", "offer"): _FIRMWARE,
     ("tunnel",): _TUNNEL,
     ("tunnel", "overview"): _TUNNEL,
     ("tunnel", "status"): _TUNNEL,

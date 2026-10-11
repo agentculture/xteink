@@ -30,7 +30,7 @@ from xteink.core import AuthError, Device, NotFoundError, Store, ValidationError
 from . import ServerConfig
 from .access import AccessVerifier
 from .auth import ServicesHolder, require_device_key
-from .routes_admin import devices_router, keys_router, whoami_router
+from .routes_admin import devices_router, firmware_router, keys_router, whoami_router
 from .routes_library import router as library_router
 
 API_VERSION = "1"
@@ -87,6 +87,7 @@ def create_app(
     _install_error_handlers(app)
     app.include_router(library_router)
     app.include_router(devices_router)
+    app.include_router(firmware_router)
     app.include_router(keys_router)
     app.include_router(whoami_router)
 

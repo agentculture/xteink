@@ -37,6 +37,7 @@ from xteink.core import (
     AuthError,
     Device,
     DeviceService,
+    FirmwareStore,
     KeyService,
     LibraryService,
     Store,
@@ -63,10 +64,17 @@ class Services:
     library: LibraryService
     devices: DeviceService
     keys: KeyService
+    firmware: FirmwareStore
 
     @classmethod
     def from_store(cls, store: Store) -> "Services":
-        return cls(store, LibraryService(store), DeviceService(store), KeyService(store))
+        return cls(
+            store,
+            LibraryService(store),
+            DeviceService(store),
+            KeyService(store),
+            FirmwareStore(store),
+        )
 
 
 class ServicesHolder:

@@ -66,6 +66,7 @@ def _build_parser() -> argparse.ArgumentParser:
     from xteink.cli._commands import device as _device_group
     from xteink.cli._commands import doctor as _doctor_cmd
     from xteink.cli._commands import explain as _explain_cmd
+    from xteink.cli._commands import firmware as _firmware_group
     from xteink.cli._commands import learn as _learn_cmd
     from xteink.cli._commands import library as _library_group
     from xteink.cli._commands import mcp as _mcp_group
@@ -97,6 +98,7 @@ def _build_parser() -> argparse.ArgumentParser:
     _server_group.register(sub)
     _library_group.register(sub)
     _device_group.register(sub)
+    _firmware_group.register(sub)
     _tunnel_group.register(sub)
     _mcp_group.register(sub)
     # Register further noun groups here.

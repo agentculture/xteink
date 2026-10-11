@@ -43,14 +43,42 @@ def _emit(args: argparse.Namespace, payload: dict[str, Any], text: str) -> None:
     emit_result(payload if json_mode(args) else text, json_mode=json_mode(args))
 
 
+RUN_FIELDS = ("last_run_at", "last_run_trigger", "last_fw_outcome", "last_content_outcome")
+
+
+def _enrich(client: api.Client, devices: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Add ``offered_firmware`` ({id, version} or null) and make the OTA / daily-run fields
+    always present, so ``--json`` has a stable shape."""
+    versions: dict[int, str] = {}
+    if any(d.get("offered_firmware_id") is not None for d in devices):
+        versions = {f["id"]: f["version"] for f in call(client.list_firmware)}
+    out = []
+    for d in devices:
+        d = dict(d)
+        d.setdefault("firmware_version", None)
+        d.setdefault("offered_firmware_id", None)
+        for k in RUN_FIELDS:
+            d.setdefault(k, None)
+        fid = d["offered_firmware_id"]
+        d["offered_firmware"] = (
+            {"id": fid, "version": versions.get(fid)} if fid is not None else None
+        )
+        out.append(d)
+    return out
+
+
 def cmd_list(args: argparse.Namespace) -> None:
-    devices = call(make_client().list_devices)
+    client = make_client()
+    devices = _enrich(client, call(client.list_devices))
     if json_mode(args):
         emit_result({"devices": devices}, json_mode=True)
         return
     lines = [
         f"{d['id']}\t{d['name']}\t{'REVOKED' if d.get('revoked_at') else 'active'}"
         f"\tlast seen: {d.get('last_seen') or 'never'}"
+        f"\tfw: {d.get('firmware_version') or '-'}"
+        f"\toffered: {(d['offered_firmware'] or {}).get('version') or '-'}"
+        f"\tlast run: {d.get('last_run_at') or 'never'}"
         for d in devices
     ]
     emit_result("\n".join(lines) or "no devices registered", json_mode=False)

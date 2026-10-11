@@ -4,7 +4,7 @@ The xteink server runs two apps from one process and one library:
 
 | App | Default port | Serves | Key |
 |-----|--------------|--------|-----|
-| Main app | 8780 | Web UI at `/`, `/api/library*`, `/api/devices*`, `/api/keys*`, `/api/whoami`, `/docs` | API key (`xtk_`), or Cloudflare Access SSO when configured |
+| Main app | 8780 | Web UI at `/`, `/api/library*`, `/api/devices*`, `/api/firmware*`, `/api/keys*`, `/api/whoami`, `/docs` | API key (`xtk_`), or Cloudflare Access SSO when configured |
 | Device app | 8781 | `/api/device/*` only | Device key (`xtd_`) |
 
 The machine-readable schema of the main app is committed at
@@ -102,7 +102,13 @@ Item:
 
 Device: `id`, `name`, `key_id`, `mirror`, `created_at`, `revoked_at`,
 `last_seen`, `last_sync_result`, `free_sd_bytes`, `firmware_version`,
-`last_error`. The raw device key is never part of this object.
+`last_error`, `offered_firmware_id` (the image currently offered, or null) and the last
+daily run: `last_run_at`, `last_run_trigger`, `last_fw_outcome`,
+`last_content_outcome`. The raw device key is never part of this object. (`xteink device
+list --json` adds `offered_firmware`, `{id, version}` or null.)
+
+Firmware: `id`, `version`, `sha256`, `size`, `board`, `fork_commit`, `source_pr`,
+`created_at`.
 
 Queue entry: `id`, `device_id`, `item_id`, `title`, `size`, `sha256`, `state`
 (`queued` or `delivered`), `queued_at`, `delivered_at`.
@@ -220,6 +226,48 @@ Queue a library item so the device downloads it on its next sync. Body:
 `{"item_id": 1}`. Idempotent while the item is queued; queueing an item the device
 already has (`delivered`) queues it again, so it is re-sent on the next sync. Response `201`: the Queue entry. `404` if the
 device or the item does not exist.
+
+## Firmware
+
+Over-the-air images for the readers. Images are stored in the same content-addressed
+blob store as library files, in their own table (never in `/api/library`).
+
+### GET /api/firmware
+
+Response `200`: `{"firmware": [Firmware, ...]}`, oldest first.
+
+### POST /api/firmware
+
+Multipart upload. Fields: `file` (required), `fork_commit`, `source_pr`, `version`,
+`dry_run` (`true` validates only). The server validates the image first (ESP image magic,
+ESP32-C3 chip id, `CROSSPOINT-BOARD-V1` board tag, at most 0x640000 bytes) and stores
+nothing when it fails. The version is read from the image; `version` is required only
+when the image carries none, and overrides it otherwise.
+
+Response `201`: `{"firmware": Firmware, "created": true, "image": {...}}`. `200` with
+`created: false` when the same bytes were already stored. With `dry_run`: `200`
+`{"dry_run": true, "image": {"size", "board", "chip_id", "version"}}`.
+
+| `code` | HTTP | Meaning |
+|--------|------|---------|
+| `too_large` | 413 | Image exceeds the OTA slot (0x640000 bytes) |
+| `truncated`, `bad_magic`, `wrong_chip`, `wrong_board` | 422 | Not a valid X3 image |
+| `version_required` | 422 | No version string in the image and none given |
+
+### GET /api/firmware/{firmware_id}
+
+Response `200`: the Firmware. `404` if unknown.
+
+### POST /api/firmware/{firmware_id}/offer
+
+Body: `{"device_id": 3}` or `{"all": true}` (exactly one), plus optional
+`"dry_run": true` to report without writing. Replaces any previous offer for the device.
+
+Single device: response `200`
+`{"firmware": Firmware, "dry_run": false, "offered": [3]}`; `422` if the device is revoked
+or has already rolled this image back (it is never offered again); `404` if unknown.
+`all`: offers to every non-revoked device that has not rolled the image back and
+returns `offered`, `skipped_revoked` and `skipped_rolled_back` device id lists.
 
 ## API keys
 
