@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-11T16:28:00Z",
-  "updated": "2026-10-11T17:14:13Z",
+  "updated": "2026-10-11T17:27:07Z",
   "claims": [
     {
       "id": "c1",
@@ -1559,6 +1559,41 @@
       ],
       "origin": "llm",
       "status": "approved"
+    },
+    {
+      "id": "l5",
+      "code": "control-absent",
+      "what": "Reported the xteink TDD baseline as green (263 passed) while 7 server/MCP test modules were skipped because the 'server' extra (fastapi) wasn't installed, so the gate didn't cover the server",
+      "skipped_check": "read the pytest skip reasons before calling a baseline green",
+      "refs": [
+        "t4",
+        "t3"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l6",
+      "code": "assumption-for-measurement",
+      "what": "t3: the BEGIN IMMEDIATE protection against two processes migrating the same DB concurrently is reasoned, not tested",
+      "skipped_check": "a concurrent-open migration test",
+      "refs": [
+        "t3"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l7",
+      "code": "grader-unverified",
+      "what": "t9: the device-side DevicePort HTTP/OTA path is compile-checked only (no xteink-tls host script run, no hardware); the 8 KB status-response cap was checked against pre-t5 code, not t5's final response",
+      "skipped_check": "run the device path on hardware (t17) and size-check t5's status response",
+      "refs": [
+        "t9",
+        "t5"
+      ],
+      "origin": "llm",
+      "status": "proposed"
     }
   ],
   "obligations": []

@@ -1,0 +1,37 @@
+{
+  "plan_slug": "ota-and-daily-6am-sync",
+  "schema_version": 2,
+  "created": "2026-10-11T17:17:51Z",
+  "updated": "2026-10-11T17:32:28Z",
+  "deviations": [
+    {
+      "id": "d1",
+      "what": "t9 and t11 each add one add_subdirectory line to the fork's test/CMakeLists.txt (outside t11's 'only the new files' and t9's file list)",
+      "task_ref": "t11",
+      "reason": "googletest suites under test/ only build and run when registered in test/CMakeLists.txt; without the line the acceptance-criteria host tests would never run in CI",
+      "affects": [
+        "t9"
+      ],
+      "origin": "llm",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 1
+    },
+    {
+      "id": "d2",
+      "what": "t9: OtaUpdater keeps the fork's GitHub releases source as a fallback for UNPROVISIONED devices (no device key); provisioned devices use only the xteink server. t9's criterion 'grep finds no api.github.com in OtaUpdater on xteink builds' becomes: 'a provisioned device never requests api.github.com (host test on the source-selection logic); xteink-check-services.py still bans the upstream crosspoint feed and setInsecure'",
+      "task_ref": "t9",
+      "reason": "user decision: keep GitHub OTA for unprovisioned devices rather than leaving them with no OTA source (t9 had removed it entirely to satisfy the grep criterion)",
+      "affects": [
+        "t14"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 2
+    }
+  ],
+  "evidence": [],
+  "deltas": [],
+  "supersessions": []
+}
