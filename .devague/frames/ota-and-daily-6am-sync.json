@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-11T16:28:00Z",
-  "updated": "2026-10-11T17:07:53Z",
+  "updated": "2026-10-11T17:14:13Z",
   "claims": [
     {
       "id": "c1",
@@ -1544,6 +1544,18 @@
       "refs": [
         "c41",
         "l1"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l4",
+      "code": "provenance-missing",
+      "what": "Third repeat of l1/l3: bare <placeholders> in plan task instructions and an acceptance criterion (t6, t7, t9-t14) failed MD033 on plan export",
+      "skipped_check": "backtick angle-bracket tokens when authoring task text (spec-to-plan text hygiene)",
+      "refs": [
+        "l1",
+        "l3"
       ],
       "origin": "llm",
       "status": "approved"

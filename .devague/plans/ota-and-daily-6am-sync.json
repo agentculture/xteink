@@ -1,0 +1,886 @@
+{
+  "slug": "ota-and-daily-6am-sync",
+  "title": "OTA and daily 6am sync",
+  "frame_slug": "ota-and-daily-6am-sync",
+  "schema_version": 5,
+  "status": "exported",
+  "created": "2026-10-11T17:08:36Z",
+  "updated": "2026-10-11T17:14:13Z",
+  "targets": [
+    {
+      "id": "c1",
+      "kind": "announcement",
+      "text": "xteink readers keep themselves current: when the X3 starts for the first time each day, it joins Wi-Fi, installs any new firmware the xteink server offers, then pulls the queued books and articles. If the firmware step can't run unattended, the books still arrive.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h33",
+      "kind": "honesty",
+      "text": "All three legs (OTA from the xteink server, the once-a-day start trigger, and books syncing even when firmware can't) are shown on the real X3, not only in unit tests or the fake device.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c2",
+      "kind": "requirement",
+      "text": "The xteink server stores uploaded firmware images in a separate firmware table and reuses the sha256 blob store; images can't go in items, because items.kind is CHECK-constrained to book/article (xteink/core/store.py:15-58). A schema migration is needed, because the store only runs CREATE TABLE IF NOT EXISTS.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h11",
+      "kind": "honesty",
+      "text": "An existing issue-1 library.db opens after the upgrade with its items, devices and queue intact, and gains the firmware table and any new device columns (migration test on a copy of an issue-1 db).",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c3",
+      "kind": "requirement",
+      "text": "The device protocol gains an additive firmware offer within v1: the device's POST /api/device/status already reports firmware_version, and the server answers with an optional offer (version, size, sha256, url). The image is served under /api/device/ with the existing device-key auth, Range resume and ETag streaming, the same as the book download at routes_device.py:223-256.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h12",
+      "kind": "honesty",
+      "text": "A firmware build without the change, still speaking protocol v1, syncs unchanged against the new server (the offer field is optional and ignored), and the fake-device test passes for both old and new clients.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c4",
+      "kind": "boundary",
+      "text": "The xteink server never fetches firmware from GitHub or anywhere else. Images reach it only by an operator upload, because privacy-check.sh runs the API on an internal:true docker network with no outbound route and requires the fake-device flow to pass offline.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h13",
+      "kind": "honesty",
+      "text": "privacy-check.sh passes with an OTA leg added to the fake-device flow, and grep finds no outbound HTTP client usage in the firmware code paths of xteink/server or xteink/core.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c5",
+      "kind": "requirement",
+      "text": "On xteink-provisioned devices, the firmware's OtaUpdater uses the xteink server as its only update source, replacing GitHub releases. It reuses the provisioned LAN and tunnel URLs and the device key from NVS namespace 'xteink' (XteinkConfig), and keeps the existing streaming esp_ota_begin/write/end path with its chip-id and board-tag checks (OtaUpdater.cpp:155-259). Before esp_ota_set_boot_partition it checks the written bytes against the sha256 in the server's offer.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h14",
+      "kind": "honesty",
+      "text": "On a provisioned device, no request goes to api.github.com during an update check (verified by serial log or by blocking GitHub on the LAN), and xteink-check-services.py passes with the GitHub source removed or gated off.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c6",
+      "kind": "boundary",
+      "text": "The partition layout stays as it is: two 0x640000 OTA slots in partitions.csv. The current image is 5,891,200 B, which leaves about 662 KB of headroom per slot, so the OTA and scheduler code must fit inside that headroom.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h15",
+      "kind": "honesty",
+      "text": "partitions.csv is byte-identical to fork feat/issue-1, and the release image built with the changes is under 0x640000 bytes with at least 5% headroom.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c7",
+      "kind": "requirement",
+      "text": "A new image proves itself before it is kept. The firmware overrides verifyRollbackLater() and calls esp_ota_mark_app_valid_cancel_rollback only after a health check passes: boot, display, SD, plus one successful POST /api/device/status to the xteink server within the same routine, retried within a short window. Otherwise the bootloader rolls back to the previous slot.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h16",
+      "kind": "honesty",
+      "text": "verifyRollbackLater() is overridden (returns true), and esp_ota_mark_app_valid_cancel_rollback is called only after the health check; a forced-fail image rolls back on hardware (S5).",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c8",
+      "kind": "requirement",
+      "text": "The routine runs at most once per local day, on the first device start (power-on or wake) after the day turns over at 06:00 in the device's configured timezone (Settings > Clock, default Asia/Jerusalem with DST, src/util/Timezones.cpp:38). A 'last daily run' local date is kept in NVS. Later starts the same day skip straight to Home or the reader.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h34",
+      "kind": "honesty",
+      "text": "A unit test against the Asia/Jerusalem POSIX TZ gets the 06:00 day boundary right on both DST transition days in 2026-2027, and a second start on the same local day runs 0 routines.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c9",
+      "kind": "requirement",
+      "text": "The daily run order is: join saved Wi-Fi, check for an offered firmware update and install it, reboot into the new image, then run the existing xteink::sync::run. If the firmware step fails or is skipped (no offer, low battery, download or verify error), the book/article sync still runs in that same wake. The firmware step never blocks content delivery.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h40",
+      "kind": "honesty",
+      "text": "In every failure branch of the firmware step (no offer, low battery, download error, sha256 mismatch, needs-human), sync::run still runs in the same start: unit- or host-tested with one case per branch.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c10",
+      "kind": "requirement",
+      "text": "Unattended Wi-Fi and OTA are gated on battery level. The existing sleep-time join requires at least 20% (src/main.cpp:336), and an OTA install needs a higher floor. A gated-off run is recorded in sync_last and retried at the next opportunity.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h19",
+      "kind": "honesty",
+      "text": "No unattended Wi-Fi join runs below the join floor and no OTA write starts below the OTA floor. Both are named constants with tests, and a skipped run is recorded in sync_last.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c11",
+      "kind": "requirement",
+      "text": "Admin surfaces for firmware: a CLI 'firmware' noun (upload/list/offer, dry-run by default with --apply, like device queue/revoke) plus an explain catalog entry; the device card in the web UI shows the offered firmware next to its existing firmware_version row; docs/device-protocol.md and docs/api.md are updated. Admin routes go in routes_admin.py.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h20",
+      "kind": "honesty",
+      "text": "uv run teken cli doctor . --strict passes with the firmware noun and its explain catalog entry, and the CLI firmware verbs are dry-run unless --apply is given.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c12",
+      "kind": "boundary",
+      "text": "The fork's OTA guard stays green: scripts/xteink-check-services.py keeps rejecting the upstream crosspoint release feed in OtaUpdater and setInsecure() in HttpDownloader, TlsTrust and OtaUpdater. Fork commits carry no AI trailers, and the fork's PR titles are conventional commits.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h21",
+      "kind": "honesty",
+      "text": "The fork's CI (including xteink-check-services.py and clang-format) is green on the PR, and the fork's commit log for the work has no Co-Authored-By or Claude-Session trailers.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c19",
+      "kind": "requirement",
+      "text": "The unattended daily run never ends with the device waiting for a human. Any firmware step that can't complete hands-off is deferred and surfaced (on the Home status line and in the server's device record) for the next attended session, after the books have synced.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h22",
+      "kind": "honesty",
+      "text": "No code path in the daily routine waits on button input or a confirmation dialog: the routine has a hard wall-clock cap and always ends by going back to sleep or to Home.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c20",
+      "kind": "audience",
+      "text": "The xteink owner reading on an X3 at home, who wants the reader current without a laptop or cable, and the xteink agent (Claude, the mesh resident) as operator: it builds, uploads and offers firmware through the xteink CLI, and the merged fork PR is how the owner hears about it.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h2",
+      "kind": "honesty",
+      "text": "Every new admin action is reachable from the xteink CLI with --json and a dry-run default, and every device behavior needs zero input on the device.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h42",
+      "kind": "honesty",
+      "text": "The spec's admin flows name the xteink agent as the one who runs the build, upload and offer, and its device flows need zero input from the owner beyond starting the reader.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c21",
+      "kind": "before_state",
+      "text": "Today a firmware update means a USB esptool app-only flash at 0x10000 with the 'awake, hands off' protocol (x3-flash-protocol memory, issue-1 deliveries). Books arrive only when the owner opens Settings > Sync or joins Wi-Fi for another reason (docs/xteink/sync.md 'When it runs'). Nothing happens on its own.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h3",
+      "kind": "honesty",
+      "text": "The before-state is accurate: on origin/feat/issue-1 and fork feat/issue-1 there is no scheduled sync and no server-hosted OTA (grep for esp_sleep_enable_timer_wakeup or a firmware table finds nothing).",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c22",
+      "kind": "why_it_matters",
+      "text": "The reader is meant to work offline on hardware the owner controls. Each USB flash is a bricking risk (a mid-write button press already left the X3 unbootable once), and content that waits for a manual sync goes stale. A local, signed, self-scheduled update keeps both private and hands-off.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h4",
+      "kind": "honesty",
+      "text": "After this ships, a routine firmware update for the X3 needs no USB cable and no esptool.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c23",
+      "kind": "after_state",
+      "text": "Each day, the first time the owner starts the X3 it brings itself current, installing the offered firmware and pulling everything queued for it, with no cable and no menu. A step that would need a person is postponed and shown on Home, never left hanging. Firmware never leaves the owner's network except over their own tunnel.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h5",
+      "kind": "honesty",
+      "text": "Firmware bytes travel only between the owner's server and the device (LAN or the owner's tunnel), and the server makes 0 outbound requests (privacy-check.sh still passes).",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c25",
+      "kind": "success_signal",
+      "text": "On battery, powered on after 06:00 with 1 queued book and no run yet that day: the routine runs before Home is usable, and the book is delivered within 120 s of power-on. A second wake the same day triggers 0 additional runs.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h41",
+      "kind": "honesty",
+      "text": "S2 is measured on battery with USB unplugged (isUsbConnected false), timed from the power-button press.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c26",
+      "kind": "success_signal",
+      "text": "A corrupted or truncated image (1 flipped byte, or a download cut short) is refused in 100% of attempts: 0 calls to esp_ota_set_boot_partition, the device keeps its current firmware_version, and the error is reported in last_error.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h35",
+      "kind": "honesty",
+      "text": "The sha256 is computed over the exact bytes written to the OTA slot, before set_boot_partition; a fixture with 1 flipped byte and a truncated download are both refused in tests.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c27",
+      "kind": "success_signal",
+      "text": "When the offered firmware step can't complete unattended (verify fails, low battery, or the server marks the offer as needing a human), the books still sync in the same wake (100% of the queued items that fit) and the firmware is shown as pending on Home and in the device record.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h9",
+      "kind": "honesty",
+      "text": "The deferral reason is visible on the device without a serial cable (Home status line) and on the server (device record), and is cleared once the human finishes the update.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c28",
+      "kind": "success_signal",
+      "text": "An image that boots but fails the post-update health check is rolled back: on the next boot the device reports the previous firmware_version, and the bad version is not offered again to that device.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h10",
+      "kind": "honesty",
+      "text": "Rollback is observed on real hardware, and the device ends up on the previous version without any human action.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c36",
+      "kind": "requirement",
+      "text": "Whether to install is decided by the server's offer, not by isUpdateNewer. Every fork build carries upstream's base 1.6.5 (platformio.ini:6-7), the X3 runs '1.6.5-dev-feat/issue-1-e0aec33f' (docs/evidence/t20-first-sync.md:3), and isUpdateNewer returns false for equal X.Y.Z (OtaUpdater.cpp:104-151). So the device installs when the offer names a build different from the running CROSSPOINT_VERSION, older builds included.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h25",
+      "kind": "honesty",
+      "text": "Offering a build that differs from the running one only in its -dev suffix and sha gets installed; offering the running build is a no-op.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c38",
+      "kind": "requirement",
+      "text": "The unattended join tries every saved network: last-connected first, then a scan matched against WifiCredentialStore. It doesn't rely on getLastConnectedSsid alone (main.cpp:337), because the X3 holds 2 credentials, and the last one used may be the phone hotspot from a tunnel sync (docs/evidence/t20-first-sync.md). The join has a hard deadline.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h27",
+      "kind": "honesty",
+      "text": "With the phone hotspot as the last-connected SSID and only home Wi-Fi in range, the 06:00 run joins home Wi-Fi and syncs.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c39",
+      "kind": "requirement",
+      "text": "The routine never interrupts reading. It runs only at start, before Home or the reader opens. A device left awake across 06:00 just runs it at its next start, with no reboot and no Wi-Fi mid-session, because there is only about 50 KB of heap while reading (platformio.ini:75-81).",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h36",
+      "kind": "honesty",
+      "text": "Reading across 06:00 causes no reboot, Wi-Fi join or interruption, and the day's run happens at the next start.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c41",
+      "kind": "requirement",
+      "text": "Each daily run reports what happened through additive, optional /api/device/status fields: when the run started, its trigger (power-on or wake), the firmware step outcome (`none`, `installed`, `failed:<code>`, `deferred:<reason>`) and the content outcome. The server keeps the latest per device, and xteink device list --json shows it. Older firmware that omits the fields still works.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h30",
+      "kind": "honesty",
+      "text": "A fake-device test posts each outcome and reads it back through device list --json; an old-protocol status without the fields still returns 200.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c42",
+      "kind": "requirement",
+      "text": "The new firmware tolerates an xteink server without the firmware offer, such as an issue-1 server (the offer field is absent), and treats that as 'no update', so content still syncs.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h31",
+      "kind": "honesty",
+      "text": "The new firmware against the issue-1 server (origin/feat/issue-1 image) completes a content sync with the firmware step 'none'.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c43",
+      "kind": "boundary",
+      "text": "The freeink-sdk submodule (Free-Ink/freeink-sdk @ 9729236c, .gitmodules) is not modified, and its pointer stays put. The start routine lives entirely in the fork's own code (main.cpp boot path, OtaUpdater, XteinkSync).",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h32",
+      "kind": "honesty",
+      "text": "git diff of the fork's feature branch shows no freeink-sdk pointer change.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c51",
+      "kind": "requirement",
+      "text": "The server checks an uploaded image before it can be offered: ESP image magic, the chip id at header offset 12 is ESP32-C3, the board tag matches X3, and the size fits a 0x640000 slot (the same checks as OtaUpdater.cpp:184-214). A wrong or garbage upload fails at upload time with a user error (exit 1), not at the device's next start.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h37",
+      "kind": "honesty",
+      "text": "Uploading a non-ESP file, an ESP32-S3 image, or an image larger than the slot is rejected by xteink firmware upload with exit 1; a valid X3 image is accepted.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c52",
+      "kind": "requirement",
+      "text": "Settings keeps a manual 'Check for updates' (the existing OtaUpdateActivity, src/activities/settings/SettingsActivity.cpp:410) pointed at the xteink server, so an OTA can be tried with the owner watching before relying on the start routine.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h38",
+      "kind": "honesty",
+      "text": "From Settings on the X3, 'Check for updates' shows the server's offered build and installs it, with the same sha256 and health check as the start routine.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c53",
+      "kind": "success_signal",
+      "text": "Started (on USB or battery) for the first time after 06:00, with a new build offered and 1 queued book: the X3 installs, reboots, passes the health check, and delivers the book with 0 touches beyond the start press. The server's device record shows the new firmware_version and the item as delivered.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h39",
+      "kind": "honesty",
+      "text": "This run is recorded as evidence with server-log timestamps, once on USB and once on battery.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c56",
+      "kind": "requirement",
+      "text": "Agent release flow: when a fork PR merges into the fork's integration branch with fork CI green, the xteink agent builds the X3 image with pio from that exact merged commit in a clean worktree, runs xteink firmware upload (admin key via grant inject, as in the issue-1 admin-API pattern), and offers it to every provisioned X3. The upload records the fork commit sha, CROSSPOINT_VERSION and the merged PR.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h43",
+      "kind": "honesty",
+      "text": "One real run is recorded end to end: fork PR merged, then a build from the merge commit (sha matches), then an upload accepted by the c51 checks, then an offer visible in xteink device list --json, then the X3 installs it at its next first start of the day.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c57",
+      "kind": "requirement",
+      "text": "The merged fork PR is the owner's notification, with no mesh message or other channel. When the offer goes live, the agent comments on that PR with the version, fork commit sha and devices offered (signed as xteink (Claude) by the cicd scripts). If a device later rolls the build back, the agent comments on the same PR.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h46",
+      "kind": "honesty",
+      "text": "For the recorded release run, the merged fork PR carries the offer comment naming the same version and sha as the server's offer record, and no message is sent anywhere else.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c58",
+      "kind": "boundary",
+      "text": "The release flow never flashes over USB and never touches the device directly. It never offers an image that failed the upload checks (c51), a build from an unmerged or locally modified tree, or a build that already rolled back on that device (c28). Fork commits in the flow carry no AI trailers.",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h45",
+      "kind": "honesty",
+      "text": "The release procedure refuses (exit non-zero, nothing offered) when the build tree is dirty, the commit isn't on the fork's integration branch, or the version previously rolled back on the target device.",
+      "deferred": false,
+      "deferred_reason": ""
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "summary": "Bench-test: does the X3 RTC keep time through a GPIO13 battery power-off?",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "docs/evidence/ota-rtc-poweroff.md records the off duration, the RTC time read at boot, the reference time, and the drift in seconds",
+        "the evidence ends with a one-line verdict, 'RTC holds' or 'RTC lost', that t11 cites to choose the offline gate or the SNTP fallback"
+      ],
+      "deps": [],
+      "covers": [],
+      "instruction": "Hardware task with the user present, following x3-flash-protocol (no flashing needed). Ask the user to sleep the X3 on battery (USB unplugged) for 30 min or more, then power it on with Wi-Fi out of range or disabled. With the user's OK, read the serial boot log (by-id port, kill the logger by PID) for the '[CLK]' RTC time, and compare it with the spark clock. Record it in docs/evidence/ota-rtc-poweroff.md in the xteink repo."
+    },
+    {
+      "id": "t2",
+      "summary": "Bench-test: a 6 MB+ TLS download over the tunnel on the X3 (issue-1 o26/c61)",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "docs/evidence/ota-tls-6mb.md records the file size, duration, peak/minimum free heap if logged, and whether the sha256 ack succeeded",
+        "the evidence ends with a verdict, 'tunnel OTA viable' or 'not viable', with the failure mode"
+      ],
+      "deps": [],
+      "covers": [],
+      "instruction": "Hardware task with the user present. Queue a test file of 6 MB or more (a padded EPUB, not real book content, and not committed) to x3-ori. Have the device sync over the tunnel host only, with the LAN unreachable (e.g. the phone hotspot). Capture the serial log with the user's OK and watch for OOM or a watchdog reset. Record the result in docs/evidence/ota-tls-6mb.md. This only gates enabling tunnel OTA (decision c32); it does not block LAN OTA."
+    },
+    {
+      "id": "t3",
+      "summary": "Server core: firmware table, migration, per-device offer and rollback memory",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "an issue-1-era library.db fixture opens after migration with items, devices and queue rows intact, and has the new tables and columns (tests/core/test_firmware.py)",
+        "offering a firmware the device has rolled back raises a user error; offer-to-all skips revoked devices and those that rolled it back",
+        "firmware rows never go into items (items.kind CHECK unchanged)"
+      ],
+      "deps": [],
+      "covers": [
+        "c2",
+        "h11"
+      ],
+      "instruction": "xteink repo. New xteink/core/firmware.py (FirmwareStore: add/list/get, offer to a device or to all provisioned devices, record a rollback). Extend xteink/core/store.py with a versioned migration step, not just CREATE TABLE IF NOT EXISTS, adding a firmware table (id, version, sha256, size, board, fork_commit, source_pr, created_at), devices.offered_firmware_id, a firmware_rollbacks(device_id, firmware_id) table, and devices daily-run columns (last_run_at, last_run_trigger, last_fw_outcome, last_content_outcome). Blobs reuse the sha256 store under files/. Tests go in tests/core/test_firmware.py; don't touch server routes."
+    },
+    {
+      "id": "t4",
+      "summary": "Server core: ESP image header validator",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "valid synthetic X3 header accepted; non-ESP file, ESP32-S3 chip id, wrong board tag, and > 0x640000 size each rejected with a distinct error message",
+        "module has no imports outside the stdlib and touches no other xteink/core file"
+      ],
+      "deps": [],
+      "covers": [
+        "c51",
+        "h37"
+      ],
+      "instruction": "xteink repo. A new pure module, xteink/core/fwimage.py, with validate(path) -> ImageInfo or raises. It checks the ESP image magic 0xE9, the chip id at header offset 12 equals ESP32-C3 (0x0005), the board tag matches the X3 (mirror how the fork's OtaUpdater.cpp:184-214 reads it; cite the line), and the size is at most 0x640000. It also extracts the CROSSPOINT_VERSION string if present. Use tiny synthetic fixtures under tests/fixtures/fw/, never a real firmware blob. Tests go in tests/core/test_fwimage.py."
+    },
+    {
+      "id": "t5",
+      "summary": "Device protocol v1 additions: firmware offer, firmware download, daily-run status",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "the old-client fake device (no new fields) syncs unchanged and gets 200 everywhere; the new-client fake device receives the offer, downloads with Range resume, and the sha256 matches",
+        "posting each fw_outcome value and rolled_back_version round-trips into the device record, and a rolled-back build is no longer offered to that device",
+        "docs/device-protocol.md documents every new field and route as an additive v1 change"
+      ],
+      "deps": [
+        "t3"
+      ],
+      "covers": [
+        "c3",
+        "h12",
+        "c41",
+        "h30"
+      ],
+      "instruction": "xteink repo: xteink/server/routes_device.py, docs/device-protocol.md and tests/server/fake_device.py plus tests/server/test_device_protocol.py. The POST /api/device/status response gains an optional 'firmware' object (version, size, sha256, url) when the device has an offer that differs from its reported firmware_version. Add GET /api/device/firmware/{id}, with device-key auth, Range and ETag streaming reusing the book download helpers; only the device's own offered id is served, any other gets 404. StatusIn gains the optional fields run_started_at, run_trigger (power_on|wake|manual), fw_outcome, content_outcome and rolled_back_version. A rolled_back_version records a rollback through FirmwareStore. Everything is additive under X-Xteink-Protocol: 1."
+    },
+    {
+      "id": "t6",
+      "summary": "Admin API + CLI 'firmware' noun (upload, list, offer, overview) + explain catalog",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "uv run teken cli doctor . --strict passes",
+        "firmware upload of a bad image exits 1 with a CliError message and stores nothing; without --apply nothing is stored or offered",
+        "device list --json shows offered_firmware, firmware_version and the last daily-run fields"
+      ],
+      "deps": [
+        "t3",
+        "t4"
+      ],
+      "covers": [
+        "c11",
+        "h20",
+        "c20",
+        "h2"
+      ],
+      "instruction": "xteink repo: xteink/server/routes_admin.py (firmware routes only), new xteink/cli/_commands/firmware.py registered in _build_parser, xteink/explain/catalog.py (also fix _ROOT's verb list), docs/api.md, tests/cli/test_firmware.py and tests/server/test_app_firmware.py. upload `<bin>` --commit `<sha>` --pr `<url>` validates through fwimage and is dry-run unless --apply. offer `<fw>` (--device `<name|id>` | --all) is dry-run unless --apply. Both support list and --json. Exit codes: 0 success, 1 user error (bad image, rolled-back offer), 2 environment error. Add 'xteink device list --json' output fields for the offer and the last daily run."
+    },
+    {
+      "id": "t7",
+      "summary": "Web UI: show offered firmware and last daily run on the device card",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "device card renders 'Offered: `<version>`' and 'Last run: `<time>` - `<fw outcome>` / `<content outcome>`' when present, and renders nothing extra when absent (vitest)",
+        "npm run typecheck, vitest and the playwright devices spec pass"
+      ],
+      "deps": [
+        "t5",
+        "t6"
+      ],
+      "covers": [
+        "c11"
+      ],
+      "instruction": "xteink repo: web/src/services/api.ts (Device type fields) and the device card in web/src (DevicesView.tsx), with a vitest test and the existing playwright devices spec. Display only, no upload or offer controls in the UI (publishing is the agent's job, c55). Rebuild xteink/server/_webassets via the existing web build."
+    },
+    {
+      "id": "t8",
+      "summary": "Privacy gate: fake-device OTA leg on the no-egress network",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "privacy-check.sh passes locally with the OTA leg, and fails if the OTA leg is skipped",
+        "grep of xteink/core and xteink/server finds no outbound HTTP client used for firmware"
+      ],
+      "deps": [
+        "t5",
+        "t6"
+      ],
+      "covers": [
+        "c4",
+        "h13",
+        "c23",
+        "h5"
+      ],
+      "instruction": "xteink repo: .github/scripts/privacy-check.sh and .github/scripts/privacy-sync.py only. Extend the fake-device run: upload a synthetic valid X3 image through the CLI, offer it, have the fake device fetch the offer and download the image, verify the sha256, then post fw_outcome=installed. All of this runs on the internal:true network. Assert the server made zero outbound connections."
+    },
+    {
+      "id": "t9",
+      "summary": "Firmware: OtaUpdater takes offers from the xteink server (sha256, offer-decides, old-server tolerant)",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "host test: an offer with a different version (including an older one or a -dev suffix) installs; the same version is a no-op; a missing 'firmware' field yields 'none'",
+        "host test: a 1-byte-flipped image and a truncated download both end with 0 set_boot_partition calls and error codes recorded",
+        "grep finds no api.github.com in OtaUpdater on xteink builds; scripts/xteink-check-services.py passes and still bans setInsecure and the upstream feed"
+      ],
+      "deps": [],
+      "covers": [
+        "c5",
+        "h14",
+        "c36",
+        "h25",
+        "c42",
+        "h31",
+        "c26",
+        "h35"
+      ],
+      "instruction": "Fork repo agentculture/xteink-firmware: worktree ../.worktrees.xteink-firmware/`<task>` branched from fork feat/issue-1; plain commit messages with NO AI trailers (fork-no-ai-trailers); run ./bin/clang-format-fix with clang-format-21 on PATH and check its exit status; host tests use the harness the existing test/xteink_sync uses (docs/xteink/sync.md). Files: src/network/OtaUpdater.{h,cpp}, src/xteink/SyncProtocol.{h,cpp} (parse the optional 'firmware' offer from the status response), test/xteink_ota/ (new), scripts/xteink-check-services.py, docs/xteink/tls.md (OTA source section) and docs/xteink/CONTRIBUTING.md. On provisioned devices, remove the GitHub releases source. The install decision is offer.version != CROSSPOINT_VERSION (older builds included; isUpdateNewer is no longer consulted). Download from the offer URL against the LAN base, streaming into esp_ota_write and hashing as it goes, and call esp_ota_set_boot_partition only if the sha256 matches. Tunnel OTA sits behind a build flag XTEINK_OTA_TUNNEL that defaults to 0 (decision c32). An absent offer means 'none'. Do not touch main.cpp or the settings activities."
+    },
+    {
+      "id": "t10",
+      "summary": "Firmware: post-update health check + rollback (verifyRollbackLater override)",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "verifyRollbackLater is overridden, and esp_ota_mark_app_valid_cancel_rollback is called only on the pass path (host test of the decision logic with stubbed checks)",
+        "a server-unreachable-past-retry-window case selects rollback; display or SD failure selects rollback; all-pass selects valid"
+      ],
+      "deps": [
+        "t9"
+      ],
+      "covers": [
+        "c7",
+        "h16"
+      ],
+      "instruction": "Fork repo agentculture/xteink-firmware: worktree ../.worktrees.xteink-firmware/`<task>` branched from fork feat/issue-1; plain commit messages with NO AI trailers (fork-no-ai-trailers); run ./bin/clang-format-fix with clang-format-21 on PATH and check its exit status; host tests use the harness the existing test/xteink_sync uses (docs/xteink/sync.md). Files: new src/xteink/OtaHealth.{h,cpp}, a minimal hook in src/main.cpp setup, test/xteink_ota_health/. Override the weak verifyRollbackLater() to return true. On the first boot of a PENDING_VERIFY image, the health check runs: display init OK, SD mounted, then one successful POST /api/device/status (retry within a short window, a named constant). Pass means esp_ota_mark_app_valid_cancel_rollback. Fail means esp_ota_mark_app_invalid_rollback_and_reboot. After a rollback, the next status POST carries rolled_back_version."
+    },
+    {
+      "id": "t11",
+      "summary": "Wi-Fi: unattended join tries every saved network",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "host test with a stubbed WiFi: last SSID out of range but a second saved SSID in range joins the second; nothing in range fails within the deadline",
+        "no changes outside the new files"
+      ],
+      "deps": [],
+      "covers": [
+        "c38",
+        "h27"
+      ],
+      "instruction": "Fork repo agentculture/xteink-firmware: worktree ../.worktrees.xteink-firmware/`<task>` branched from fork feat/issue-1; plain commit messages with NO AI trailers (fork-no-ai-trailers); run ./bin/clang-format-fix with clang-format-21 on PATH and check its exit status; host tests use the harness the existing test/xteink_sync uses (docs/xteink/sync.md). Files: new src/xteink/WifiJoin.{h,cpp} plus test/xteink_wifijoin/ only (callers are wired in t12). joinAnySaved(deadlineMs): try the last-connected SSID first, then scan and try each saved credential found in range, in RSSI order, all within one hard deadline. Return the joined SSID or a failure code."
+    },
+    {
+      "id": "t12",
+      "summary": "Firmware: once-a-day start routine (gate, order, deferral, battery, status)",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "host test: the 06:00 day boundary is correct on both 2026 and 2027 DST transition days for the Asia/Jerusalem TZ; a second start on the same local day runs 0 routines",
+        "host test: each firmware branch (none, low battery, download error, sha mismatch, needs-human) still runs the sync in the same start, and the status fields carry the matching fw_outcome",
+        "the routine has a single named wall-clock cap, and no code path in it waits on button input"
+      ],
+      "deps": [
+        "t1",
+        "t9",
+        "t10",
+        "t11"
+      ],
+      "covers": [
+        "c8",
+        "h34",
+        "c9",
+        "h40",
+        "c10",
+        "h19",
+        "c19",
+        "h22",
+        "c39",
+        "h36",
+        "c27",
+        "h9",
+        "c41"
+      ],
+      "instruction": "Fork repo agentculture/xteink-firmware: worktree ../.worktrees.xteink-firmware/`<task>` branched from fork feat/issue-1; plain commit messages with NO AI trailers (fork-no-ai-trailers); run ./bin/clang-format-fix with clang-format-21 on PATH and check its exit status; host tests use the harness the existing test/xteink_sync uses (docs/xteink/sync.md). Files: new src/xteink/DailyRoutine.{h,cpp}, a hook in src/main.cpp after the wakeup-reason switch (PowerButton/Other boots only, never AfterUSBPower or AfterFlash), the status fields in src/xteink/XteinkSync.cpp, the Home status line, and test/xteink_daily/. Gate: run when NVS 'xteink/last_run' is earlier than the most recent 06:00 in the device TZ (HalClock TZ, default Jerusalem). Use the clock source per t1's verdict: the RTC if it holds; otherwise WifiJoin plus SNTP before deciding. Order: battery floors (named constants), WifiJoin, OTA via t9 (on install: write last_run only after the health check passes), then XteinkSync::run. Any firmware branch that would need a human means sync first and the firmware is marked deferred. There is a hard wall-clock cap, and it never runs while the reader is open."
+    },
+    {
+      "id": "t13",
+      "summary": "Firmware: Settings 'Check for updates' uses the server offer",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "the activity calls the same OtaUpdater offer/install functions as the daily routine (no duplicated download code)",
+        "fork CI build passes; on-device behavior verified in t17"
+      ],
+      "deps": [
+        "t9",
+        "t10"
+      ],
+      "covers": [
+        "c52",
+        "h38"
+      ],
+      "instruction": "Fork repo agentculture/xteink-firmware: worktree ../.worktrees.xteink-firmware/`<task>` branched from fork feat/issue-1; plain commit messages with NO AI trailers (fork-no-ai-trailers); run ./bin/clang-format-fix with clang-format-21 on PATH and check its exit status; host tests use the harness the existing test/xteink_sync uses (docs/xteink/sync.md). Files: src/activities/settings/OtaUpdateActivity.{h,cpp} only. Point the activity at the t9 server-offer path (a status POST to fetch the offer, then install it) with the same sha256 check, and let the t10 health check handle the next boot. Show 'No update offered' when there is no offer."
+    },
+    {
+      "id": "t14",
+      "summary": "Fork guards: partitions, size headroom, SDK pointer, CI green",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "the new checks fail on a deliberately modified partitions.csv, an oversize image, and a moved submodule pointer (shown in the PR description)",
+        "fork PR CI is green, and git log on the branch shows no Co-Authored-By or Claude-Session trailers"
+      ],
+      "deps": [
+        "t12",
+        "t13"
+      ],
+      "covers": [
+        "c6",
+        "h15",
+        "c43",
+        "h32",
+        "c12",
+        "h21"
+      ],
+      "instruction": "Fork repo agentculture/xteink-firmware: worktree ../.worktrees.xteink-firmware/`<task>` branched from fork feat/issue-1; plain commit messages with NO AI trailers (fork-no-ai-trailers); run ./bin/clang-format-fix with clang-format-21 on PATH and check its exit status; host tests use the harness the existing test/xteink_sync uses (docs/xteink/sync.md). Files: scripts/xteink-check-services.py (or a new scripts/xteink-check-footprint.py) and .github/workflows/xteink-ci.yml. Add CI checks that partitions.csv is byte-identical to the fork's feat/issue-1 version, that the release X3 image is at most 0x640000 with at least 5% headroom, and that the freeink-sdk gitlink equals 9729236c (or a documented bump). Then open the fork PR with a conventional-commit title (feat(xteink): ...) using gh -R agentculture/xteink-firmware."
+    },
+    {
+      "id": "t15",
+      "summary": "Agent release flow: build from the merged fork commit, upload, offer, comment on the PR",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "unit tests with stubbed gh, git, pio and xteink: the happy path calls the steps in order; a dirty tree, an unmerged PR, red checks, and a previously rolled-back version each exit non-zero before upload",
+        "the PR comment body names the version, fork sha and offered devices; the rollback report comments once per rollback (idempotent)",
+        "the script never invokes esptool or touches a serial port (asserted by test)"
+      ],
+      "deps": [
+        "t6"
+      ],
+      "covers": [
+        "c56",
+        "h43",
+        "c57",
+        "h46",
+        "c58",
+        "h45",
+        "c20",
+        "h42"
+      ],
+      "instruction": "xteink repo: new scripts/firmware-release.py, docs/firmware-release.md and tests/test_firmware_release.py; a pointer in CLAUDE.md is added in t18. It's not a vendored skill, so don't add it under .claude/skills. Input: a merged fork PR number. Steps: gh -R agentculture/xteink-firmware pr view (must be MERGED into the integration branch, with green checks); git worktree add at the merge commit in a temp dir; pio run for the X3 release env; xteink firmware upload --commit --pr --apply (admin key via grant inject); xteink firmware offer --all --apply; then gh pr comment on that fork PR with the version, sha and devices offered (via the cicd reply script so it's signed). Refuse with a non-zero exit and nothing offered when the tree is dirty, the commit isn't on the integration branch, or the build previously rolled back on a target. A separate subcommand reports rollbacks: it scans the device records and comments once on the PR that shipped the build."
+    },
+    {
+      "id": "t16",
+      "summary": "Bootstrap: USB app-only flash of the first OTA-capable build onto the X3",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "evidence records the build sha, the esptool hash verification, and the post-boot firmware_version seen by the server",
+        "the device is still provisioned afterwards (a status POST succeeds with the same device id)",
+        "before flashing, evidence records a grep on origin/feat/issue-1 (xteink) and fork feat/issue-1 showing no firmware table, no firmware offer field and no daily routine, confirming the before-state (h3)"
+      ],
+      "deps": [
+        "t14"
+      ],
+      "covers": [
+        "c21",
+        "h3"
+      ],
+      "instruction": "Hardware task with the user, strictly per x3-flash-protocol: wait for 'awake, hands off', use the by-id port, esptool write-flash 0x10000 app-only with no grep and verify 'Hash of data verified', and tell the user when they may touch the device. Do not use a factory image (it wipes NVS provisioning). The build comes from the fork PR head of t14. Record it in docs/evidence/ota-bootstrap-flash.md."
+    },
+    {
+      "id": "t17",
+      "summary": "On-device validation: success signals end to end on the X3",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "the evidence doc has one section per scenario (a) to (f), each with a pass/fail verdict and server timestamps",
+        "every scenario passes, or the failing one is filed as a /deviate deviation and not silently dropped"
+      ],
+      "deps": [
+        "t16",
+        "t15",
+        "t8",
+        "t7"
+      ],
+      "covers": [
+        "c1",
+        "h33",
+        "c53",
+        "h39",
+        "c25",
+        "h41",
+        "c28",
+        "h10",
+        "c22",
+        "h4"
+      ],
+      "instruction": "Hardware task with the user. Use the t15 release flow to publish a second build (a trivial version-only change merged in the fork), then: (a) on USB, first start after 06:00 with 1 queued test document; (b) the same on battery, timed from the power press (records the real duration against the 120 s target and battery use, closing lapse l2); (c) a corrupted offer (served from a throwaway stack, not the live 'xteink' compose project) is refused; (d) an offer flagged needs-human still syncs the book; (e) a build whose health check deliberately fails rolls back, and the release flow's rollback report comments on the PR; (f) Settings > Check for updates. Serial logs only with the user's OK. Record everything in docs/evidence/ota-daily-validation.md with server-log timestamps."
+    },
+    {
+      "id": "t18",
+      "summary": "Docs, prompt files, version bump and PR",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "markdownlint, black/isort/flake8, bandit, scan-secrets, teken doctor --strict and harness-smoke --stage config all pass",
+        "the four harness prompt files describe the same project facts; the version-check CI job passes"
+      ],
+      "deps": [
+        "t17"
+      ],
+      "covers": [],
+      "instruction": "xteink repo: update CLAUDE.md 'Current state vs. roadmap' (OTA plus daily routine landed, and the firmware-release procedure), the same facts in QWEN.md, AGENTS.override.md and AGENTS.colleague.md, README and docs/mcp.md if they're affected, and docs/remote-access.md (tunnel OTA stays off until t2 says viable). Bump the minor version with the version-bump skill and update CHANGELOG. Run ask-colleague review, then open the PR with the cicd skill targeting the right base (feat/issue-1 if PR #4 is still open, otherwise main)."
+    }
+  ],
+  "risks": [
+    {
+      "id": "r1",
+      "text": "Which fork branch is the release 'integration branch' (frame v9)? Until fork PR #1 merges it is feat/issue-1, and after that probably the fork's default branch. t15 takes it as config.",
+      "kind": "unknown_nonblocking",
+      "task_id": "t15",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r2",
+      "text": "t1 may come back 'RTC lost'. In that case t12 takes the SNTP-join path, which adds about 10 s to battery starts until the day's run is done.",
+      "kind": "unknown_nonblocking",
+      "task_id": "t12",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r3",
+      "text": "Enable tunnel OTA (flip XTEINK_OTA_TUNNEL) only if t2's verdict is 'viable'. It is a separate follow-up change, not part of this plan.",
+      "kind": "follow_up",
+      "task_id": "t2",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r4",
+      "text": "Flash headroom is about 662 KB per slot. t9-t13 add code; if t14's 5% headroom check fails, the work needs trimming before merge (no partition change, c6).",
+      "kind": "unknown_nonblocking",
+      "task_id": "t14",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r5",
+      "text": "This stacks on the unmerged issue-1 PRs (xteink #4, fork #1). Review or rebases there can move code under t3-t14; rebase ota/daily-sync and the fork worktrees when they merge.",
+      "kind": "unknown_nonblocking",
+      "task_id": null,
+      "resolved": false,
+      "resolution": ""
+    }
+  ],
+  "obligations": []
+}
