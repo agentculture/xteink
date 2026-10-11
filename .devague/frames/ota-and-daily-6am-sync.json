@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-11T16:28:00Z",
-  "updated": "2026-10-11T19:45:01Z",
+  "updated": "2026-10-11T20:52:58Z",
   "claims": [
     {
       "id": "c1",
@@ -1651,6 +1651,18 @@
       "refs": [
         "t5",
         "t3"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l13",
+      "code": "grader-unverified",
+      "what": "t12's spec says the daily routine never runs on a boot right after a flash, but on the X3 the esptool RTS reset (rst:0x15 USB chip reset) is classified as Other, so the routine ran 7 s after the bootstrap flash; the host tests couldn't see the device's reset-reason mapping",
+      "skipped_check": "map USB_UART_CHIP_RESET boots to AfterFlash, or accept them; decide in a follow-up",
+      "refs": [
+        "t12",
+        "t16"
       ],
       "origin": "llm",
       "status": "proposed"
