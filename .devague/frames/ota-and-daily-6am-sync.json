@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-11T16:28:00Z",
-  "updated": "2026-10-11T20:52:58Z",
+  "updated": "2026-10-11T21:10:58Z",
   "claims": [
     {
       "id": "c1",
@@ -1663,6 +1663,18 @@
       "refs": [
         "t12",
         "t16"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l14",
+      "code": "control-absent",
+      "what": "t17 (e): the planned rollback trigger (stop api and the device tunnel) could not produce 'no answer', because Cloudflare's edge answers 530 and d8 counts any HTTP answer as healthy; rollback remains unproven on the device (owner chose to skip a forced-failure build)",
+      "skipped_check": "a forced-failure test image, or cutting Wi-Fi, to prove on-device rollback",
+      "refs": [
+        "t17",
+        "d8"
       ],
       "origin": "llm",
       "status": "proposed"
