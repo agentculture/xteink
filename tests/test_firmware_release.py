@@ -77,7 +77,7 @@ class Fake:
                 return cp(" M foo.c\n" if self.dirty else "")
             return cp("")
         if cmd[-0].endswith("pio"):
-            out = Path(cwd) / ".pio" / "build" / "gh_release"
+            out = Path(cwd) / ".pio" / "build" / "xteink_release"
             out.mkdir(parents=True)
             (out / "firmware.bin").write_bytes(b"\xe9")
             return cp("")
@@ -147,7 +147,7 @@ def test_happy_path_order_and_comment(fake, capsys):
         upload.index("--commit") : upload.index("--commit") + 5
     ]
     assert fake.find("offer")[0][-3:] == ["--all", "--apply", "--json"]
-    assert fake.find("-e", "gh_release")
+    assert fake.find("-e", "xteink_release")
     assert fake.find("-R", "agentculture/xteink-firmware", "comment", "7")
     (body,) = fake.inputs
     assert "1.7.0" in body and SHA in body

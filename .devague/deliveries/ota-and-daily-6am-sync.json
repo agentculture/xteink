@@ -2,7 +2,7 @@
   "plan_slug": "ota-and-daily-6am-sync",
   "schema_version": 2,
   "created": "2026-10-11T17:17:51Z",
-  "updated": "2026-10-11T19:08:15Z",
+  "updated": "2026-10-11T19:18:20Z",
   "deviations": [
     {
       "id": "d1",
@@ -108,6 +108,22 @@
       "status": "approved",
       "classification": "acceptable",
       "seq": 8
+    },
+    {
+      "id": "d9",
+      "what": "Code-review follow-ups on fork PR #2, all 10 findings fixed before the t16 bootstrap flash. Build identity (#3): xteink release builds carry the fork commit in CROSSPOINT_VERSION ('<base>+xteink.<sha8>', from a new xteink release env that the release flow (t15) builds), so every build is distinct; c36's offer-decides rule is unchanged",
+      "task_ref": "t9",
+      "reason": "/code-review (medium) found: release builds share the bare version '1.6.5' so OTA would work only once; no device-side memory of a rolled-back build plus an unrecorded early crash could reinstall a bad build daily; the note was missing on a failed install; plus budget, heap, TZ-thread-safety, duplicate-join and dead-code issues. The user chose to fix all 10 with version-carries-commit",
+      "affects": [
+        "t10",
+        "t12",
+        "t15",
+        "t16"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 9
     }
   ],
   "evidence": [],

@@ -26,7 +26,7 @@ from typing import Any, Sequence
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FORK_REPO = "agentculture/xteink-firmware"
 DEFAULT_FORK_CHECKOUT = Path.home() / "git" / "xteink-firmware"
-DEFAULT_PIO_ENV = "gh_release"
+DEFAULT_PIO_ENV = "xteink_release"
 DEFAULT_PIO = Path.home() / ".platformio" / "penv" / "bin" / "pio"
 PR_REPLY = REPO_ROOT / ".claude" / "skills" / "cicd" / "scripts" / "pr-reply.sh"
 GREEN_CONCLUSIONS = {"SUCCESS", "NEUTRAL", "SKIPPED"}

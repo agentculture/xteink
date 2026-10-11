@@ -15,7 +15,7 @@ this on both the script source and every command it runs.
 ```bash
 python3 scripts/firmware-release.py release PR_NUMBER \
   [--integration-branch BRANCH] [--fork-checkout PATH] \
-  [--pio-env gh_release] [--pio PATH] [--version V] [--fork OWNER/REPO] \
+  [--pio-env xteink_release] [--pio PATH] [--version V] [--fork OWNER/REPO] \
   [--key-name SECRET] [--no-grant]
 ```
 
@@ -29,8 +29,10 @@ Order of operations:
    device (`xteink firmware list`, then `xteink firmware rollbacks`).
 4. `git worktree add --detach` the merge commit in a temp directory, then
    `git submodule update --init freeink-sdk`. The tree must be clean.
-5. `pio run -e gh_release`, which builds the ESP32-C3 image shared by the X3 and
-   X4 at `.pio/build/gh_release/firmware.bin`. The tree must still be clean.
+5. `pio run -e xteink_release`, which builds the ESP32-C3 image shared by the X3 and
+   X4 at `.pio/build/xteink_release/firmware.bin`. Its version is
+   `<base>+xteink.<fork sha8>`, so every build is distinct to the device's
+   install decision (upstream's `gh_release` env gives every build the same bare version). The tree must still be clean.
 6. `xteink firmware upload IMAGE --commit SHA --pr URL --apply`.
 7. `xteink firmware offer ID --all --apply`.
 8. `gh pr comment` on the fork PR with the version, fork sha and the devices
