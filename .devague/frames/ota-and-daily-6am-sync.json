@@ -1,0 +1,1553 @@
+{
+  "slug": "ota-and-daily-6am-sync",
+  "title": "OTA and daily 6am sync",
+  "schema_version": 6,
+  "status": "exported",
+  "created": "2026-10-11T16:28:00Z",
+  "updated": "2026-10-11T17:07:53Z",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "announcement",
+      "text": "xteink readers keep themselves current: when the X3 starts for the first time each day, it joins Wi-Fi, installs any new firmware the xteink server offers, then pulls the queued books and articles. If the firmware step can't run unattended, the books still arrive.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h1",
+          "text": "All three legs (OTA from the xteink server, the 06:00 or catch-up trigger, and books syncing even when firmware can't) are shown on the real X3, not only in unit tests or the fake device.",
+          "status": "rejected",
+          "instruction": ""
+        },
+        {
+          "id": "h33",
+          "text": "All three legs (OTA from the xteink server, the once-a-day start trigger, and books syncing even when firmware can't) are shown on the real X3, not only in unit tests or the fake device.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "xteink readers keep themselves current: every morning at 06:00 Israel time the X3 joins Wi-Fi, installs any new firmware the xteink server offers, then pulls the day's books and articles \u2014 and if the firmware step can't run, the books still arrive.",
+          "kind": "announcement",
+          "reason": "decision c50"
+        }
+      ]
+    },
+    {
+      "id": "c2",
+      "kind": "requirement",
+      "text": "The xteink server stores uploaded firmware images in a separate firmware table and reuses the sha256 blob store; images can't go in items, because items.kind is CHECK-constrained to book/article (xteink/core/store.py:15-58). A schema migration is needed, because the store only runs CREATE TABLE IF NOT EXISTS.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h11",
+          "text": "An existing issue-1 library.db opens after the upgrade with its items, devices and queue intact, and gains the firmware table and any new device columns (migration test on a copy of an issue-1 db).",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c3",
+      "kind": "requirement",
+      "text": "The device protocol gains an additive firmware offer within v1: the device's POST /api/device/status already reports firmware_version, and the server answers with an optional offer (version, size, sha256, url). The image is served under /api/device/ with the existing device-key auth, Range resume and ETag streaming, the same as the book download at routes_device.py:223-256.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h12",
+          "text": "A firmware build without the change, still speaking protocol v1, syncs unchanged against the new server (the offer field is optional and ignored), and the fake-device test passes for both old and new clients.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c4",
+      "kind": "boundary",
+      "text": "The xteink server never fetches firmware from GitHub or anywhere else. Images reach it only by an operator upload, because privacy-check.sh runs the API on an internal:true docker network with no outbound route and requires the fake-device flow to pass offline.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h13",
+          "text": "privacy-check.sh passes with an OTA leg added to the fake-device flow, and grep finds no outbound HTTP client usage in the firmware code paths of xteink/server or xteink/core.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c5",
+      "kind": "requirement",
+      "text": "On xteink-provisioned devices, the firmware's OtaUpdater uses the xteink server as its only update source, replacing GitHub releases. It reuses the provisioned LAN and tunnel URLs and the device key from NVS namespace 'xteink' (XteinkConfig), and keeps the existing streaming esp_ota_begin/write/end path with its chip-id and board-tag checks (OtaUpdater.cpp:155-259). Before esp_ota_set_boot_partition it checks the written bytes against the sha256 in the server's offer.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h14",
+          "text": "On a provisioned device, no request goes to api.github.com during an update check (verified by serial log or by blocking GitHub on the LAN), and xteink-check-services.py passes with the GitHub source removed or gated off.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [
+        {
+          "id": "q2",
+          "text": "Does the xteink server REPLACE the fork's GitHub-releases OTA source on xteink-provisioned devices, or is it added as a first source with GitHub as fallback? And who decides what a device is offered: a per-device pinned target, the latest uploaded image, or both?",
+          "resolved": true,
+          "blocking": false,
+          "resolution": "Server only, replaces GitHub; operator picks per-device offer (c17)"
+        },
+        {
+          "id": "q3",
+          "text": "Integrity: there is no secure boot or app signing (sdkconfig.defaults:400-402), and LAN sync is plain http by design (the c60 trade-off, TlsTrust.h:15-17). A LAN attacker could therefore serve a matching sha256 plus a malicious image. Options: require HTTPS (the tunnel) for firmware only, sign images with a key whose public half is compiled into the firmware, or accept the LAN risk.",
+          "resolved": true,
+          "blocking": false,
+          "resolution": "Signed images, offline key, pubkey compiled in (c18)"
+        }
+      ],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "The firmware's OtaUpdater gets the xteink server as an update source. It reuses the provisioned LAN and tunnel URLs and the device key from NVS namespace 'xteink' (XteinkConfig), keeps the existing streaming esp_ota_begin/write/end path, and keeps the chip-id and board-tag checks (OtaUpdater.cpp:155-259). Before set_boot_partition it also checks the image against the server-supplied sha256.",
+          "kind": "requirement",
+          "reason": "user decisions c17 (server only) and c18 (signed images)"
+        },
+        {
+          "text": "On xteink-provisioned devices, the firmware's OtaUpdater uses the xteink server as its only update source, replacing GitHub releases. It reuses the provisioned LAN and tunnel URLs and the device key from NVS namespace 'xteink' (XteinkConfig), and keeps the existing streaming esp_ota_begin/write/end path with its chip-id and board-tag checks (OtaUpdater.cpp:155-259). It verifies the image's offline-key signature (c18) before esp_ota_set_boot_partition.",
+          "kind": "requirement",
+          "reason": "decision c49"
+        }
+      ]
+    },
+    {
+      "id": "c6",
+      "kind": "boundary",
+      "text": "The partition layout stays as it is: two 0x640000 OTA slots in partitions.csv. The current image is 5,891,200 B, which leaves about 662 KB of headroom per slot, so the OTA and scheduler code must fit inside that headroom.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h15",
+          "text": "partitions.csv is byte-identical to fork feat/issue-1, and the release image built with the changes is under 0x640000 bytes with at least 5% headroom.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c7",
+      "kind": "requirement",
+      "text": "A new image proves itself before it is kept. The firmware overrides verifyRollbackLater() and calls esp_ota_mark_app_valid_cancel_rollback only after a health check passes: boot, display, SD, plus one successful POST /api/device/status to the xteink server within the same routine, retried within a short window. Otherwise the bootloader rolls back to the previous slot.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h16",
+          "text": "verifyRollbackLater() is overridden (returns true), and esp_ota_mark_app_valid_cancel_rollback is called only after the health check; a forced-fail image rolls back on hardware (S5).",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "A new image proves itself before it is kept. The firmware overrides verifyRollbackLater() and calls esp_ota_mark_app_valid_cancel_rollback only after a health check passes (boot, display and SD). Otherwise the bootloader rolls back to the previous slot.",
+          "kind": "requirement",
+          "reason": "user decision c47"
+        }
+      ]
+    },
+    {
+      "id": "c8",
+      "kind": "requirement",
+      "text": "The routine runs at most once per local day, on the first device start (power-on or wake) after the day turns over at 06:00 in the device's configured timezone (Settings > Clock, default Asia/Jerusalem with DST, src/util/Timezones.cpp:38). A 'last daily run' local date is kept in NVS. Later starts the same day skip straight to Home or the reader.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h17",
+          "text": "The next-wake delay computed for every DST transition day in 2026-2027 lands at 06:00 local time (unit test against the Asia/Jerusalem POSIX TZ), and the NVS last-run date stops a second run the same local day.",
+          "status": "rejected",
+          "instruction": ""
+        },
+        {
+          "id": "h34",
+          "text": "A unit test against the Asia/Jerusalem POSIX TZ gets the 06:00 day boundary right on both DST transition days in 2026-2027, and a second start on the same local day runs 0 routines.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [
+        {
+          "id": "q1",
+          "text": "On battery, X3 'sleep' is a power-off. HalPowerManager::startDeepSleep drives GPIO13 low, which the code comments call 'the battery power-off' (lib/hal/HalPowerManager.cpp:87-101). The chip and its RTC timer lose power, so nothing can wake the device at 06:00. A timer wake only works while USB keeps the board in charge-sleep. Which model do we take? (a) a scheduled wake only while plugged in; (b) a real ESP deep sleep with a timer on battery, keeping GPIO13 high, which costs standby battery and needs a drain measurement; (c) catch-up: on the first power-on or wake after 06:00, run the daily routine; (d) a combination of (a) and (c).",
+          "resolved": true,
+          "blocking": true,
+          "resolution": "User chose plugged-in timer + catch-up (c15)"
+        }
+      ],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "The daily schedule targets 06:00 in Asia/Jerusalem local time with DST, using the existing POSIX TZ entry 'IST-2IDT,M3.4.4/26,M10.5.0' (src/util/Timezones.cpp:38) via HalClock::setTimezone. The next-wake delay is recomputed from localtime at every sleep entry, and SNTP snaps the clock whenever Wi-Fi is up.",
+          "kind": "requirement",
+          "reason": "user decision c15 (plugged-in timer + catch-up)"
+        },
+        {
+          "text": "The daily routine is anchored to 06:00 Asia/Jerusalem, with DST, via the existing POSIX TZ entry 'IST-2IDT,M3.4.4/26,M10.5.0' (src/util/Timezones.cpp:38). On USB, the sleep entry arms a timer wake for the next 06:00, recomputed from localtime at every sleep entry. On battery, the power-off design is unchanged, and the first boot/wake after a missed 06:00 runs the routine (c15). A 'last daily run' date persists in NVS so the routine runs at most once per local day.",
+          "kind": "requirement",
+          "reason": "user decision c48"
+        },
+        {
+          "text": "The daily routine is anchored to 06:00 in the device's configured timezone (Settings > Clock, via HalClock::setTimezone), defaulting to Asia/Jerusalem with DST ('IST-2IDT,M3.4.4/26,M10.5.0', src/util/Timezones.cpp:38). On USB, every sleep entry arms a timer wake for the next local 06:00, recomputed from localtime. On battery, the power-off design is unchanged, and the first boot/wake after a missed 06:00 runs the routine (c15). A 'last daily run' local date persists in NVS so the routine runs at most once per local day.",
+          "kind": "requirement",
+          "reason": "decision c50"
+        }
+      ]
+    },
+    {
+      "id": "c9",
+      "kind": "requirement",
+      "text": "The daily run order is: join saved Wi-Fi, check for an offered firmware update and install it, reboot into the new image, then run the existing xteink::sync::run. If the firmware step fails or is skipped (no offer, low battery, download or verify error), the book/article sync still runs in that same wake. The firmware step never blocks content delivery.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h18",
+          "text": "In every failure branch of the firmware step (no offer, low battery, download error, signature fail, needs-human), sync::run still runs in the same wake: unit- or host-tested with one case per branch.",
+          "status": "rejected",
+          "instruction": ""
+        },
+        {
+          "id": "h40",
+          "text": "In every failure branch of the firmware step (no offer, low battery, download error, sha256 mismatch, needs-human), sync::run still runs in the same start: unit- or host-tested with one case per branch.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [
+        {
+          "id": "q4",
+          "text": "What does 'if can't in that order, then books first' mean? (a) if the firmware step fails, still sync books in the same wake (as c9 currently says); (b) when the wake budget, battery or Wi-Fi window is too short for both, do books first and firmware after; or (c) both.",
+          "resolved": true,
+          "blocking": false,
+          "resolution": "User: both, and 'can't' means the firmware step would need a human; then books first (c16, c19)"
+        }
+      ],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c10",
+      "kind": "requirement",
+      "text": "Unattended Wi-Fi and OTA are gated on battery level. The existing sleep-time join requires at least 20% (src/main.cpp:336), and an OTA install needs a higher floor. A gated-off run is recorded in sync_last and retried at the next opportunity.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h19",
+          "text": "No unattended Wi-Fi join runs below the join floor and no OTA write starts below the OTA floor. Both are named constants with tests, and a skipped run is recorded in sync_last.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c11",
+      "kind": "requirement",
+      "text": "Admin surfaces for firmware: a CLI 'firmware' noun (upload/list/offer, dry-run by default with --apply, like device queue/revoke) plus an explain catalog entry; the device card in the web UI shows the offered firmware next to its existing firmware_version row; docs/device-protocol.md and docs/api.md are updated. Admin routes go in routes_admin.py.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h20",
+          "text": "uv run teken cli doctor . --strict passes with the firmware noun and its explain catalog entry, and the CLI firmware verbs are dry-run unless --apply is given.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c12",
+      "kind": "boundary",
+      "text": "The fork's OTA guard stays green: scripts/xteink-check-services.py keeps rejecting the upstream crosspoint release feed in OtaUpdater and setInsecure() in HttpDownloader, TlsTrust and OtaUpdater. Fork commits carry no AI trailers, and the fork's PR titles are conventional commits.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h21",
+          "text": "The fork's CI (including xteink-check-services.py and clang-format) is green on the PR, and the fork's commit log for the work has no Co-Authored-By or Claude-Session trailers.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c13",
+      "kind": "non_goal",
+      "text": "No automatic article fetching (RSS, web clipping, subscriptions) in this work. 'Books and articles' means whatever is already queued for the device, or kept in mirror mode, through the existing push model.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c14",
+      "kind": "assumption",
+      "text": "This work builds on issue 1 (xteink PR #4 and fork PR #1, both still open and unmerged). The branch ota/daily-sync is cut from origin/feat/issue-1, and the fork work branches from fork feat/issue-1.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c15",
+      "kind": "decision",
+      "text": "Wake model: plugged-in timer + catch-up. On USB (charge-sleep keeps the C3 in real deep sleep), a timer wake at 06:00 Asia/Jerusalem runs the daily routine. On battery, the board power-off design is unchanged, and the first power-on/wake after a missed 06:00 runs the routine before Home.",
+      "origin": "user",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c16",
+      "kind": "decision",
+      "text": "Ordering: firmware first, then books. But if the firmware step would leave the device waiting for a human (e.g. needs a confirmation, a re-provision, or a factory flash, or can't finish unattended), books go first and firmware waits for the human. If the firmware step fails or is skipped, books still sync in the same wake. If battery or time can't cover both, books go first and firmware waits.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c17",
+      "kind": "decision",
+      "text": "OTA source: on xteink-provisioned devices the xteink server replaces GitHub releases as the only OTA source. Builds are uploaded through a CLI 'firmware' noun, and the operator chooses what each device is offered.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c18",
+      "kind": "decision",
+      "text": "Integrity: firmware images are signed with an offline key, and the public key is compiled into the firmware. The device verifies the signature before set_boot_partition, so the image is safe over LAN HTTP or the tunnel. The sha256 alone is not trusted.",
+      "origin": "user",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c19",
+      "kind": "requirement",
+      "text": "The unattended daily run never ends with the device waiting for a human. Any firmware step that can't complete hands-off is deferred and surfaced (on the Home status line and in the server's device record) for the next attended session, after the books have synced.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h22",
+          "text": "No code path in the daily routine waits on button input or a confirmation dialog: the routine has a hard wall-clock cap and always ends by going back to sleep or to Home.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c20",
+      "kind": "audience",
+      "text": "The xteink owner reading on an X3 at home, who wants the reader current without a laptop or cable, and the xteink agent (Claude, the mesh resident) as operator: it builds, uploads and offers firmware through the xteink CLI, and the merged fork PR is how the owner hears about it.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h2",
+          "text": "Every new admin action is reachable from the xteink CLI with --json and a dry-run default, and every device behavior needs zero input on the device.",
+          "status": "confirmed",
+          "instruction": ""
+        },
+        {
+          "id": "h42",
+          "text": "The spec's admin flows name the xteink agent as the one who runs the build, upload and offer, and its device flows need zero input from the owner beyond starting the reader.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "Check that the spec's admin flows (CLI firmware noun) and device flows (daily routine) each name this one person as both the reader and the operator.",
+      "revisions": [
+        {
+          "text": "The xteink owner reading on an X3 at home, who wants the reader current every morning without a laptop or cable, and the same owner as operator: uploading signed firmware builds and choosing which device gets which build via the xteink CLI.",
+          "kind": "audience",
+          "reason": "decision c55"
+        },
+        {
+          "text": "The xteink owner reading on an X3 at home, who wants the reader current without a laptop or cable, and the xteink agent (Claude, the mesh resident) as operator: it builds, uploads and offers firmware through the xteink CLI and tells the owner when an offer goes live.",
+          "kind": "audience",
+          "reason": "decision c60"
+        }
+      ]
+    },
+    {
+      "id": "c21",
+      "kind": "before_state",
+      "text": "Today a firmware update means a USB esptool app-only flash at 0x10000 with the 'awake, hands off' protocol (x3-flash-protocol memory, issue-1 deliveries). Books arrive only when the owner opens Settings > Sync or joins Wi-Fi for another reason (docs/xteink/sync.md 'When it runs'). Nothing happens on its own.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h3",
+          "text": "The before-state is accurate: on origin/feat/issue-1 and fork feat/issue-1 there is no scheduled sync and no server-hosted OTA (grep for esp_sleep_enable_timer_wakeup or a firmware table finds nothing).",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c22",
+      "kind": "why_it_matters",
+      "text": "The reader is meant to work offline on hardware the owner controls. Each USB flash is a bricking risk (a mid-write button press already left the X3 unbootable once), and content that waits for a manual sync goes stale. A local, signed, self-scheduled update keeps both private and hands-off.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h4",
+          "text": "After this ships, a routine firmware update for the X3 needs no USB cable and no esptool.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c23",
+      "kind": "after_state",
+      "text": "Each day, the first time the owner starts the X3 it brings itself current, installing the offered firmware and pulling everything queued for it, with no cable and no menu. A step that would need a person is postponed and shown on Home, never left hanging. Firmware never leaves the owner's network except over their own tunnel.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h5",
+          "text": "Firmware bytes travel only between the owner's server and the device (LAN or the owner's tunnel), and the server makes 0 outbound requests (privacy-check.sh still passes).",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "Walk the success signals end to end on the real X3, record them in a new `docs/evidence/` file, and confirm each one passed.",
+      "revisions": [
+        {
+          "text": "Each morning the X3 has the latest offered firmware and everything queued for it. On USB this happens at 06:00 Israel time with nobody touching it. On battery it happens at the first wake after 06:00. A step that would need a person is postponed and shown on Home, never left hanging. Firmware never leaves the owner's network except over their own tunnel.",
+          "kind": "after_state",
+          "reason": "decision c50"
+        }
+      ]
+    },
+    {
+      "id": "c24",
+      "kind": "success_signal",
+      "text": "Plugged in overnight, with a newer signed image offered and 1 queued book: by 06:15 local time the X3 runs the new firmware_version and has the book delivered (acked). The server's device record shows both, with 0 touches.",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [
+        {
+          "id": "h6",
+          "text": "The S1 run is recorded as evidence with timestamps from the server log, not just observed.",
+          "status": "rejected",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "Bench run on the X3: upload and offer the image and queue a book at about 05:50, leave it on USB, and at 06:15 check xteink device list --json (firmware_version, last_seen) plus the queue state 'delivered'.",
+      "revisions": []
+    },
+    {
+      "id": "c25",
+      "kind": "success_signal",
+      "text": "On battery, powered on after 06:00 with 1 queued book and no run yet that day: the routine runs before Home is usable, and the book is delivered within 120 s of power-on. A second wake the same day triggers 0 additional runs.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h7",
+          "text": "S2 is measured on battery with USB unplugged (isUsbConnected false), so the catch-up path is what ran, not the timer path.",
+          "status": "rejected",
+          "instruction": ""
+        },
+        {
+          "id": "h41",
+          "text": "S2 is measured on battery with USB unplugged (isUsbConnected false), timed from the power-button press.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "Bench run on battery: time from power-on to the ack in the server log; wake a second time and confirm no new status POST with a daily-run marker.",
+      "revisions": []
+    },
+    {
+      "id": "c26",
+      "kind": "success_signal",
+      "text": "A corrupted or truncated image (1 flipped byte, or a download cut short) is refused in 100% of attempts: 0 calls to esp_ota_set_boot_partition, the device keeps its current firmware_version, and the error is reported in last_error.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h8",
+          "text": "The signature is checked over the exact bytes written to the OTA slot, before set_boot_partition, using a public key compiled into the running image. The server can't supply or override the key.",
+          "status": "rejected",
+          "instruction": ""
+        },
+        {
+          "id": "h35",
+          "text": "The sha256 is computed over the exact bytes written to the OTA slot, before set_boot_partition; a fixture with 1 flipped byte and a truncated download are both refused in tests.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "Firmware unit test over the verify function with tampered fixtures, plus one on-device run where the server offers a tampered image.",
+      "revisions": [
+        {
+          "text": "An image with a bad signature, a missing signature, or 1 flipped byte is refused in 100% of attempts: 0 calls to esp_ota_set_boot_partition, the device keeps its current firmware_version, and the error is reported in last_error.",
+          "kind": "success_signal",
+          "reason": "decision c49"
+        }
+      ]
+    },
+    {
+      "id": "c27",
+      "kind": "success_signal",
+      "text": "When the offered firmware step can't complete unattended (verify fails, low battery, or the server marks the offer as needing a human), the books still sync in the same wake (100% of the queued items that fit) and the firmware is shown as pending on Home and in the device record.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h9",
+          "text": "The deferral reason is visible on the device without a serial cable (Home status line) and on the server (device record), and is cleared once the human finishes the update.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "Fake-device server test plus one X3 run with an offer flagged as needing a human.",
+      "revisions": []
+    },
+    {
+      "id": "c28",
+      "kind": "success_signal",
+      "text": "An image that boots but fails the post-update health check is rolled back: on the next boot the device reports the previous firmware_version, and the bad version is not offered again to that device.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h10",
+          "text": "Rollback is observed on real hardware, and the device ends up on the previous version without any human action.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "Build a test image whose health check deliberately fails; offer it on the X3 and observe the rollback via serial log (with the user's OK) and the server's device record.",
+      "revisions": []
+    },
+    {
+      "id": "c29",
+      "kind": "non_goal",
+      "text": "Only the X3 is verified. Other Xteink models (X4 and friends) that share the x3-x4 image are not tested or promised here (issue-1 follow-up r7).",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c30",
+      "kind": "non_goal",
+      "text": "The USB esptool flash and provisioning paths are unchanged. They stay the recovery route, and factory images still wipe NVS.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c31",
+      "kind": "assumption",
+      "text": "The X3's I2C RTC (found at boot, docs/evidence/x3-key-mapping-serial.txt:113; 'TLS still verified using the restored RTC clock', t20-first-sync.md:37) keeps time through the GPIO13 battery power-off, so the catch-up check can tell offline whether today's 06:00 has passed.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c32",
+      "kind": "decision",
+      "text": "OTA transport: firmware OTA over the LAN (plain HTTP, checked against the offer's sha256) ships first. OTA over the tunnel stays disabled until a plan task proves a 6 MB+ TLS download on the X3 with no OOM or watchdog reset (closes issue-1 o26/c61). The reason is memory and stability, not security.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "OTA transport: firmware OTA over the LAN (signature-verified, so plain HTTP is acceptable) ships first. OTA over the tunnel stays disabled until a plan task proves a 6 MB+ TLS download on the X3 with no OOM or watchdog reset (closes issue-1 o26/c61); only then is it enabled.",
+          "kind": "decision",
+          "reason": "decision c49"
+        }
+      ]
+    },
+    {
+      "id": "c33",
+      "kind": "decision",
+      "text": "Battery clock: the first plan task bench-tests whether the X3 RTC keeps time through a GPIO13 power-off (power off for 30 min or more, boot offline, compare with the server clock). If it holds, catch-up decides offline from the RTC. If not, catch-up joins Wi-Fi and runs SNTP (about 10 s) on battery wakes until today's run is done.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c34",
+      "kind": "requirement",
+      "text": "The 06:00 timer is armed in HalPowerManager::startDeepSleep, the common choke point, not only in enterDeepSleep. The USB-plug-in cold boot (WakeupReason::AfterUSBPower, src/main.cpp:574-591) and the unheld-power-button re-sleep (main.cpp:564-571) call powerManager.startDeepSleep directly, and those are exactly the paths a device plugged in overnight takes.",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [
+        {
+          "id": "h23",
+          "text": "On the X3: power it off, plug in USB (the AfterUSBPower path), and with no other interaction it still wakes at the next 06:00.",
+          "status": "rejected",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c35",
+      "kind": "requirement",
+      "text": "A timer wake (deep-sleep reset with wakeup cause TIMER, which getWakeupReason maps to Other today, HalGPIO.cpp:246-267) gets its own boot path. It runs the routine headless, leaves the retained sleep-screen frame on the panel, does not open Home or the reader, and goes back to sleep re-arming the next 06:00. Only the outcome line may be repainted.",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [
+        {
+          "id": "h24",
+          "text": "After an unattended 06:00 run the panel still shows the sleep screen, plus at most a one-line outcome, and the device is asleep again within the routine's wall-clock cap.",
+          "status": "rejected",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c36",
+      "kind": "requirement",
+      "text": "Whether to install is decided by the server's offer, not by isUpdateNewer. Every fork build carries upstream's base 1.6.5 (platformio.ini:6-7), the X3 runs '1.6.5-dev-feat/issue-1-e0aec33f' (docs/evidence/t20-first-sync.md:3), and isUpdateNewer returns false for equal X.Y.Z (OtaUpdater.cpp:104-151). So the device installs when the offer names a build different from the running CROSSPOINT_VERSION, older builds included.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h25",
+          "text": "Offering a build that differs from the running one only in its -dev suffix and sha gets installed; offering the running build is a no-op.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "Whether to install is decided by the server's signed offer, not by isUpdateNewer. Every fork build carries upstream's base 1.6.5 (platformio.ini:6-7), the X3 runs '1.6.5-dev-feat/issue-1-e0aec33f' (docs/evidence/t20-first-sync.md:3), and isUpdateNewer returns false for equal X.Y.Z (OtaUpdater.cpp:104-151). So the device installs when the signed offer names a build different from the running CROSSPOINT_VERSION, subject to the downgrade rule.",
+          "kind": "requirement",
+          "reason": "decision c49"
+        }
+      ]
+    },
+    {
+      "id": "c37",
+      "kind": "requirement",
+      "text": "The signature covers a manifest (version string, image sha256, size, target board, and a monotonic build counter), not just the image bytes. The device refuses an offer whose counter is lower than the running build's unless the manifest carries an operator-signed downgrade flag. This blocks a LAN attacker from replaying an older validly signed image over plain-HTTP LAN OTA.",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [
+        {
+          "id": "h26",
+          "text": "Replaying an older signed manifest and image over LAN HTTP without the downgrade flag is refused (unit test plus a fake-server test); with the flag it installs.",
+          "status": "rejected",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c38",
+      "kind": "requirement",
+      "text": "The unattended join tries every saved network: last-connected first, then a scan matched against WifiCredentialStore. It doesn't rely on getLastConnectedSsid alone (main.cpp:337), because the X3 holds 2 credentials, and the last one used may be the phone hotspot from a tunnel sync (docs/evidence/t20-first-sync.md). The join has a hard deadline.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h27",
+          "text": "With the phone hotspot as the last-connected SSID and only home Wi-Fi in range, the 06:00 run joins home Wi-Fi and syncs.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c39",
+      "kind": "requirement",
+      "text": "The routine never interrupts reading. It runs only at start, before Home or the reader opens. A device left awake across 06:00 just runs it at its next start, with no reboot and no Wi-Fi mid-session, because there is only about 50 KB of heap while reading (platformio.ini:75-81).",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h28",
+          "text": "Reading through 06:00 on USB causes no reboot or interruption, and the day's run completes at the next sleep or wake.",
+          "status": "rejected",
+          "instruction": ""
+        },
+        {
+          "id": "h36",
+          "text": "Reading across 06:00 causes no reboot, Wi-Fi join or interruption, and the day's run happens at the next start.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "If the device is awake at 06:00 (being read while plugged in), nothing interrupts the reader: no reboot and no Wi-Fi, because there is only about 50 KB of heap while reading (platformio.ini:75-81). The missed run happens at the next sleep entry, which already joins Wi-Fi for plugin events (main.cpp:325-345), or at the next wake.",
+          "kind": "requirement",
+          "reason": "decision c50"
+        }
+      ]
+    },
+    {
+      "id": "c40",
+      "kind": "requirement",
+      "text": "The firmware compiles in at least 2 signature public-key slots (current and next), so the signing key can be rotated by a release signed with the current key. The xteink server checks the signature on upload and rejects unsigned or mis-signed images before they can be offered.",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [
+        {
+          "id": "h29",
+          "text": "Rotation works end to end in a test: an image signed with the next key installs on a device after a transitional release; an unsigned upload is rejected by the server with a user error (exit 1).",
+          "status": "rejected",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c41",
+      "kind": "requirement",
+      "text": "Each daily run reports what happened through additive, optional /api/device/status fields: when the run started, its trigger (power-on or wake), the firmware step outcome (`none`, `installed`, `failed:<code>`, `deferred:<reason>`) and the content outcome. The server keeps the latest per device, and xteink device list --json shows it. Older firmware that omits the fields still works.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h30",
+          "text": "A fake-device test posts each outcome and reads it back through device list --json; an old-protocol status without the fields still returns 200.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "Each daily run reports what happened through additive, optional /api/device/status fields: when the run started, its trigger (timer, catch-up, sleep-entry), the firmware step outcome (none, installed, failed:<code>, deferred:<reason>) and the content outcome. The server keeps the latest per device, and xteink device list --json shows it. Older firmware that omits the fields still works.",
+          "kind": "requirement",
+          "reason": "decision c50; also fixes l3 (backtick placeholders)"
+        }
+      ]
+    },
+    {
+      "id": "c42",
+      "kind": "requirement",
+      "text": "The new firmware tolerates an xteink server without the firmware offer, such as an issue-1 server (the offer field is absent), and treats that as 'no update', so content still syncs.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h31",
+          "text": "The new firmware against the issue-1 server (origin/feat/issue-1 image) completes a content sync with the firmware step 'none'.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c43",
+      "kind": "boundary",
+      "text": "The freeink-sdk submodule (Free-Ink/freeink-sdk @ 9729236c, .gitmodules) is not modified, and its pointer stays put. The start routine lives entirely in the fork's own code (main.cpp boot path, OtaUpdater, XteinkSync).",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h32",
+          "text": "git diff of the fork's feature branch shows no freeink-sdk pointer change.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "The freeink-sdk submodule (Free-Ink/freeink-sdk @ 9729236c, .gitmodules) is not modified. The timer wake source is armed from the fork's HalPowerManager next to the SDK's GPIO wake (ESP-IDF allows several wake sources), and the submodule pointer stays put.",
+          "kind": "boundary",
+          "reason": "decision c50 (no timer wake)"
+        }
+      ]
+    },
+    {
+      "id": "c44",
+      "kind": "assumption",
+      "text": "The first firmware with server OTA and the start routine reaches the X3 by one USB app-only flash (x3-flash-protocol). The running image (eab86526) has only GitHub OTA, and the fork has no published release that could carry it over the air.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "The first firmware with server OTA and signature checks reaches the X3 by one USB app-only flash (x3-flash-protocol). The running image (eab86526) has only GitHub OTA, and the fork has no published release that could carry it over the air.",
+          "kind": "assumption",
+          "reason": "decision c49 (no signing)"
+        }
+      ]
+    },
+    {
+      "id": "c45",
+      "kind": "decision",
+      "text": "The SD-card firmware path stays as it is, unsigned, on xteink builds. It needs physical access and is the cable-free recovery route if an OTA image breaks networking. It is documented in docs/xteink as the deliberate exception to c18.",
+      "origin": "user",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c46",
+      "kind": "decision",
+      "text": "The firmware signing key is a hidden grant secret on spark (like XTEINK_TUNNEL_TOKEN_*). An 'xteink firmware sign' verb signs through grant inject. Compromise is mitigated by the 2-slot key rotation (c40).",
+      "origin": "user",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c47",
+      "kind": "decision",
+      "text": "The post-update health check requires boot + display + SD + one successful POST /api/device/status to the xteink server within the same routine. If the server is unreachable it retries within a short window, then rolls back.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c48",
+      "kind": "decision",
+      "text": "The 06:00 trigger follows the device's configured timezone (Settings > Clock), which defaults to Asia/Jerusalem.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c49",
+      "kind": "decision",
+      "text": "Threat model: accidents, not attackers. The device isn't secret, so there is no image signing, signing key, or anti-downgrade counter. Integrity comes from the sha256 in the server's offer, the ESP image checksum, and the existing chip-id/board-tag checks. Installing an older build is an ordinary operator choice.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c50",
+      "kind": "decision",
+      "text": "Trigger: the routine runs only when the device starts (power-on or wake). There is no 06:00 timer wake, and the existing sleep/power-off design is unchanged on USB and on battery.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c51",
+      "kind": "requirement",
+      "text": "The server checks an uploaded image before it can be offered: ESP image magic, the chip id at header offset 12 is ESP32-C3, the board tag matches X3, and the size fits a 0x640000 slot (the same checks as OtaUpdater.cpp:184-214). A wrong or garbage upload fails at upload time with a user error (exit 1), not at the device's next start.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h37",
+          "text": "Uploading a non-ESP file, an ESP32-S3 image, or an image larger than the slot is rejected by xteink firmware upload with exit 1; a valid X3 image is accepted.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c52",
+      "kind": "requirement",
+      "text": "Settings keeps a manual 'Check for updates' (the existing OtaUpdateActivity, src/activities/settings/SettingsActivity.cpp:410) pointed at the xteink server, so an OTA can be tried with the owner watching before relying on the start routine.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h38",
+          "text": "From Settings on the X3, 'Check for updates' shows the server's offered build and installs it, with the same sha256 and health check as the start routine.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c53",
+      "kind": "success_signal",
+      "text": "Started (on USB or battery) for the first time after 06:00, with a new build offered and 1 queued book: the X3 installs, reboots, passes the health check, and delivers the book with 0 touches beyond the start press. The server's device record shows the new firmware_version and the item as delivered.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h39",
+          "text": "This run is recorded as evidence with server-log timestamps, once on USB and once on battery.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c54",
+      "kind": "decision",
+      "text": "Builds reach the server by a manual upload: build with pio, then 'xteink firmware upload' with the firmware .bin. A CI push is a separate, later idea.",
+      "origin": "user",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c55",
+      "kind": "decision",
+      "text": "Firmware publishing is the xteink agent's job, not the owner's. After a fork change merges, the agent builds, uploads and offers the image to the X3 with no approval step. The merged fork PR is how the owner hears about it (c60). The health check + rollback (c7/c47) is the safety net.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "Firmware publishing is the xteink agent's job, not the owner's. After a fork change merges, the agent builds, uploads and offers the image to the X3 with no approval step, then notifies the owner each time an offer goes live. The health check + rollback (c7/c47) is the safety net.",
+          "kind": "decision",
+          "reason": "c60"
+        },
+        {
+          "text": "The xteink owner reading on an X3 at home, who wants the reader current without a laptop or cable, and the xteink agent (Claude, the mesh resident) as operator: it builds, uploads and offers firmware through the xteink CLI, and the merged fork PR is how the owner hears about it.",
+          "kind": "decision",
+          "reason": "restore: previous amend targeted the wrong id (meant c20)"
+        }
+      ]
+    },
+    {
+      "id": "c56",
+      "kind": "requirement",
+      "text": "Agent release flow: when a fork PR merges into the fork's integration branch with fork CI green, the xteink agent builds the X3 image with pio from that exact merged commit in a clean worktree, runs xteink firmware upload (admin key via grant inject, as in the issue-1 admin-API pattern), and offers it to every provisioned X3. The upload records the fork commit sha, CROSSPOINT_VERSION and the merged PR.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h43",
+          "text": "One real run is recorded end to end: fork PR merged, then a build from the merge commit (sha matches), then an upload accepted by the c51 checks, then an offer visible in xteink device list --json, then the X3 installs it at its next first start of the day.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c57",
+      "kind": "requirement",
+      "text": "The merged fork PR is the owner's notification, with no mesh message or other channel. When the offer goes live, the agent comments on that PR with the version, fork commit sha and devices offered (signed as xteink (Claude) by the cicd scripts). If a device later rolls the build back, the agent comments on the same PR.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h44",
+          "text": "The release run's mesh message and PR comment both exist and name the same version and sha as the server's offer record.",
+          "status": "rejected",
+          "instruction": ""
+        },
+        {
+          "id": "h46",
+          "text": "For the recorded release run, the merged fork PR carries the offer comment naming the same version and sha as the server's offer record, and no message is sent anywhere else.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "Each live offer notifies the owner with the version, fork commit, merged PR link and devices offered: a mesh message through the communicate skill plus a comment on the merged fork PR (signed by the cicd/communicate scripts as xteink (Claude)). If the device later rolls the build back, that also produces a notification.",
+          "kind": "requirement",
+          "reason": "decision c60 (the PR is the notification)"
+        }
+      ]
+    },
+    {
+      "id": "c58",
+      "kind": "boundary",
+      "text": "The release flow never flashes over USB and never touches the device directly. It never offers an image that failed the upload checks (c51), a build from an unmerged or locally modified tree, or a build that already rolled back on that device (c28). Fork commits in the flow carry no AI trailers.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h45",
+          "text": "The release procedure refuses (exit non-zero, nothing offered) when the build tree is dirty, the commit isn't on the fork's integration branch, or the version previously rolled back on the target device.",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c59",
+      "kind": "assumption",
+      "text": "The trigger for the release flow is the agent's own fork merge (it already merges fork PRs through the cicd skill). There is no webhook or CI push; a merge made by someone else is picked up the next time the agent runs the flow.",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c60",
+      "kind": "decision",
+      "text": "The merged fork PR is the notification. There is no separate mesh message or other channel; offer details and any rollback are reported on that PR.",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    }
+  ],
+  "open_vagueness": [
+    {
+      "id": "v1",
+      "text": "Real deep-sleep battery drain on the X3 with GPIO13 held high (board quiescent current) is unmeasured, so option (b) of q1 needs a bench measurement over hours before it can be chosen.",
+      "kind": "unknown_blocking",
+      "claim_id": "c8",
+      "resolved": true,
+      "resolution": "Moot: battery timer wake not chosen (c15)",
+      "resolution_claim_id": null
+    },
+    {
+      "id": "v2",
+      "text": "Whether the X3's I2C RTC (BoardConfig.h:302; PCF8563 or DS3231) has an alarm/INT line that could power the board on or wake it is a hardware schematic question that the code does not answer.",
+      "kind": "unknown_nonblocking",
+      "claim_id": "c8",
+      "resolved": true,
+      "resolution": "Moot: no timer wake (c50)",
+      "resolution_claim_id": "c50"
+    },
+    {
+      "id": "v3",
+      "text": "A TLS download of 5 MB or more on the ESP32-C3 has never been run on hardware (issue-1 open items o26/c61). The firmware image is 5.9 MB, so an over-the-tunnel OTA hits this directly.",
+      "kind": "unknown_blocking",
+      "claim_id": "c5",
+      "resolved": true,
+      "resolution": "LAN OTA first; tunnel OTA gated on a hardware TLS proof task (c32)",
+      "resolution_claim_id": "c32"
+    },
+    {
+      "id": "v4",
+      "text": "RC slow-clock drift across a ~24 h deep sleep is unquantified (the docs have no figure), so the wake may land minutes off 06:00 unless the delay is re-derived or corrected at each wake.",
+      "kind": "unknown_nonblocking",
+      "claim_id": "c8",
+      "resolved": true,
+      "resolution": "Moot: no timer wake, so no 24 h sleep drift (c50)",
+      "resolution_claim_id": "c50"
+    },
+    {
+      "id": "v5",
+      "text": "Over-the-air firmware currently comes from GitHub releases whose asset is named crosspoint-<tag>-x3-x4.bin (release.yml:140). How does a build reach the server: a manual upload via the CLI, or a later CI push? Manual upload is assumed for now.",
+      "kind": "follow_up",
+      "claim_id": "c11",
+      "resolved": true,
+      "resolution": "Manual CLI upload (c54)",
+      "resolution_claim_id": "c54"
+    },
+    {
+      "id": "v6",
+      "text": "Does the X3 RTC keep time through a battery power-off? If not, catch-up must join Wi-Fi and SNTP on each battery wake until today's run is done (one join of about 10 s per wake), or it treats 'floor date < today' as unknown.",
+      "kind": "unknown_blocking",
+      "claim_id": "c31",
+      "resolved": true,
+      "resolution": "Bench-test the RTC as the first task; SNTP-join fallback (c33)",
+      "resolution_claim_id": "c33"
+    },
+    {
+      "id": "v7",
+      "text": "Not examined: Cloudflare tunnel behavior for a 5.9 MB binary at 06:00 (limits, caching). It is moot until tunnel OTA is enabled (c32), and is to be checked in that proof task.",
+      "kind": "unknown_nonblocking",
+      "claim_id": null,
+      "resolved": false,
+      "resolution": "",
+      "resolution_claim_id": null
+    },
+    {
+      "id": "v8",
+      "text": "Not examined: battery cost of the daily Wi-Fi join plus OTA write on the X3 (mAh per run). The battery floors in c10 are guesses until it is measured.",
+      "kind": "unknown_nonblocking",
+      "claim_id": null,
+      "resolved": false,
+      "resolution": "",
+      "resolution_claim_id": null
+    },
+    {
+      "id": "v9",
+      "text": "Which fork branch counts as the integration branch for releases? Today the work lives on fork feat/issue-1 (PR agentculture/xteink-firmware#1 is open). After that merges it is probably the fork's default branch; to be settled in /spec-to-plan.",
+      "kind": "unknown_nonblocking",
+      "claim_id": "c56",
+      "resolved": false,
+      "resolution": "",
+      "resolution_claim_id": null
+    }
+  ],
+  "scope_entries": [
+    {
+      "id": "s1",
+      "surface": "xteink/core/store.py (origin/feat/issue-1)",
+      "finding": "SQLite schema: the items table has kind CHECK('book','article'). The devices table already has a firmware_version column. There is no firmware table and no per-device target version, and the store has no migration path beyond CREATE TABLE IF NOT EXISTS.",
+      "seeds": [
+        "c2"
+      ]
+    },
+    {
+      "id": "s2",
+      "surface": "docs/device-protocol.md + xteink/server/routes_device.py",
+      "finding": "Protocol v1 has the endpoints status, queue, items/{id} and ack. Every status field is optional. firmware_version is stored and displayed but nothing acts on it. There is no OTA endpoint. Changes must be additive, or they need a new protocol version (device-protocol.md:4-5). A 426 already means 'firmware update needed'.",
+      "seeds": [
+        "c3"
+      ]
+    },
+    {
+      "id": "s3",
+      "surface": ".github/scripts/privacy-check.sh + scripts/scan-secrets.py (xteink)",
+      "finding": "The privacy gate proves zero egress, and scan-secrets rejects non-localhost URLs in tracked JSON. A server-side OTA source therefore has to be upload-only, and the fake device needs an OTA leg.",
+      "seeds": [
+        "c4"
+      ]
+    },
+    {
+      "id": "s4",
+      "surface": "xteink-firmware src/network/OtaUpdater.cpp + OtaUpdateActivity",
+      "finding": "OTA already exists. Today it checks GitHub releases/latest for agentculture/xteink-firmware (OtaUpdater.cpp:25-32). It parses the release JSON, streams the image over wolfSSL HttpDownloader into esp_ota_write, and compares versions with isUpdateNewer, which accepts X.Y.Z only. The UI is under Settings. The source URL is hard-wired.",
+      "seeds": [
+        "c5"
+      ]
+    },
+    {
+      "id": "s5",
+      "surface": "xteink-firmware partitions.csv + .pio/build/default/firmware.bin",
+      "finding": "ota_0 and ota_1 are 6,553,600 B each, and otadata is present. The app is 5.89 MB, so about 10% of each slot is free. Changing partitions would need a factory flash, which wipes NVS provisioning (x3-flash-protocol memory).",
+      "seeds": [
+        "c6"
+      ]
+    },
+    {
+      "id": "s6",
+      "surface": "framework-arduinoespressif32 cores/esp32/esp32-hal-misc.c:286-321 + sdkconfig.defaults:331",
+      "finding": "CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y, but initArduino marks every booted app valid unless verifyRollbackLater() is overridden, and nothing in src/, lib/ or freeink-sdk overrides it. Today rollback therefore only catches an image that crashes before init. Secure boot and signed apps are off (sdkconfig.defaults:400-402).",
+      "seeds": [
+        "c7"
+      ]
+    },
+    {
+      "id": "s7",
+      "surface": "xteink-firmware lib/hal/HalClock.cpp, lib/TrustedTime, src/util/Timezones.cpp",
+      "finding": "SNTP (HalClock::syncFromNTP, TrustedTime) and the TZ picker exist, and Jerusalem is in the table. TrustedTime.h:6-8 says the C3 keeps time through deep sleep but loses it on power-off, and that there is no battery-backed RTC. An I2C RTC capability is compiled for X3 (BoardConfig.h:302). The xteink/d2-nav-sntp branch is already merged into feat/issue-1.",
+      "seeds": [
+        "c8"
+      ]
+    },
+    {
+      "id": "s8",
+      "surface": "xteink-firmware src/xteink/XteinkSync.cpp + docs/xteink/sync.md",
+      "finding": "sync::run(renderer*, Callbacks{}, budget) already runs headless (onStationJoined at :831). It does LAN first with a 4 s timeout, then the tunnel, with a 60 s item budget. Results are written to NVS sync_last and drawn on Home only when Home repaints. Wi-Fi activities reboot for a fresh heap first, because there is only about 50 KB free while reading and TLS peaks around 39 KB.",
+      "seeds": [
+        "c9"
+      ]
+    },
+    {
+      "id": "s9",
+      "surface": "xteink-firmware src/main.cpp:325-345 (deliverSleepPluginEvents)",
+      "finding": "A headless join of the last-connected SSID already exists: WiFi.begin with a 10 s deadline, gated at 20% battery, and it starts TrustedTime when connected. This is the template for the scheduled join.",
+      "seeds": [
+        "c10"
+      ]
+    },
+    {
+      "id": "s10",
+      "surface": "xteink CLI/MCP/web (origin/feat/issue-1)",
+      "finding": "The CLI nouns are device, library, server, tunnel and mcp. device has list, queue, revoke and overview (device.py:117-141). There are 3 MCP tools: push_file, list_library and send_to_device. DevicesView.tsx:207-210 already shows Firmware when firmware_version is set, and api.ts:44 already has it on the Device type. Nothing for schedules or firmware exists anywhere.",
+      "seeds": [
+        "c11"
+      ]
+    },
+    {
+      "id": "s11",
+      "surface": "xteink-firmware scripts/xteink-check-services.py:99-104 + docs/xteink/CONTRIBUTING.md:14",
+      "finding": "The CI guard pins the OTA source away from upstream and bans setInsecure in the OTA/TLS files. CONTRIBUTING says updates come from the fork's releases, never upstream's. That rule and docs/xteink/tls.md:212-228 (the OTA source section) need rewording for a server source.",
+      "seeds": [
+        "c12"
+      ]
+    },
+    {
+      "id": "s12",
+      "surface": "xteink/core/ingest.py + xteink/mcp/tools.py (origin/feat/issue-1)",
+      "finding": "kind='article' is only a label: Markdown/HTML uploads default to it (ingest.py:171). Every item is pushed by the web UI, the CLI or MCP. There is no RSS, URL fetch or scheduled ingest, and there are no server background tasks (only the dual uvicorn asyncio.gather in app.py:188).",
+      "seeds": [
+        "c13"
+      ]
+    },
+    {
+      "id": "s13",
+      "surface": "gh pr list (xteink #4, fork #1)",
+      "finding": "Both issue-1 PRs are OPEN. main holds only the scaffold, so the server, protocol and sync client exist only on the feat/issue-1 branches.",
+      "seeds": [
+        "c14"
+      ]
+    },
+    {
+      "id": "s14",
+      "surface": "xteink-firmware lib/hal/HalPowerManager.cpp:77-156 + freeink-sdk PowerManager.cpp:60-151",
+      "finding": "Sleep on Xteink C3 boards drives GPIO13 low, which cuts power to the battery MOSFET, then runs esp_deep_sleep_start. The only armed wake source is the power-button GPIO. esp_sleep_enable_timer_wakeup is used nowhere, and HalGPIO::getWakeupReason (HalGPIO.cpp:246-267) has no Timer case. On battery a timer wake is impossible without changing the power-off design; on USB the chip stays in deep sleep.",
+      "seeds": [
+        "q1"
+      ]
+    },
+    {
+      "id": "s15",
+      "surface": "xteink-firmware docs/xteink/tls.md + src/network/TlsTrust.h",
+      "finding": "The LAN URL may be plain http (TlsTrust.h:15-17); the tunnel requires a pinned CA bundle (XteinkCaBundle.h) plus hostname verification. The GitHub roots in the bundle exist for OTA (tls.md:60). There is no image signing anywhere.",
+      "seeds": [
+        "q2",
+        "q3"
+      ]
+    },
+    {
+      "id": "s16",
+      "surface": "challenge pass / adjacent-systems lens: src/main.cpp:563-597 + lib/hal/HalPowerManager.cpp:77-156",
+      "finding": "Three call sites reach the deep sleep: enterDeepSleep, AfterUSBPower and unheld-PowerButton. Only the first runs the sleep-entry hooks. A timer armed in enterDeepSleep alone would miss the plug-in-overnight case.",
+      "seeds": [
+        "c34"
+      ]
+    },
+    {
+      "id": "s17",
+      "surface": "challenge pass / adjacent-systems lens: lib/hal/HalGPIO.cpp:246-267 + src/main.cpp:563-597",
+      "finding": "getWakeupReason has no Timer case, so a timer wake falls to Other and the default branch boots the full UI. Without a dedicated path, an unattended wake would leave the device awake on Home and draining.",
+      "seeds": [
+        "c35"
+      ]
+    },
+    {
+      "id": "s18",
+      "surface": "challenge pass / unstated-assumptions lens: src/network/OtaUpdater.cpp:104-151 + platformio.ini:6-7,283",
+      "finding": "The frame assumed 'newer' was decidable. In fact dev builds share X.Y.Z with each other, so isUpdateNewer would never offer one of them. Hand-flashed devices run dev builds today.",
+      "seeds": [
+        "c36"
+      ]
+    },
+    {
+      "id": "s19",
+      "surface": "challenge pass / security lens: decision c18 + c32 (LAN HTTP OTA) + sdkconfig.defaults:400-402",
+      "finding": "Image signing alone authenticates the bytes, not the decision to install them. Over plain-HTTP LAN, an attacker can serve any previously signed image (a downgrade replay). Anti-rollback efuses are off, so this has to be enforced in software.",
+      "seeds": [
+        "c37"
+      ]
+    },
+    {
+      "id": "s20",
+      "surface": "challenge pass / adjacent-systems lens: src/activities/settings/SdFirmwareUpdateActivity.cpp + src/network/FirmwareFlasher.cpp",
+      "finding": "A second install path, the SD card, exists beside OTA. It validates size and checksum only (SdFirmwareUpdateActivity.cpp:89-97) and isn't covered by c18. Routed to a question for the user.",
+      "seeds": []
+    },
+    {
+      "id": "s21",
+      "surface": "challenge pass / failure-mode lens: src/main.cpp:325-345 + src/WifiCredentialStore.cpp:198-210",
+      "finding": "The existing headless join (the template for c10) only tries the last SSID. Issue-1 synced over the phone hotspot, so the last SSID is often the wrong one at home in the morning.",
+      "seeds": [
+        "c38"
+      ]
+    },
+    {
+      "id": "s22",
+      "surface": "challenge pass / lifecycle lens: src/main.cpp:356-391 (enterDeepSleep) + platformio.ini:75-81",
+      "finding": "The frame covered 'asleep on USB' and 'off on battery' but not 'awake at 06:00'. The reader heap can't host TLS, so the run has to defer.",
+      "seeds": [
+        "c39"
+      ]
+    },
+    {
+      "id": "s23",
+      "surface": "challenge pass / security/operations lens: decision c18 + memory issue1-handoff-state (grant secrets)",
+      "finding": "c18 named an offline key but not its custody, its rotation or what happens if it is lost. Rotation needs a second compiled-in key slot. Custody routed to a question for the user.",
+      "seeds": [
+        "c40"
+      ]
+    },
+    {
+      "id": "s24",
+      "surface": "challenge pass / recovery lens: c7 + framework esp32-hal-misc.c:286-321",
+      "finding": "A health check without network can keep an image whose networking is broken, and that image can never receive the next OTA. That is the worst-case recovery path (USB plus the flash protocol). Routed to a question.",
+      "seeds": []
+    },
+    {
+      "id": "s25",
+      "surface": "challenge pass / observability lens: xteink/server/routes_device.py:76-149 (StatusIn) + xteink/core/devices.py:149-164",
+      "finding": "Today status carries last_sync_result and last_error only, so a silent daily-run failure would be invisible on the server. The COALESCE update pattern supports additive optional fields.",
+      "seeds": [
+        "c41"
+      ]
+    },
+    {
+      "id": "s26",
+      "surface": "challenge pass / migration/compat lens: docs/device-protocol.md (v1, additive) + c3",
+      "finding": "c3 covered an old device against a new server, but not a new device against an old server. Firmware and server deploy independently, so both directions matter.",
+      "seeds": [
+        "c42"
+      ]
+    },
+    {
+      "id": "s27",
+      "surface": "challenge pass / adjacent-systems lens: .gitmodules + freeink-sdk/libs/hardware/PowerManager",
+      "finding": "The sleep is entered inside a third-party submodule. Editing it would mean forking a second repo, so the frame keeps the change in the fork's HAL layer.",
+      "seeds": [
+        "c43"
+      ]
+    },
+    {
+      "id": "s28",
+      "surface": "challenge pass / overlooked-actors lens: src/util/Timezones.cpp + ClockSettingsActivity",
+      "finding": "The device already has a user-selectable timezone. Pinning the schedule to Jerusalem would ignore it. Routed to a question.",
+      "seeds": []
+    },
+    {
+      "id": "s29",
+      "surface": "challenge pass / lifecycle lens: memory issue1-handoff-state (X3 runs eab86526) + OtaUpdater.cpp:25-32",
+      "finding": "Bootstrap: there is a chicken-and-egg step. The device can't OTA into the OTA feature.",
+      "seeds": [
+        "c44"
+      ]
+    },
+    {
+      "id": "s30",
+      "surface": "challenge pass / concurrency lens: xteink/core/store.py + routes_device.py",
+      "finding": "Clean pass. There is one device per key and a single sqlite writer per request. A firmware download beside a book download in the same run is sequential on the device. Residual: two devices fetching the same image at once is plain read concurrency on a content-addressed blob, so there's no new hazard.",
+      "seeds": []
+    },
+    {
+      "id": "s31",
+      "surface": "challenge pass / failure-mode lens: OtaUpdater.cpp:155-259 (esp_ota_begin/write/end)",
+      "finding": "Clean pass. An interrupted download or power loss mid-write leaves the running slot untouched (begin erases only the inactive slot, and the boot partition switches only after end plus verify). It retries the next day. Residual: no Range resume into an OTA slot, so a flaky link re-downloads the whole 5.9 MB.",
+      "seeds": []
+    }
+  ],
+  "lapses": [
+    {
+      "id": "l1",
+      "code": "provenance-missing",
+      "what": "Hand-edited the exported spec (backticked <new>/<tag>) instead of fixing the source text via a move, so the frame JSON and docs/specs diverge and a re-export reintroduces MD033",
+      "skipped_check": "export hygiene: backtick angle-bracket tokens at capture time",
+      "refs": [
+        "c23",
+        "v5"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l2",
+      "code": "assumption-for-measurement",
+      "what": "The 120 s budget in c25 and the battery floors in c10 were proposed without any measurement on the X3 (the issue-1 sync took about 42.8 s over hotspot+tunnel; there is no OTA timing or mAh data)",
+      "skipped_check": "time an OTA plus sync run on the X3 before fixing thresholds",
+      "refs": [
+        "c25",
+        "c10"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l3",
+      "code": "provenance-missing",
+      "what": "Repeated l1 during the challenge pass: c41's text has bare failed:<code> / deferred:<reason>, so the re-export failed MD033 and was hand-patched again",
+      "skipped_check": "backtick angle-bracket tokens at capture time (export hygiene)",
+      "refs": [
+        "c41",
+        "l1"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    }
+  ],
+  "obligations": []
+}

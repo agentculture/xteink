@@ -252,3 +252,5 @@ web/node_modules/
 *.key
 compose.override.yaml
 docker-compose.override.yaml
+
+.devague/questions/
