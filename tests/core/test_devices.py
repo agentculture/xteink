@@ -152,3 +152,26 @@ def test_queue_entries_carry_the_item_format(devices, library):
     item = _item(library)
     entry = devices.queue_item(dev.id, item.id)
     assert entry.format == "epub"
+
+
+def test_report_status_records_daily_run_fields(devices):
+    dev, _ = devices.register("r")
+    s = devices.report_status(
+        dev.id,
+        run_started_at="2026-10-11T06:00:00Z",
+        run_trigger="wake",
+        fw_outcome="deferred:low_battery",
+        content_outcome="ok",
+    )
+    assert (s.last_run_at, s.last_run_trigger) == ("2026-10-11T06:00:00Z", "wake")
+    assert (s.last_fw_outcome, s.last_content_outcome) == ("deferred:low_battery", "ok")
+
+
+def test_report_status_keeps_run_fields_when_omitted(devices):
+    dev, _ = devices.register("r")
+    devices.report_status(
+        dev.id, run_started_at="t0", run_trigger="power_on", fw_outcome="installed"
+    )
+    after = devices.report_status(dev.id, last_sync_result="ok", content_outcome="partial")
+    assert (after.last_run_at, after.last_run_trigger) == ("t0", "power_on")
+    assert (after.last_fw_outcome, after.last_content_outcome) == ("installed", "partial")
