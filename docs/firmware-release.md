@@ -55,7 +55,7 @@ and `--key-name` (or `XTEINK_GRANT_KEY`) for a differently named grant secret.
 | Integration branch | `--integration-branch` | `XTEINK_INTEGRATION_BRANCH` | `feat/issue-1` |
 | Fork checkout | `--fork-checkout` | `XTEINK_FORK_CHECKOUT` | `~/git/xteink-firmware` |
 | Admin key secret | `--key-name` | `XTEINK_GRANT_KEY` | `XTEINK_MCP_API_KEY` |
-| PlatformIO binary | `--pio` | `PIO` | `~/.platformio/penv/bin/pio` |
+| PlatformIO binary | `--pio` | `PIO` | `penv/bin/pio` in PlatformIO's default home |
 
 The integration branch is configuration, not a constant: today it is the fork's
 `feat/issue-1`, and it will probably become the default branch.

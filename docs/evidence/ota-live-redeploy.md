@@ -5,7 +5,7 @@ Run 2026-10-11 with the owner's approval. The live compose project `xteink` was 
 ## Steps
 
 1. `api` and `mcp` were stopped, with the tunnels left up, so the SQLite database could be copied consistently.
-2. The `xteink_xteink-data` volume was backed up to `~/.local/share/xteink/backups/server/20261011T195030Z-xteink-data.tgz` (81,991 B, sha256 prefix `160e8704cb8b696e`; contains `library.db` and `files/`). This lives outside the repo and is not committed.
+2. The `xteink_xteink-data` volume was backed up to `xteink/backups/server/20261011T195030Z-xteink-data.tgz` under the operator's XDG data home (81,991 B, sha256 prefix `160e8704cb8b696e`; contains `library.db` and `files/`). This lives outside the repo and is not committed.
 3. The stack was rebuilt with the issue-1 command from the worktree, adding `--env-file` pointing at the main checkout's gitignored `.env`:
    `COMPOSE_PROJECT_NAME=xteink grant run --inject TUNNEL_TOKEN_UI=… --inject TUNNEL_TOKEN_DEVICE=… --inject XTEINK_API_KEY=… -- docker compose --env-file <main checkout>/.env --profile remote up -d --build`.
 

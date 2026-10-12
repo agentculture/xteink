@@ -34,14 +34,16 @@ def test_upload_dry_run_validates_but_stores_nothing(api, capsys):
 def test_upload_dry_run_text_hint(api, capsys):
     rc, out, _ = run(capsys, ["firmware", "upload", str(FIXTURE), *COMMON])
     assert rc == 0
-    assert "would store" in out and "--apply" in out
+    assert "would store" in out
+    assert "--apply" in out
 
 
 def test_upload_apply_stores(api, capsys):
     rc, out, _ = run(capsys, ["firmware", "upload", str(FIXTURE), *COMMON, "--apply", "--json"])
     payload = json.loads(out)
     assert rc == 0
-    assert payload["applied"] is True and payload["created"] is True
+    assert payload["applied"] is True
+    assert payload["created"] is True
     assert payload["firmware"]["id"] == 1
     assert b'name="dry_run"\r\n\r\nfalse' in api.bodies[-1]
     assert b'name="fork_commit"\r\n\r\nabc123' in api.bodies[-1]
@@ -54,14 +56,17 @@ def test_upload_bad_image_exits_1_and_stores_nothing(api, capsys, tmp_path):
         rc, out, err = run(capsys, ["firmware", "upload", str(bad), *COMMON, *extra])
         assert rc == 1
         assert out == ""
-        assert err.startswith("error:") and "bad_magic" in err and "hint:" in err
+        assert err.startswith("error:")
+        assert "bad_magic" in err
+        assert "hint:" in err
     # every attempt was refused by the server; nothing succeeded
     assert api.writes == [("POST", "/api/firmware")] * 2
 
 
 def test_upload_missing_file_exits_1_without_requests(api, capsys, tmp_path):
     rc, _, err = run(capsys, ["firmware", "upload", str(tmp_path / "nope.bin"), *COMMON])
-    assert rc == 1 and "not a file" in err
+    assert rc == 1
+    assert "not a file" in err
     assert api.requests == []
 
 
@@ -81,7 +86,8 @@ def test_upload_server_down_exits_2(monkeypatch, capsys):
 
 def test_list_text_and_json(api, capsys):
     rc, out, _ = run(capsys, ["firmware", "list"])
-    assert rc == 0 and "1.6.5-dev" in out
+    assert rc == 0
+    assert "1.6.5-dev" in out
     rc, out, _ = run(capsys, ["firmware", "list", "--json"])
     assert json.loads(out)["firmware"][0]["id"] == 1
 
@@ -97,7 +103,8 @@ def test_offer_dry_run_asks_server_to_dry_run(api, capsys):
     rc, out, _ = run(capsys, ["firmware", "offer", "1", "--device", "Reader One", "--json"])
     payload = json.loads(out)
     assert rc == 0
-    assert payload["applied"] is False and payload["offered"] == [1]
+    assert payload["applied"] is False
+    assert payload["offered"] == [1]
     assert json.loads(api.bodies[-1])["dry_run"] is True
 
 
@@ -113,19 +120,25 @@ def test_offer_apply_device_by_version(api, capsys):
 def test_offer_all(api, capsys):
     rc, out, _ = run(capsys, ["firmware", "offer", "1", "--all", "--apply", "--json"])
     payload = json.loads(out)
-    assert rc == 0 and payload["offered"] == [1, 2] and payload["all"] is True
+    assert rc == 0
+    assert payload["offered"] == [1, 2]
+    assert payload["all"] is True
     rc, out, _ = run(capsys, ["firmware", "offer", "1", "--all"])
-    assert rc == 0 and "2 offered" in out and "--apply" in out
+    assert rc == 0
+    assert "2 offered" in out
+    assert "--apply" in out
 
 
 def test_offer_rolled_back_device_exits_1(api, capsys):
     rc, _, err = run(capsys, ["firmware", "offer", "1", "--device", "2", "--apply"])
-    assert rc == 1 and "rolled back" in err
+    assert rc == 1
+    assert "rolled back" in err
 
 
 def test_offer_unknown_firmware_exits_1(api, capsys):
     rc, _, err = run(capsys, ["firmware", "offer", "99", "--all"])
-    assert rc == 1 and "no firmware matches" in err
+    assert rc == 1
+    assert "no firmware matches" in err
 
 
 def test_device_list_json_has_ota_and_daily_run_fields(api, capsys):
@@ -143,7 +156,8 @@ def test_device_list_json_has_ota_and_daily_run_fields(api, capsys):
     assert d1["offered_firmware"] == {"id": 1, "version": "1.6.5-dev"}
     assert d1["firmware_version"] == "1.6.4"
     assert d1["last_run_at"] == "2026-10-11T03:00:00+00:00"
-    assert d1["last_fw_outcome"] == "updated" and d1["last_content_outcome"] == "ok"
+    assert d1["last_fw_outcome"] == "updated"
+    assert d1["last_content_outcome"] == "ok"
     assert d1["last_run_trigger"] == "daily"
     for k in (
         "offered_firmware",
@@ -153,15 +167,19 @@ def test_device_list_json_has_ota_and_daily_run_fields(api, capsys):
         "last_fw_outcome",
         "last_content_outcome",
     ):
-        assert k in d2 and d2[k] is None
+        assert k in d2
+        assert d2[k] is None
     rc, out, _ = run(capsys, ["device", "list"])
-    assert "offered: 1.6.5-dev" in out and "fw: 1.6.4" in out
+    assert "offered: 1.6.5-dev" in out
+    assert "fw: 1.6.4" in out
 
 
 def test_rollbacks_lists_devices(api, capsys):
     rc, out, _ = run(capsys, ["firmware", "rollbacks", "1", "--json"])
     assert rc == 0
     payload = json.loads(out)
-    assert payload["firmware"]["id"] == 1 and payload["rollbacks"][0]["device_id"] == 2
+    assert payload["firmware"]["id"] == 1
+    assert payload["rollbacks"][0]["device_id"] == 2
     rc, out, _ = run(capsys, ["firmware", "rollbacks", "1"])
-    assert rc == 0 and "Reader Two" in out
+    assert rc == 0
+    assert "Reader Two" in out

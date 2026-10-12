@@ -134,10 +134,11 @@ class FirmwareStore:
 
     # --- offers -------------------------------------------------------------------
 
-    def offer(self, device_id: int, firmware_id: int) -> Firmware:
+    def offer(self, device_id: int, firmware_id: int, *, dry_run: bool = False) -> Firmware:
         """Offer an image to one device, replacing any previous offer.
 
         ValidationError if the device is revoked or has already rolled this image back.
+        With ``dry_run`` the same checks run and nothing is written.
         """
         with self.store.connect() as c:
             dev = self._device(c, device_id)
@@ -149,15 +150,17 @@ class FirmwareStore:
                     f"device {device_id} rolled back firmware {firmware_id} ({fw.version});"
                     " it is not offered again"
                 )
-            c.execute(
-                "UPDATE devices SET offered_firmware_id = ? WHERE id = ?",
-                (firmware_id, device_id),
-            )
+            if not dry_run:
+                c.execute(
+                    "UPDATE devices SET offered_firmware_id = ? WHERE id = ?",
+                    (firmware_id, device_id),
+                )
         return fw
 
-    def offer_all(self, firmware_id: int) -> OfferAllResult:
+    def offer_all(self, firmware_id: int, *, dry_run: bool = False) -> OfferAllResult:
         """Offer an image to every provisioned (non-revoked) device that has not rolled
-        it back. Skipped devices keep whatever offer they had."""
+        it back. Skipped devices keep whatever offer they had. With ``dry_run`` the same
+        selection is reported and nothing is written."""
         offered, revoked, rolled = [], [], []
         with self.store.connect() as c:
             fw = _fw(self._get(c, firmware_id))
@@ -168,10 +171,11 @@ class FirmwareStore:
                     rolled.append(dev["id"])
                 else:
                     offered.append(dev["id"])
-            c.executemany(
-                "UPDATE devices SET offered_firmware_id = ? WHERE id = ?",
-                [(firmware_id, d) for d in offered],
-            )
+            if not dry_run:
+                c.executemany(
+                    "UPDATE devices SET offered_firmware_id = ? WHERE id = ?",
+                    [(firmware_id, d) for d in offered],
+                )
         return OfferAllResult(fw, tuple(offered), tuple(revoked), tuple(rolled))
 
     def offered(self, device_id: int) -> Firmware | None:

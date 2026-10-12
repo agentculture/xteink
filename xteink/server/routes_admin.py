@@ -199,43 +199,17 @@ def offer_firmware(
     back, is refused (single: 422) or skipped (``all``). ``dry_run`` reports without writing."""
     if body.all == (body.device_id is not None):
         raise ValidationError("give exactly one of device_id or all")
-    fw = services.firmware.get(firmware_id)
     if body.all:
-        if body.dry_run:
-            offered, revoked, rolled = [], [], []
-            for d in services.devices.list():
-                if d.revoked_at:
-                    revoked.append(d.id)
-                elif any(r.id == firmware_id for r in services.firmware.rolled_back(d.id)):
-                    rolled.append(d.id)
-                else:
-                    offered.append(d.id)
-        else:
-            res = services.firmware.offer_all(firmware_id)
-            offered, revoked, rolled = (
-                list(res.offered),
-                list(res.skipped_revoked),
-                list(res.skipped_rolled_back),
-            )
+        res = services.firmware.offer_all(firmware_id, dry_run=body.dry_run)
         return {
-            "firmware": asdict(fw),
+            "firmware": asdict(res.firmware),
             "dry_run": body.dry_run,
-            "offered": offered,
-            "skipped_revoked": revoked,
-            "skipped_rolled_back": rolled,
+            "offered": list(res.offered),
+            "skipped_revoked": list(res.skipped_revoked),
+            "skipped_rolled_back": list(res.skipped_rolled_back),
         }
     device_id = int(body.device_id)  # type: ignore[arg-type]
-    if body.dry_run:
-        dev = services.devices.get(device_id)
-        if dev.revoked_at:
-            raise ValidationError(f"device {device_id} is revoked")
-        if any(r.id == firmware_id for r in services.firmware.rolled_back(device_id)):
-            raise ValidationError(
-                f"device {device_id} rolled back firmware {firmware_id} ({fw.version});"
-                " it is not offered again"
-            )
-    else:
-        services.firmware.offer(device_id, firmware_id)
+    fw = services.firmware.offer(device_id, firmware_id, dry_run=body.dry_run)
     return {"firmware": asdict(fw), "dry_run": body.dry_run, "offered": [device_id]}
 
 

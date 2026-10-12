@@ -165,7 +165,8 @@ def test_migrated_issue1_db_works_through_the_services(tmp_path):
     assert [d.name for d in devices.list()] == ["x3", "old"]
     x3 = devices.get(1)
     assert x3.firmware_version == "1.6.5-dev"
-    assert x3.offered_firmware_id is None and x3.last_run_at is None
+    assert x3.offered_firmware_id is None
+    assert x3.last_run_at is None
     assert [e.item_id for e in devices.queue(1, state=None)] == [1, 2]
     assert [i.title for i in LibraryService(store).list()] == ["Book A", "Article B"]
 
@@ -373,8 +374,34 @@ def test_offer_all_skips_revoked_and_rolled_back(devices, firmware):
     assert result.offered == (a.id, d.id)
     assert result.skipped_revoked == (b.id,)
     assert result.skipped_rolled_back == (c.id,)
-    assert firmware.offered(a.id) == fw and firmware.offered(d.id) == fw
-    assert firmware.offered(b.id) is None and firmware.offered(c.id) is None
+    assert firmware.offered(a.id) == fw
+    assert firmware.offered(d.id) == fw
+    assert firmware.offered(b.id) is None
+    assert firmware.offered(c.id) is None
+
+
+def test_dry_run_offers_check_the_same_rules_and_write_nothing(devices, firmware):
+    a, _ = devices.register("a")
+    b, _ = devices.register("b")
+    c, _ = devices.register("c")
+    devices.revoke_key(b.id)
+    fw = firmware.add(IMAGE, version="v1", board="x3").firmware
+    firmware.record_rollback(c.id, fw.id)
+
+    result = firmware.offer_all(fw.id, dry_run=True)
+    assert (result.offered, result.skipped_revoked, result.skipped_rolled_back) == (
+        (a.id,),
+        (b.id,),
+        (c.id,),
+    )
+    assert firmware.offered(a.id) is None
+
+    assert firmware.offer(a.id, fw.id, dry_run=True) == fw
+    assert firmware.offered(a.id) is None
+    with pytest.raises(ValidationError, match="revoked"):
+        firmware.offer(b.id, fw.id, dry_run=True)
+    with pytest.raises(ValidationError, match="rolled back"):
+        firmware.offer(c.id, fw.id, dry_run=True)
 
 
 def test_offer_all_unknown_firmware(firmware):

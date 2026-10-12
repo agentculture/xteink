@@ -36,19 +36,24 @@ def test_upload_list_get(main_client, h):
     body = r.json()
     fw = body["firmware"]
     assert body["created"] is True
-    assert fw["version"] == "1.6.5-dev" and fw["board"] == "x4" and fw["size"] == len(VALID)
-    assert fw["fork_commit"] == "abc123" and fw["source_pr"] == "https://example.test/pr/1"
+    assert fw["version"] == "1.6.5-dev"
+    assert fw["board"] == "x4"
+    assert fw["size"] == len(VALID)
+    assert fw["fork_commit"] == "abc123"
+    assert fw["source_pr"] == "https://example.test/pr/1"
     assert main_client.get("/api/firmware", headers=h).json()["firmware"] == [fw]
     assert main_client.get(f"/api/firmware/{fw['id']}", headers=h).json() == fw
     assert main_client.get("/api/firmware/99", headers=h).status_code == 404
     again = upload(main_client, h)
-    assert again.status_code == 200 and again.json()["created"] is False
+    assert again.status_code == 200
+    assert again.json()["created"] is False
 
 
 def test_dry_run_stores_nothing(main_client, h, store):
     r = upload(main_client, h, dry_run="true")
     assert r.status_code == 200
-    assert r.json()["dry_run"] is True and r.json()["image"]["version"] == "1.6.5-dev"
+    assert r.json()["dry_run"] is True
+    assert r.json()["image"]["version"] == "1.6.5-dev"
     assert FirmwareStore(store).list() == []
 
 
@@ -63,7 +68,8 @@ def test_dry_run_stores_nothing(main_client, h, store):
 )
 def test_bad_image_422_and_nothing_stored(main_client, h, store, data, code):
     r = upload(main_client, h, data=data)
-    assert r.status_code == 422 and r.json()["code"] == code
+    assert r.status_code == 422
+    assert r.json()["code"] == code
     assert FirmwareStore(store).list() == []
 
 
@@ -71,17 +77,20 @@ def test_too_large_413(main_client, h, store, monkeypatch):
     monkeypatch.setattr("xteink.server.routes_admin.MAX_IMAGE_SIZE", 10)
     monkeypatch.setattr("xteink.core.fwimage.MAX_IMAGE_SIZE", 10)
     r = upload(main_client, h)
-    assert r.status_code == 413 and r.json()["code"] == "too_large"
+    assert r.status_code == 413
+    assert r.json()["code"] == "too_large"
     assert FirmwareStore(store).list() == []
 
 
 def test_version_required_when_image_has_none(main_client, h, store):
     bare = VALID.replace(b"CrossPoint version: ", b"CrossPoint vers!on: ")
     r = upload(main_client, h, data=bare)
-    assert r.status_code == 422 and r.json()["code"] == "version_required"
+    assert r.status_code == 422
+    assert r.json()["code"] == "version_required"
     assert FirmwareStore(store).list() == []
     ok = upload(main_client, h, data=bare, version="9.9.9")
-    assert ok.status_code == 201 and ok.json()["firmware"]["version"] == "9.9.9"
+    assert ok.status_code == 201
+    assert ok.json()["firmware"]["version"] == "9.9.9"
 
 
 def test_offer_single_and_dry_run(main_client, h, store):
@@ -89,10 +98,12 @@ def test_offer_single_and_dry_run(main_client, h, store):
     fid = upload(main_client, h).json()["firmware"]["id"]
     url = f"/api/firmware/{fid}/offer"
     dry = main_client.post(url, json={"device_id": dev.id, "dry_run": True}, headers=h)
-    assert dry.status_code == 200 and dry.json()["offered"] == [dev.id]
+    assert dry.status_code == 200
+    assert dry.json()["offered"] == [dev.id]
     assert FirmwareStore(store).offered(dev.id) is None
     r = main_client.post(url, json={"device_id": dev.id}, headers=h)
-    assert r.status_code == 200 and r.json()["dry_run"] is False
+    assert r.status_code == 200
+    assert r.json()["dry_run"] is False
     assert FirmwareStore(store).offered(dev.id).id == fid
     listed = main_client.get("/api/devices", headers=h).json()["devices"][0]
     assert listed["offered_firmware_id"] == fid
@@ -132,7 +143,8 @@ def test_offer_all(main_client, h, store):
     assert FirmwareStore(store).offered(ok.id) is None
     res = main_client.post(url, json={"all": True}, headers=h).json()
     assert res["offered"] == [ok.id]
-    assert res["skipped_revoked"] == [revoked.id] and res["skipped_rolled_back"] == [rolled.id]
+    assert res["skipped_revoked"] == [revoked.id]
+    assert res["skipped_rolled_back"] == [rolled.id]
     assert FirmwareStore(store).offered(ok.id).id == fid
 
 
@@ -144,6 +156,7 @@ def test_rollbacks_route(main_client, h, store):
     assert main_client.get(url, headers=h).json() == {"rollbacks": []}
     FirmwareStore(store).record_rollback(rolled.id, fid)
     (row,) = main_client.get(url, headers=h).json()["rollbacks"]
-    assert row["device_id"] == rolled.id and row["device_name"] == "rolled"
+    assert row["device_id"] == rolled.id
+    assert row["device_name"] == "rolled"
     assert row["rolled_back_at"]
     assert main_client.get("/api/firmware/99/rollbacks", headers=h).status_code == 404
