@@ -43,6 +43,10 @@ Order of operations:
    `pr-reply.sh --print-body`, which resolves the nick from `culture.yaml`.
 9. The temp worktree is always removed (submodules deinitialised first).
 
+Step 6 also refuses (exit `1`, nothing offered) when the upload dedupes onto an
+image already stored for a different fork commit: offering it would credit this
+PR while its rollback bookkeeping stays on the other one.
+
 Any refusal in steps 1 to 5 exits `1` with nothing uploaded or offered. A tool
 that fails or is missing exits `2`. Errors follow the CLI's error contract
 (`{code, message, remediation}` with `--json`). On success, `--json` prints

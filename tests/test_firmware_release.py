@@ -42,6 +42,10 @@ class Fake:
         self.firmware = []  # existing uploaded images
         self.rollbacks: dict[int, list[dict]] = {}
         self.pr_comments: list[dict] = []
+        self.upload_result = {
+            "firmware": {"id": 5, "version": "1.7.0", "fork_commit": SHA},
+            "created": True,
+        }
         self.__dict__.update(over)
 
     def names(self):
@@ -84,8 +88,7 @@ class Fake:
         if verb == ["firmware", "rollbacks"]:
             return cp(json.dumps({"rollbacks": self.rollbacks.get(int(inner[3]), [])}))
         if verb == ["firmware", "upload"]:
-            fw = {"id": 5, "version": "1.7.0", "fork_commit": SHA}
-            return cp(json.dumps({"firmware": fw, "created": True}))
+            return cp(json.dumps(self.upload_result))
         if verb == ["firmware", "offer"]:
             return cp(
                 json.dumps({"offered": [1, 2], "skipped_revoked": [], "skipped_rolled_back": []})
@@ -312,3 +315,24 @@ def test_device_name_lookup_failure_warns_and_still_comments(fake, monkeypatch, 
     (body,) = fake.inputs
     assert "devices offered: #1, #2" in body
     assert "device names unavailable" in capsys.readouterr().err
+
+
+def test_dedupe_onto_another_commits_upload_refuses_before_offering(fake):
+    other = "b" * 40
+    fake.upload_result = {
+        "firmware": {"id": 3, "version": "1.6.0", "fork_commit": other},
+        "created": False,
+    }
+    assert release() == 1
+    assert not fake.find("offer")
+    assert not [c for c in fake.calls if c[0] == "gh" and "comment" in c]
+    assert fake.find("worktree", "remove")
+
+
+def test_re_releasing_the_same_commit_offers_the_existing_upload(fake):
+    fake.upload_result = {
+        "firmware": {"id": 5, "version": "1.7.0", "fork_commit": SHA},
+        "created": False,
+    }
+    assert release() == 0
+    assert fake.find("offer")

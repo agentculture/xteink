@@ -219,7 +219,15 @@ def cmd_release(args: argparse.Namespace) -> None:
             *extra,
             "--apply",
         )
-        uploaded = _json(up_cmd)["firmware"]
+        up = _json(up_cmd)
+        uploaded = up["firmware"]
+        if not up.get("created", True) and uploaded.get("fork_commit") != sha:
+            # Identical bytes are already stored under another commit's row: offering it
+            # would credit this PR in the comment while rollback bookkeeping stays on that one.
+            raise refused(
+                f"the image is identical to firmware {uploaded['id']} ({uploaded['version']}), "
+                f"stored for commit {str(uploaded.get('fork_commit'))[:12]}; nothing was offered"
+            )
         offered = _json(_xteink(args, "firmware", "offer", str(uploaded["id"]), "--all", "--apply"))
         ids = [int(i) for i in offered["offered"]]
         who = ", ".join(device_names(args, ids)) or "none"

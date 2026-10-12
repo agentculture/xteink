@@ -16,6 +16,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Prompt files describe the Home clock tick, the RTC write after the daily sync and the release CLI verb
 
+### Fixed
+
+- `xteink firmware release` refuses, before offering, when the upload dedupes onto an image stored for another fork commit; a failed device-name lookup now warns instead of silently listing ids
+
 ### Removed
 
 - scripts/firmware-release.py; use `xteink firmware release` and `xteink firmware report-rollbacks` (same flags and checks)
