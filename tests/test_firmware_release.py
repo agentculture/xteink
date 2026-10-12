@@ -296,3 +296,19 @@ def test_no_flash_or_serial_command_is_ever_run(fake, tmp_path):
         assert word.lower() not in flat, word
     pio = fake.find("run", "-e")
     assert pio and all("-t" not in c and "--target" not in c for c in pio)
+
+
+def test_device_name_lookup_failure_warns_and_still_comments(fake, monkeypatch, capsys):
+    real = fake.__call__
+
+    def no_devices(cmd, **kw):
+        if "device" in cmd and "list" in cmd:
+            fake.calls.append(list(cmd))
+            return cp(rc=2, err="server unreachable")
+        return real(cmd, **kw)
+
+    monkeypatch.setattr(fr, "_run", no_devices)
+    assert release() == 0
+    (body,) = fake.inputs
+    assert "devices offered: #1, #2" in body
+    assert "device names unavailable" in capsys.readouterr().err

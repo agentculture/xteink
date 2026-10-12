@@ -194,7 +194,8 @@ def post_comment(fork: str, pr: str, body: str) -> None:
 def device_names(args: argparse.Namespace, ids: list[int]) -> list[str]:
     try:
         devices = _json(_xteink(args, "device", "list"))["devices"]
-    except (CliError, KeyError):
+    except (CliError, KeyError) as exc:
+        _log(f"warning: device names unavailable ({exc}); the PR comment lists ids only")
         devices = []
     names = {d["id"]: d.get("name", "") for d in devices}
     return [f"{names[i]} (#{i})" if names.get(i) else f"#{i}" for i in ids]
