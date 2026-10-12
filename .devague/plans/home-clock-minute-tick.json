@@ -1,0 +1,457 @@
+{
+  "slug": "home-clock-minute-tick",
+  "title": "home clock minute tick",
+  "frame_slug": "home-clock-minute-tick",
+  "schema_version": 5,
+  "status": "drafting",
+  "created": "2026-10-12T15:13:08Z",
+  "updated": "2026-10-12T15:14:12Z",
+  "targets": [
+    {
+      "id": "c1",
+      "kind": "announcement",
+      "text": "The X3's home screen shows a clock that ticks over every minute while the device is awake, and stops costing anything once it sleeps",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h1",
+      "kind": "honesty",
+      "text": "Ticking happens only while awake on Home; no tick logic runs in SleepActivity or after deep sleep",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c3",
+      "kind": "requirement",
+      "text": "HomeActivity::loop() (HomeActivity.cpp:303, no timer today) checks halClock.getTime() and calls requestUpdate() when the local minute differs from the last drawn minute, so both the classic and cover-grid Home layouts tick",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h2",
+      "kind": "honesty",
+      "text": "A host or on-device check shows exactly one requestUpdate per minute change and none between changes (no redraw storm from the 50 ms idle loop)",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c4",
+      "kind": "requirement",
+      "text": "The minute tick only runs when the clock is actually shown (clockShowInHeader on and halClock.isAvailable()), so a hidden clock costs no extra refreshes",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h3",
+      "kind": "honesty",
+      "text": "With Show on home off or no RTC, Home issues zero timer-driven refreshes",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c5",
+      "kind": "boundary",
+      "text": "The tick must not keep the device awake: requestUpdate() never touches lastActivityTime (main.cpp:819-824), so auto-sleep at sleepTimeoutMinutes (main.cpp:897-901) still fires on schedule",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h4",
+      "kind": "honesty",
+      "text": "With the tick running, auto-sleep fires at sleepTimeoutMinutes after the last button press, same as with the clock off",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c10",
+      "kind": "audience",
+      "text": "The X3 owner looking at the Home screen between books",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h9",
+      "kind": "honesty",
+      "text": "The only person reading the X3 Home screen is its owner; no multi-user behavior is needed",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c11",
+      "kind": "before_state",
+      "text": "Today the Home header clock (Settings > System > Clock > Show on home, off by default per CrossPointSettings.h:264) shows the time of the last redraw and goes stale until a button press",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h10",
+      "kind": "honesty",
+      "text": "Confirmed on the current X3 build: the header clock does not change without a button press",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c15",
+      "kind": "requirement",
+      "text": "Show on home defaults ON: CrossPointSettings.h:264 clockShowInHeader initializer becomes 1 for the xteink build",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h5",
+      "kind": "honesty",
+      "text": "A freshly flashed/settings-wiped device shows the clock on Home without any user action",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c16",
+      "kind": "requirement",
+      "text": "Home keeps a minute-tick counter and renders every 15th tick with HALF_REFRESH instead of FAST_REFRESH (HomeActivity.cpp:482/559); the counter lives in HomeActivity only and never touches lastActivityTime or preventAutoSleep, so sleep timing is unchanged",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h6",
+      "kind": "honesty",
+      "text": "Over 30 awake minutes on Home, exactly 2 HALF_REFRESH renders occur (ticks 15 and 30); all other ticks are FAST_REFRESH",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c17",
+      "kind": "requirement",
+      "text": "When the daily routine's Wi-Fi join gets an SNTP answer (trustedtime::startSync in the routine port's joinWifi, callback onTimeSynced in lib/TrustedTime/TrustedTime.cpp:55-70), the routine writes the synced UTC time to the RTC from its own task before Wi-Fi turns off, never from the lwIP callback (which would race the render task's I2C RTC reads via HalClock)",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h7",
+      "kind": "honesty",
+      "text": "The RTC write happens off the lwIP task and only after SNTP reports completed; with no internet the RTC is left untouched",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c18",
+      "kind": "after_state",
+      "text": "While the X3 sits awake on Home, the header shows the correct local time, changing within ~10 s of each minute boundary, with a ghost-clearing half refresh every 15 minutes, and it still auto-sleeps on its normal timeout",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h8",
+      "kind": "honesty",
+      "text": "Verified on the X3 itself, not only in host tests",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c19",
+      "kind": "why_it_matters",
+      "text": "The X3 doubles as a glanceable bedside/desk clock without a separate device, and the time stays right because the daily sync keeps the RTC honest",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h11",
+      "kind": "honesty",
+      "text": "The clock is accurate enough to be relied on (within 10 s display lag, RTC within 2 s after a sync)",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c20",
+      "kind": "success_signal",
+      "text": "On the X3, Home left awake for 16 min shows 16 consecutive minute changes, each within 10 s of a reference clock, exactly 1 half refresh (at tick 15), and the device enters sleep at sleepTimeoutMinutes +/- 10 s after the last button press",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h12",
+      "kind": "honesty",
+      "text": "Measured on the X3 with a reference clock, results recorded in docs/evidence/",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c21",
+      "kind": "success_signal",
+      "text": "After a daily sync with internet reachable, the RTC differs from NTP time by < 2 s (checked via Clock settings row or the [DAILY] serial log)",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h13",
+      "kind": "honesty",
+      "text": "Measured after a real morning daily sync, recorded in docs/evidence/",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c22",
+      "kind": "requirement",
+      "text": "HalClock's poll-and-cache (HalClock.cpp:37-54: _cachedUtc, _lastPollMs, _hasCachedTime, no lock) is guarded so the main-loop minute tick and the render task's formatTime can both call it without a torn 64-bit cache read or interleaved RTC I2C transactions",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h14",
+      "kind": "honesty",
+      "text": "No HalClock member is read or written outside the guard; a host test or code review shows both callers go through it",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c23",
+      "kind": "requirement",
+      "text": "The daily routine's RTC write uses a new TZ-free HalClock setter (write UTC to the RTC + refresh the cache), never HalClock::syncFromNTP, which rewrites the process TZ via configTzTime (HalClock.cpp:88-93) \u2014 the exact TZ churn DailyRoutine.cpp:26-29 forbids because it races the render task",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h15",
+      "kind": "honesty",
+      "text": "grep shows the routine never calls syncFromNTP/configTzTime/setenv(TZ) on the RTC-write path",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c24",
+      "kind": "requirement",
+      "text": "The xteink default-ON for Show on home is behind an xteink build flag set in the xteink envs (platformio.ini env:default / env:xteink_release), not a bare change to the shared CrossPointSettings.h:264 initializer, which every board env (x4pro, papermono, eego_a4, ...) also compiles",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h16",
+      "kind": "honesty",
+      "text": "A non-xteink env build (e.g. x4pro) still defaults clockShowInHeader to 0",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c25",
+      "kind": "requirement",
+      "text": "The minute-tick and refresh-mode decision (minute changed? which tick is the 15th?) is a pure function covered by the fork's host tests (test/, as SntpPolicy.h is), and each tick logs one line with the minute and FAST/HALF so the 16-minute on-device check (c20) can be read from a serial log",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h17",
+      "kind": "honesty",
+      "text": "Host tests cover minute change, no change, the 15th-tick HALF, and counter reset on Home re-entry",
+      "deferred": false,
+      "deferred_reason": ""
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "summary": "HalClock: guard the poll/cache and add a TZ-free UTC setter",
+      "origin": "llm",
+      "status": "proposed",
+      "acceptance_criteria": [
+        "lib/hal/HalClock.{h,cpp} only: a FreeRTOS mutex (or portMUX critical section) guards every read/write of _cachedUtc, _hasCachedTime, _lastPollMs and every _sdkRtc call; localTime/getTime/formatTime/syncFromNTP/setTimezone all take it",
+        "new bool HalClock::setUtc(int64_t epoch) writes the RTC via _sdkRtc.set and refreshes the cache under the guard; it calls none of setenv, tzset, configTzTime (grep-verifiable)",
+        "pio run -e default builds with no new warnings; clang-format-fix clean"
+      ],
+      "deps": [],
+      "covers": [
+        "c22",
+        "h14"
+      ],
+      "instruction": "Fork repo agentculture/xteink-firmware, branch off feat/issue-1 (c6e8b2cf). Keep syncFromNTP's behavior; just route its cache/RTC writes through the guard. A recursive or non-recursive mutex is fine as long as public methods do not re-enter each other while holding it. No AI trailers in fork commits."
+    },
+    {
+      "id": "t2",
+      "summary": "Pure minute-tick decision function with host tests",
+      "origin": "llm",
+      "status": "proposed",
+      "acceptance_criteria": [
+        "new header-only src/xteink/ClockTick.h (no Arduino/HAL includes) exposes a function taking (lastMinute or none, nowMinute, ticksSinceHomeEntered) and returning {redraw, half}: redraw only when the minute changed; half on the 15th, 30th, ... tick; first observation after Home entry draws nothing extra",
+        "new test/xteink_clock_tick host test registered in test/CMakeLists.txt covers: unchanged minute, minute change, hour/day wrap (59->0), tick 14 FAST, tick 15 HALF, tick 30 HALF, reset on re-entry; ctest passes"
+      ],
+      "deps": [],
+      "covers": [
+        "c25",
+        "h17"
+      ],
+      "instruction": "Mirror src/network/SntpPolicy.h + test/xteink_sync style. Host test build: cmake -S test -B build/test -G Ninja && cmake --build build/test && ctest --test-dir build/test. This task owns test/CMakeLists.txt."
+    },
+    {
+      "id": "t3",
+      "summary": "xteink build flag: Show on home ON and Asia/Jerusalem clock TZ by default",
+      "origin": "llm",
+      "status": "proposed",
+      "acceptance_criteria": [
+        "a build flag (e.g. -DXTEINK_CLOCK_DEFAULTS) is set in the xteink envs of platformio.ini (env:default and env:xteink_release); with it, CrossPointSettings.h clockShowInHeader initializes to 1 and an unset clock time zone resolves to the Jerusalem entry (Timezones.cpp:38); without it both stay as today",
+        "pio run -e default and pio run -e x4pro both build; a host or static check shows x4pro keeps clockShowInHeader = 0",
+        "a saved settings file value still overrides the default (load path at CrossPointSettings.cpp:122 untouched)"
+      ],
+      "deps": [],
+      "covers": [
+        "c15",
+        "h5",
+        "c24",
+        "h16"
+      ],
+      "instruction": "Files: platformio.ini, src/CrossPointSettings.h, src/util/Timezones.cpp only. Check whether timezones::activeIndex()/applyToClock treat clockTimezone 255 as UTC; make the flag change that fallback, not the stored value. The daily routine's own Jerusalem fallback (DailyRoutine.cpp routineTimezone) stays as is."
+    },
+    {
+      "id": "t4",
+      "summary": "Home: tick the header clock every minute with a half refresh every 15 ticks",
+      "origin": "llm",
+      "status": "proposed",
+      "acceptance_criteria": [
+        "src/activities/home/HomeActivity.{h,cpp} only: loop() calls halClock.getTime only when SETTINGS.clockShowInHeader && halClock.isAvailable(), feeds ClockTick, and calls requestUpdate() exactly when it says redraw; nothing is ticked when the clock is hidden",
+        "render() uses HALF_REFRESH when the tick said half, otherwise its existing mode, on both the cover-grid (:482) and classic (:559) paths; tick count resets in onEnter",
+        "no write to lastActivityTime and no preventAutoSleep override added (grep); each tick logs one LOG_INF line with HH:MM and FAST/HALF",
+        "no tick redraw while recents are loading (recentsLoading guard)"
+      ],
+      "deps": [
+        "t1",
+        "t2"
+      ],
+      "covers": [
+        "c1",
+        "h1",
+        "c3",
+        "h2",
+        "c4",
+        "h3",
+        "c5",
+        "h4",
+        "c16",
+        "h6"
+      ],
+      "instruction": "Depends on t1 (thread-safe getTime) and t2 (ClockTick.h). Keep the change minimal and inside HomeActivity."
+    },
+    {
+      "id": "t5",
+      "summary": "Daily routine: wait up to 8 s for SNTP, then write the RTC",
+      "origin": "llm",
+      "status": "proposed",
+      "acceptance_criteria": [
+        "src/xteink/DailyRoutine.{h,cpp}: Port gains sntpCompleted()/waitSntp(budget) and writeRtc(epoch) (implemented via HalClock::setUtc); before wifiOff the routine, when Wi-Fi was up, waits at most min(kClockSyncBudgetMs, remaining cap) only if SNTP has not completed, then writes the RTC on success",
+        "on SNTP timeout or no internet the RTC is untouched and the run's status/outcomes are unchanged; the [DAILY] log line reports rtc_written yes/no",
+        "test/xteink_daily host tests (fake Port) cover: already-synced (no wait, RTC written), late sync within budget, timeout (RTC untouched), cap nearly exhausted (wait clipped); ctest passes",
+        "the RTC write path calls none of syncFromNTP, configTzTime, setenv, tzset (grep)"
+      ],
+      "deps": [
+        "t1"
+      ],
+      "covers": [
+        "c17",
+        "h7",
+        "c23",
+        "h15"
+      ],
+      "instruction": "Do not touch test/CMakeLists.txt (t2 owns it); extend the existing test/xteink_daily target. The write happens on the routine's task, never from TrustedTime's onTimeSynced callback."
+    },
+    {
+      "id": "t6",
+      "summary": "Fork PR, gates, merge, and release the build to the X3 server",
+      "origin": "llm",
+      "status": "proposed",
+      "acceptance_criteria": [
+        "fork PR feat(xteink): home clock minute tick into feat/issue-1, conventional-commit title, no AI trailers; clang-format-fix clean (exit status checked), host ctest green, pio run -e default and -e x4pro green, harness-smoke all, Sonar gate checked",
+        "after merge, uv run python scripts/firmware-release.py release <forkPR#> --fork-checkout <fork worktree> uploads and offers 1.6.5+xteink.<sha8> to device 3; the PR comment is posted"
+      ],
+      "deps": [
+        "t3",
+        "t4",
+        "t5"
+      ],
+      "covers": [],
+      "instruction": "Follow docs/firmware-release.md and the x3-flash-protocol memory. No direct flashing: the X3 gets it via Settings > Check for updates (OTA), like c6e8b2cf did."
+    },
+    {
+      "id": "t7",
+      "summary": "On-device: install via Check for updates, flip Show on home, run the 16-minute Home check",
+      "origin": "llm",
+      "status": "proposed",
+      "acceptance_criteria": [
+        "before the install, the user confirms on the current build that the header clock does not change without a button press (c11)",
+        "after the install the user turns on Settings > System > Clock > Show on home and picks a time zone if the clock shows UTC",
+        "with the user's OK to open serial (it resets the X3), a 16-minute serial log on Home shows 16 tick lines, each within 10 s of a reference clock, exactly one HALF (tick 15), then the device sleeps at sleepTimeoutMinutes +/- 10 s after the last press; recorded in docs/evidence/home-clock-validation.md with SSIDs redacted"
+      ],
+      "deps": [
+        "t6"
+      ],
+      "covers": [
+        "c18",
+        "h8",
+        "c20",
+        "h12",
+        "c11",
+        "h10",
+        "c10",
+        "h9",
+        "c19",
+        "h11"
+      ],
+      "instruction": "Read the x3-flash-protocol and network-identifier-hygiene memories first. Kill loggers by PID. Leave the device untouched during the 16 minutes."
+    },
+    {
+      "id": "t8",
+      "summary": "Morning check: RTC within 2 s of NTP after a real daily sync",
+      "origin": "llm",
+      "status": "proposed",
+      "acceptance_criteria": [
+        "after the next 06:00 daily sync with internet, the [DAILY] line shows rtc_written yes and the clock differs from an NTP reference by < 2 s; recorded in docs/evidence/home-clock-validation.md"
+      ],
+      "deps": [
+        "t7"
+      ],
+      "covers": [
+        "c21",
+        "h13"
+      ],
+      "instruction": "Prefer a serial log captured with the user's OK; otherwise compare the Clock settings row against a reference clock by eye and say so in the evidence."
+    },
+    {
+      "id": "t9",
+      "summary": "xteink repo closeout: evidence, prompt-file facts, version bump, PR",
+      "origin": "llm",
+      "status": "proposed",
+      "acceptance_criteria": [
+        "CLAUDE.md, QWEN.md, AGENTS.override.md, AGENTS.colleague.md mention the Home clock tick and the RTC write in their firmware facts; markdownlint, black/isort/flake8, bandit, scan-secrets, teken cli doctor --strict, harness-smoke --stage config all pass",
+        "version-bump (minor) with a CHANGELOG entry; ask-colleague review run; PR opened via the cicd skill against the right base (ota/daily-sync's PR base chain)"
+      ],
+      "deps": [
+        "t8"
+      ],
+      "covers": [],
+      "instruction": "Branch clock/home-minute sits on ota/daily-sync, which is still local and unmerged; confirm the PR base with the user before opening."
+    }
+  ],
+  "risks": [
+    {
+      "id": "r1",
+      "text": "h5 says a fresh/settings-wiped device shows the clock without user action; proving it on the user's only X3 would wipe its settings, so t3 proves it by build/host check unless the user offers a device to wipe",
+      "kind": "unknown_nonblocking",
+      "task_id": "t3",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r2",
+      "text": "15-tick HALF_REFRESH may not be enough against ghosting on the X3 UC8253 fast LUT (frame park v1); t7 will show it, and a change would be a /deviate",
+      "kind": "unknown_nonblocking",
+      "task_id": "t7",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r3",
+      "text": "the clock/home-minute xteink branch stacks on the unpushed ota/daily-sync branch (itself on open PR #4); its PR base depends on how those land",
+      "kind": "follow_up",
+      "task_id": "t9",
+      "resolved": false,
+      "resolution": ""
+    }
+  ],
+  "obligations": []
+}
