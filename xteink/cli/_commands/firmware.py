@@ -1,5 +1,7 @@
 """``xteink firmware`` — upload, list and offer device firmware via the HTTP API (thin client).
 
+``release`` and ``report-rollbacks`` (the agent release flow) live in ``firmware_release``.
+
 ``upload`` and ``offer`` are dry-run unless ``--apply`` is given. A dry-run still asks the
 server to validate the image (or check the offer) but stores / offers nothing.
 """
@@ -11,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from xteink.cli._commands.device import DRY_RUN_HINT, resolve_device, short
+from xteink.cli._commands.firmware_release import register_release
 from xteink.cli._commands.overview import emit_overview
 from xteink.cli._commands.server import add_json, call, json_mode, make_client
 from xteink.cli._errors import EXIT_USER_ERROR, CliError
@@ -159,6 +162,10 @@ def cmd_overview(args: argparse.Namespace) -> None:
                     "offer FIRMWARE (--device ID|NAME | --all) [--apply] — offer an image to "
                     "devices (FIRMWARE is an id or version)",
                     "rollbacks FIRMWARE — devices that rolled an image back",
+                    "release PR — ship a merged fork PR over the air: build, upload, offer to "
+                    "every device, comment on the PR",
+                    "report-rollbacks [--dry-run] — comment once on the PR that shipped a build "
+                    "a device rolled back",
                     "overview — this description",
                 ],
             },
@@ -168,6 +175,8 @@ def cmd_overview(args: argparse.Namespace) -> None:
                     "upload/offer are dry-run until --apply is given",
                     "a bad image exits 1 and stores nothing",
                     "a device that rolled an image back is never offered it again (exit 1)",
+                    "release refuses (exit 1) unless the PR is merged into the integration "
+                    "branch with green checks; it never flashes over serial",
                 ],
             },
         ],
@@ -176,7 +185,9 @@ def cmd_overview(args: argparse.Namespace) -> None:
 
 
 def register(sub: argparse._SubParsersAction) -> None:
-    p = sub.add_parser("firmware", help="Firmware: upload, list, offer (see 'firmware overview').")
+    p = sub.add_parser(
+        "firmware", help="Firmware: upload, list, offer, release (see 'firmware overview')."
+    )
     add_json(p)
     p.set_defaults(func=cmd_overview, json=False)
     nsub = p.add_subparsers(dest="firmware_command", parser_class=type(p))
@@ -207,6 +218,8 @@ def register(sub: argparse._SubParsersAction) -> None:
     rb.add_argument("firmware", metavar="FIRMWARE", help="Firmware id or version.")
     add_json(rb)
     rb.set_defaults(func=cmd_rollbacks)
+
+    register_release(nsub)
 
     ov = nsub.add_parser("overview", help="Describe the firmware noun.")
     add_json(ov)

@@ -1,27 +1,22 @@
-"""scripts/firmware-release.py with every external command stubbed (no gh, git, pio, device)."""
+"""`xteink firmware release` / `report-rollbacks` with every external command stubbed.
+
+No gh, git, pio or device is touched.
+"""
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import subprocess
 from pathlib import Path
 
 import pytest
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "firmware-release.py"
+from xteink.cli import main
+from xteink.cli._commands import firmware_release as fr
+
+SOURCE = Path(fr.__file__)
 SHA = "a" * 40
 PR_URL = "https://github.com/agentculture/xteink-firmware/pull/7"
-
-
-def _load():
-    spec = importlib.util.spec_from_file_location("firmware_release", SCRIPT)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
-fr = _load()
 
 
 def cp(out="", rc=0, err=""):
@@ -111,7 +106,12 @@ def fake(tmp_path, monkeypatch):
 
 
 def release(*extra):
-    return fr.main(["release", "7", "--fork-checkout", "/fork", "--pio", "/x/pio", *extra])
+    argv = ["firmware", "release", "7", "--fork-checkout", "/fork", "--pio", "/x/pio", "--json"]
+    return main([*argv, *extra])
+
+
+def report(*extra):
+    return main(["firmware", "report-rollbacks", "--json", *extra])
 
 
 def test_happy_path_order_and_comment(fake, capsys):
@@ -143,24 +143,22 @@ def test_happy_path_order_and_comment(fake, capsys):
     ]
     (upload,) = fake.find("upload")
     assert upload[:5] == ["grant", "run", "--inject", "XTEINK_API_KEY=XTEINK_MCP_API_KEY", "--"]
-    at = upload.index("--commit")
-    assert upload[at : at + 5] == ["--commit", SHA, "--pr", PR_URL, "--apply"]
+    assert ["--commit", SHA, "--pr", PR_URL, "--apply"] == upload[
+        upload.index("--commit") : upload.index("--commit") + 5
+    ]
     assert fake.find("offer")[0][-3:] == ["--all", "--apply", "--json"]
     assert fake.find("-e", "xteink_release")
     assert fake.find("-R", "agentculture/xteink-firmware", "comment", "7")
     (body,) = fake.inputs
-    assert "1.7.0" in body
-    assert SHA in body
-    assert "Reader One (#1)" in body
-    assert "Reader Two (#2)" in body
+    assert "1.7.0" in body and SHA in body
+    assert "Reader One (#1)" in body and "Reader Two (#2)" in body
     assert body.rstrip().endswith("- xteink (Claude)")
     assert json.loads(capsys.readouterr().out)["offered"] == [1, 2]
 
 
 def assert_refused_before_upload(fake, rc):
-    assert rc != 0
-    assert not fake.find("upload")
-    assert not fake.find("offer")
+    assert rc == 1  # refused: a precondition failed
+    assert not fake.find("upload") and not fake.find("offer")
     assert not [c for c in fake.calls if c[0] == "gh" and "comment" in c]
 
 
@@ -253,25 +251,24 @@ def comments(fake):
 def test_rollback_report_comments_once_per_rollback(fake):
     fake.firmware = [FW]
     fake.rollbacks = {3: [ROW, {**ROW, "device_id": 4, "device_name": "Other"}]}
-    assert fr.main(["report-rollbacks"]) == 0
+    assert report() == 0
     assert len(comments(fake)) == 2
     assert fr.ROLLBACK_MARKER.format(device=2, sha=SHA) in fake.inputs[0]
-    assert "1.7.0" in fake.inputs[0]
-    assert "Reader Two" in fake.inputs[0]
+    assert "1.7.0" in fake.inputs[0] and "Reader Two" in fake.inputs[0]
     assert fake.inputs[0].rstrip().endswith("- xteink (Claude)")
     # second run: gh now shows both markers -> nothing more is posted
     fake.pr_comments = [{"body": b} for b in fake.inputs]
     fake.calls.clear()
-    assert fr.main(["report-rollbacks"]) == 0
+    assert report() == 0
     assert comments(fake) == []
 
 
 def test_rollback_report_dry_run_and_no_rollbacks(fake):
     fake.firmware = [FW]
-    assert fr.main(["report-rollbacks"]) == 0
+    assert report() == 0
     assert comments(fake) == []
     fake.rollbacks = {3: [ROW]}
-    assert fr.main(["report-rollbacks", "--dry-run"]) == 0
+    assert report("--dry-run") == 0
     assert comments(fake) == []
 
 
@@ -280,8 +277,8 @@ def test_rollback_report_dry_run_and_no_rollbacks(fake):
 FORBIDDEN = ("esptool", "ttyACM", "ttyUSB", "serial", "upload_port", "-t upload", "pio device")
 
 
-def test_script_source_has_no_flash_or_serial_access():
-    src = SCRIPT.read_text().lower()
+def test_release_source_has_no_flash_or_serial_access():
+    src = SOURCE.read_text().lower()
     code = "\n".join(ln for ln in src.splitlines() if not ln.lstrip().startswith("#"))
     # the module docstring states the rule in words; strip it before scanning
     code = code.split('"""', 2)[2]
@@ -293,10 +290,9 @@ def test_no_flash_or_serial_command_is_ever_run(fake, tmp_path):
     release()
     fake.firmware = [FW]
     fake.rollbacks = {3: [ROW]}
-    fr.main(["report-rollbacks"])
+    report()
     flat = " ".join(" ".join(c) for c in fake.calls).lower().replace(str(tmp_path).lower(), "")
     for word in FORBIDDEN:
         assert word.lower() not in flat, word
     pio = fake.find("run", "-e")
-    assert pio
-    assert all("-t" not in c and "--target" not in c for c in pio)
+    assert pio and all("-t" not in c and "--target" not in c for c in pio)

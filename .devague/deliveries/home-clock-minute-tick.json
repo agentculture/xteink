@@ -1,0 +1,24 @@
+{
+  "plan_slug": "home-clock-minute-tick",
+  "schema_version": 2,
+  "created": "2026-10-12T18:27:55Z",
+  "updated": "2026-10-12T18:27:55Z",
+  "deviations": [
+    {
+      "id": "d1",
+      "what": "before t6, fold scripts/firmware-release.py into the xteink CLI as 'xteink firmware release <pr>' and 'xteink firmware report-rollbacks', delete the script; t6 ships fork PR #4 with 'xteink firmware release 4' instead of the script",
+      "task_ref": "t6",
+      "reason": "CLAUDE.md requires product components under a CLI noun group, not a separate entry point; the script (ac1515c, OTA plan) broke that rule and the user asked for it to be part of the CLI",
+      "affects": [
+        "t9"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 1
+    }
+  ],
+  "evidence": [],
+  "deltas": [],
+  "supersessions": []
+}
