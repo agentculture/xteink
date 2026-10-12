@@ -150,22 +150,24 @@ def test_happy_path_order_and_comment(fake, capsys):
     ]
     (upload,) = fake.find("upload")
     assert upload[:5] == ["grant", "run", "--inject", "XTEINK_API_KEY=XTEINK_MCP_API_KEY", "--"]
-    assert ["--commit", SHA, "--pr", PR_URL, "--apply"] == upload[
-        upload.index("--commit") : upload.index("--commit") + 5
-    ]
+    at = upload.index("--commit")
+    assert upload[at : at + 5] == ["--commit", SHA, "--pr", PR_URL, "--apply"]
     assert fake.find("offer")[0][-3:] == ["--all", "--apply", "--json"]
     assert fake.find("-e", "xteink_release")
     assert fake.find("-R", "agentculture/xteink-firmware", "comment", "7")
     (body,) = fake.inputs
-    assert "1.7.0" in body and SHA in body
-    assert "Reader One (#1)" in body and "Reader Two (#2)" in body
+    assert "1.7.0" in body
+    assert SHA in body
+    assert "Reader One (#1)" in body
+    assert "Reader Two (#2)" in body
     assert body.rstrip().endswith("- xteink (Claude)")
     assert json.loads(capsys.readouterr().out)["offered"] == [1, 2]
 
 
 def assert_refused_before_upload(fake, rc):
     assert rc == 1  # refused: a precondition failed
-    assert not fake.find("upload") and not fake.find("offer")
+    assert not fake.find("upload")
+    assert not fake.find("offer")
     assert not [c for c in fake.calls if c[0] == "gh" and "comment" in c]
 
 
@@ -261,7 +263,8 @@ def test_rollback_report_comments_once_per_rollback(fake):
     assert report() == 0
     assert len(comments(fake)) == 2
     assert fr.ROLLBACK_MARKER.format(device=2, sha=SHA) in fake.inputs[0]
-    assert "1.7.0" in fake.inputs[0] and "Reader Two" in fake.inputs[0]
+    assert "1.7.0" in fake.inputs[0]
+    assert "Reader Two" in fake.inputs[0]
     assert fake.inputs[0].rstrip().endswith("- xteink (Claude)")
     # second run: gh now shows both markers -> nothing more is posted
     fake.pr_comments = [{"body": b} for b in fake.inputs]
@@ -302,7 +305,8 @@ def test_no_flash_or_serial_command_is_ever_run(fake, tmp_path):
     for word in FORBIDDEN:
         assert word.lower() not in flat, word
     pio = fake.find("run", "-e")
-    assert pio and all("-t" not in c and "--target" not in c for c in pio)
+    assert pio
+    assert all("-t" not in c and "--target" not in c for c in pio)
 
 
 def test_device_name_lookup_failure_warns_and_still_comments(fake, monkeypatch, capsys):
@@ -381,7 +385,8 @@ def test_dedupe_without_a_commit_names_the_way_to_ship_it(fake, capsys):
     }
     assert release() == 1
     err = json.loads(capsys.readouterr().err)
-    assert "without a fork commit" in err["message"] and "None" not in err["message"]
+    assert "without a fork commit" in err["message"]
+    assert "None" not in err["message"]
     assert "xteink firmware offer 3 --all --apply" in err["remediation"]
 
 
