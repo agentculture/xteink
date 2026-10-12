@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.1] - 2026-10-13
+
+### Changed
+
+- Home clock delivery summary refreshed: owner-approved evidence e1-e7, deltas b1-b4 and lapse l1; delta b5 (release-verb hardening) filed; t9 delivered with xteink #5 and #6 merged; t8 still pending
+
 ## [0.12.0] - 2026-10-12
 
 ### Added

@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-12T14:38:02Z",
-  "updated": "2026-10-12T20:43:13Z",
+  "updated": "2026-10-12T21:49:48Z",
   "claims": [
     {
       "id": "c1",
@@ -691,7 +691,7 @@
         "test/xteink_daily/XteinkDailyTest.cpp"
       ],
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     }
   ],
   "obligations": [

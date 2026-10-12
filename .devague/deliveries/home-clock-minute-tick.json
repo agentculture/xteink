@@ -2,7 +2,7 @@
   "plan_slug": "home-clock-minute-tick",
   "schema_version": 2,
   "created": "2026-10-12T18:27:55Z",
-  "updated": "2026-10-12T20:42:43Z",
+  "updated": "2026-10-12T21:50:20Z",
   "deviations": [
     {
       "id": "d1",
@@ -34,7 +34,7 @@
         "commit": "498dc69d"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 2
     },
@@ -50,7 +50,7 @@
       "outcome": "pass",
       "run": null,
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 3
     },
@@ -69,7 +69,7 @@
         "commit": "498dc69d"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 4
     },
@@ -88,7 +88,7 @@
         "commit": "498dc69d"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 5
     },
@@ -107,7 +107,7 @@
         "commit": "498dc69d"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 6
     },
@@ -126,7 +126,7 @@
         "commit": "498dc69d"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 7
     },
@@ -145,7 +145,7 @@
         "commit": "498dc69d"
       },
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false,
       "seq": 8
     }
@@ -160,7 +160,7 @@
       ],
       "evidence_refs": [],
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false
     },
     {
@@ -172,7 +172,7 @@
       ],
       "evidence_refs": [],
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false
     },
     {
@@ -186,7 +186,7 @@
         "e4"
       ],
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false
     },
     {
@@ -199,6 +199,19 @@
       "evidence_refs": [
         "e1"
       ],
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false
+    },
+    {
+      "id": "b5",
+      "kind": "amended",
+      "behavior_text": "review hardening of 'xteink firmware release' (#6 /code-review rounds): an error after the upload exits 2 naming the failed step instead of the catch-all exit 1; a tool that cannot start exits 2; the xteink calls run this same install (python -m xteink); a dedupe onto another commit's upload refuses before offering and names the offer command; report-rollbacks split per image. tests/test_firmware_release.py: 25 passed at main d56e0d8 (2026-10-12T21:50Z)",
+      "caused_by": [
+        "d1",
+        "b1"
+      ],
+      "evidence_refs": [],
       "origin": "llm",
       "status": "proposed",
       "superseded": false
