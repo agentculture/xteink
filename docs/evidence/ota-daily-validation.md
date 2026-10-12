@@ -38,7 +38,7 @@ The owner woke the X3 at 07:02 Israel time on 2026-10-12, on USB. Attaching the 
 
 ## Still to run
 
-- **(a′)** After fork PR #3 merges and is released: one update (daily or Check for updates), and the server should show `last_fw_outcome: installed`.
+- **(a′)** Fork PR #3 was squash-merged as `c6e8b2cf`. `firmware-release.py release 3` uploaded it as firmware #4 and offered it to `[3]`. At 05:09:53Z the owner ran Settings → Check for updates. The server first saw the X3 on `…2500570d`, then at 05:10:43Z on `xteink-fw 1.6.5+xteink.c6e8b2cf`. That second report is the new image's post-update health-check POST. `last_fw_outcome` stays `none` today, because today's daily run has already happened and the manual path never reports a run outcome. **Still open:** at the first start after 06:00 on 2026-10-13, the daily run should read the `fw_verified` marker written by this health check and report `last_fw_outcome: installed`. This exercises the marker surviving reboots and the day boundary.
 - **(b)** A battery start, timed from the power press (120 s target, lapse l2). This also answers t1's question (whether the RTC holds through power-off), from the routine's `clock rtc/system/sntp` log field.
 - **(d)** and **t2**: a tunnel-only offer and tunnel TLS, the next time the owner syncs away from home.
 
