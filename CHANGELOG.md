@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-10-12
+
+### Added
+
+- Over-the-air firmware: a firmware table with a versioned DB migration, an ESP image header validator (sha256, chip id, board tag), per-device offers and rollback memory (xteink/core)
+- Device protocol v1 additions: firmware offer in the status response, firmware download, and daily-run status reporting (last_run_at, last_fw_outcome, last_content_outcome)
+- Admin API and the CLI noun firmware (list, upload, offer, rollbacks); the web UI device card shows the offered firmware and last daily run
+- Agent release flow scripts/firmware-release.py (docs/firmware-release.md): build a merged fork PR's xteink_release env, upload, offer to every device and comment on the PR; a rollback report comments once per rollback
+- CI privacy gate gains a mandatory fake-device OTA leg
+- Hardware evidence for the X3 OTA and once-a-day sync (docs/evidence/ota-*.md)
+
+### Changed
+
+- Prompt files and README describe OTA from this server and the daily routine
+
+### Fixed
+
+- Device protocol compares firmware builds without the device's 'xteink-fw ' version prefix
+
 ## [0.10.0] - 2026-10-07
 
 ### Added

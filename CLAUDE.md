@@ -48,13 +48,25 @@ Landed and in the tree (read the code, not this list, when in doubt):
   `xteink.culture.dev` tunnel-only to `api:8781`. Tokens are hidden grant secrets
   injected with `grant run --inject`; xteink never calls the Cloudflare API.
 - **CLI nouns**: `server`, `library`, `device` (`list`, `queue`, `revoke`,
-  `backup`, `provision`), `tunnel` (`status`, `plan`), `mcp` (`serve`), beside
+  `backup`, `provision`), `firmware` (`list`, `upload`, `offer`, `rollbacks`),
+  `tunnel` (`status`, `plan`), `mcp` (`serve`), beside
   `whoami`, `learn`, `explain`, `overview`, `doctor`, `cli overview`. Mutating
   verbs are dry-run unless `--apply`.
-- User docs: `README.md` (quickstart), `docs/api.md`, `docs/mcp.md`.
+- **OTA and the daily routine**: the server is the only firmware source. Images
+  are checked (sha256, ESP image header, chip and board tag) before they are
+  stored, offered per device, and never offered again to a device that rolled
+  one back (`xteink/core` firmware table, admin API, device protocol v1
+  additions). The agent's release flow builds a merged fork PR, uploads it,
+  offers it to every device and comments on the PR (`docs/firmware-release.md`).
+  On the device, a start-only daily routine (once per local day, which turns
+  over at 06:00) installs an offered image, runs a health check and syncs.
+  Hardware-verified on the X3 (`docs/evidence/ota-daily-validation.md`).
+  Tunnel OTA stays off (`XTEINK_OTA_TUNNEL=0`) until the tunnel path is proven.
+- User docs: `README.md` (quickstart), `docs/api.md`, `docs/mcp.md`,
+  `docs/firmware-release.md`.
 - **Device firmware** (separate repo, `agentculture/xteink-firmware`, a
   CrossPoint Reader fork): xteink theme, USB provisioning, pinned-root TLS, OTA
-  from fork releases, the sync client (protocol v1, LAN first with tunnel
+  from this server (see above), the sync client (protocol v1, LAN first with tunnel
   fallback), and the X3 key profile (edge keys turn pages, hold OK = zoom, hold
   Back = rotate, 4.3/4.4 = paragraph scroll). **Hardware-verified on the X3
   only**: books pushed via MCP or the web UI reach the device over the home LAN
@@ -64,8 +76,11 @@ Landed and in the tree (read the code, not this list, when in doubt):
 
 Still **(planned)** or unverified:
 
-- **(unverified)** Syncing a large (≥ 5 MB) EPUB over HTTPS on the X3. Only
-  small articles have synced over TLS so far.
+- **(unverified)** Syncing a large (≥ 5 MB) EPUB through the tunnel. A 6.5 MB
+  EPUB has synced over the home LAN with no SD retries; through the tunnel only
+  small articles have synced so far.
+- **(unverified)** On-device OTA rollback, OTA over the tunnel, and battery-start
+  timing of the daily routine (open items in `docs/evidence/ota-daily-validation.md`).
 - **(planned)** PDF ingest (rejected today with `pdf_not_supported`).
 
 Some CLI strings (`xteink/cli/_commands/learn.py`, `xteink/explain/catalog.py`)

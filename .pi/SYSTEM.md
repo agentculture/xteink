@@ -22,9 +22,10 @@ readers. A local server (web UI and API on :8780, a key-gated device-only app on
 Cloudflare Tunnel setup are in the tree; see `README.md`, `docs/api.md` and
 `docs/mcp.md`. The device firmware lives in a separate repo
 (`agentculture/xteink-firmware`). On the X3 it is hardware-verified: books
-reach the device over the home LAN or a phone hotspot and read offline. Other
-Xteink models are build-verified only, and large (≥ 5 MB) EPUB syncs over HTTPS
-are not verified yet.
+reach the device over the home LAN or a phone hotspot and read offline, and it
+updates over the air from the server once a day at start-up. Other Xteink models
+are build-verified only, and large (≥ 5 MB) EPUB syncs through the tunnel are not
+verified yet.
 
 ## What you may do
 
