@@ -278,36 +278,44 @@ def _pr_ref(url: str) -> tuple[str, str] | None:
     return (m.group(1), m.group(2)) if m else None
 
 
+def _rollback_body(marker: str, fw: dict[str, Any], row: dict[str, Any]) -> str:
+    return (
+        f"{marker}\n"
+        f"Device **{row['device_name']}** (#{row['device_id']}) rolled back firmware "
+        f"`{fw['version']}` (fork commit `{fw['fork_commit']}`) at "
+        f"{row['rolled_back_at']}. It will not be offered this build again."
+    )
+
+
+def _report_image(args: argparse.Namespace, fw: dict[str, Any]) -> list[str]:
+    """Comment once per not-yet-reported rollback of one image; return one line per comment."""
+    ref = _pr_ref(fw.get("source_pr") or "")
+    if not ref or not fw.get("fork_commit"):
+        return []
+    rows = _json(_xteink(args, "firmware", "rollbacks", str(fw["id"])))["rollbacks"]
+    if not rows:
+        return []
+    repo, pr = ref
+    view = _json(["gh", "-R", repo, "pr", "view", pr, "--json", "comments"])
+    existing = "\n".join(c.get("body", "") for c in view.get("comments", []))
+    lines = []
+    for row in rows:
+        marker = ROLLBACK_MARKER.format(device=row["device_id"], sha=fw["fork_commit"])
+        if marker in existing:
+            continue
+        if args.dry_run:
+            lines.append(f"would comment on {repo}#{pr}: device {row['device_id']}")
+        else:
+            post_comment(repo, pr, _rollback_body(marker, fw, row))
+            lines.append(f"commented on {repo}#{pr}: device {row['device_id']}")
+    return lines
+
+
 def cmd_report_rollbacks(args: argparse.Namespace) -> None:
-    posted = 0
     lines: list[str] = []
     for fw in _json(_xteink(args, "firmware", "list"))["firmware"]:
-        ref = _pr_ref(fw.get("source_pr") or "")
-        if not ref or not fw.get("fork_commit"):
-            continue
-        rows = _json(_xteink(args, "firmware", "rollbacks", str(fw["id"])))["rollbacks"]
-        if not rows:
-            continue
-        repo, pr = ref
-        view = _json(["gh", "-R", repo, "pr", "view", pr, "--json", "comments"])
-        existing = "\n".join(c.get("body", "") for c in view.get("comments", []))
-        for row in rows:
-            marker = ROLLBACK_MARKER.format(device=row["device_id"], sha=fw["fork_commit"])
-            if marker in existing:
-                continue
-            body = (
-                f"{marker}\n"
-                f"Device **{row['device_name']}** (#{row['device_id']}) rolled back firmware "
-                f"`{fw['version']}` (fork commit `{fw['fork_commit']}`) at "
-                f"{row['rolled_back_at']}. It will not be offered this build again."
-            )
-            if args.dry_run:
-                lines.append(f"would comment on {repo}#{pr}: device {row['device_id']}")
-            else:
-                post_comment(repo, pr, body)
-                lines.append(f"commented on {repo}#{pr}: device {row['device_id']}")
-            posted += 1
-    payload = {"commented": posted, "dry_run": bool(args.dry_run)}
+        lines.extend(_report_image(args, fw))
+    payload = {"commented": len(lines), "dry_run": bool(args.dry_run)}
     text = "\n".join(lines) or "no new rollbacks to report"
     emit_result(payload if json_mode(args) else text, json_mode=json_mode(args))
 
