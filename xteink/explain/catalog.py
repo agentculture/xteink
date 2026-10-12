@@ -217,8 +217,11 @@ validate the image (or check the offer) but stores and offers nothing.
     xteink firmware upload IMAGE --commit SHA --pr URL [--version V] [--apply] [--json]
     xteink firmware offer FIRMWARE (--device ID|NAME | --all) [--apply] [--json]
     xteink firmware rollbacks FIRMWARE [--json]
-    xteink firmware release PR_NUMBER [--fork-checkout DIR] [--integration-branch B] [--json]
-    xteink firmware report-rollbacks [--dry-run] [--json]
+    xteink firmware release PR_NUMBER [--fork-checkout DIR] [--integration-branch B]
+        [--pio-env ENV] [--pio PATH] [--version V] [--fork OWNER/REPO]
+        [--key-name SECRET] [--no-grant] [--json]
+    xteink firmware report-rollbacks [--dry-run] [--fork OWNER/REPO] [--key-name SECRET]
+        [--no-grant] [--json]
     xteink firmware overview
 
 - `rollbacks` lists the devices that rolled that image back (device id, name, time); read-only.

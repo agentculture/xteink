@@ -32,6 +32,8 @@ DEFAULT_FORK_CHECKOUT = Path.home() / "git" / "xteink-firmware"
 DEFAULT_PIO_ENV = "xteink_release"
 DEFAULT_PIO = Path.home() / ".platformio" / "penv" / "bin" / "pio"
 PR_REPLY = REPO_ROOT / ".claude" / "skills" / "cicd" / "scripts" / "pr-reply.sh"
+# The xteink calls run this same install (not whatever `xteink` is first on PATH).
+XTEINK_CMD = (sys.executable, "-m", "xteink")
 GREEN_CONCLUSIONS = {"SUCCESS", "NEUTRAL", "SKIPPED"}
 ROLLBACK_MARKER = "<!-- xteink-rollback device={device} fw={sha} -->"
 
@@ -56,6 +58,8 @@ def _run(
         )
     except FileNotFoundError as exc:
         raise env_failure(f"{cmd[0]} not found on PATH") from exc
+    except OSError as exc:  # not executable, cwd not a directory, ...
+        raise env_failure(f"{cmd[0]} could not be started: {exc}") from exc
 
 
 def _ok(cmd: Sequence[str], *, cwd: str | Path | None = None, input_text: str | None = None) -> str:
@@ -76,7 +80,7 @@ def _json(cmd: Sequence[str], **kw: Any) -> Any:
 
 def _xteink(args: argparse.Namespace, *sub: str) -> list[str]:
     """An xteink invocation, with the admin key injected from grant unless --no-grant."""
-    cmd = ["xteink", *sub, "--json"]
+    cmd = [*XTEINK_CMD, *sub, "--json"]
     if args.no_grant:
         return cmd
     return ["grant", "run", "--inject", f"XTEINK_API_KEY={args.key_name}", "--", *cmd]
@@ -184,6 +188,7 @@ def signed(body: str) -> str:
     res = _run(["bash", str(PR_REPLY), "--print-body", "0", "0", body])
     if res.returncode == 0 and res.stdout.strip():
         return res.stdout.rstrip("\n")
+    _log(f"warning: {PR_REPLY} unavailable (not a source checkout?); signing as xteink")
     return f"{body}\n\n- xteink (Claude)"
 
 
@@ -197,7 +202,7 @@ def device_names(args: argparse.Namespace, ids: list[int]) -> list[str]:
     except (CliError, KeyError) as exc:
         _log(f"warning: device names unavailable ({exc}); the PR comment lists ids only")
         devices = []
-    names = {d["id"]: d.get("name", "") for d in devices}
+    names = {d.get("id"): d.get("name", "") for d in devices}
     return [f"{names[i]} (#{i})" if names.get(i) else f"#{i}" for i in ids]
 
 
@@ -208,6 +213,7 @@ def cmd_release(args: argparse.Namespace) -> None:
     repo = str(args.fork_checkout)
     tmp = Path(tempfile.mkdtemp(prefix="xteink-fw-release-"))
     tree = tmp / "fork"
+    stage = "build"
     try:
         _ok(["git", "-C", repo, "worktree", "add", "--detach", str(tree), sha])
         check_clean(tree)
@@ -220,15 +226,23 @@ def cmd_release(args: argparse.Namespace) -> None:
             "--apply",
         )
         up = _json(up_cmd)
+        stage = "upload"  # from here on the server may hold (or offer) the image
         uploaded = up["firmware"]
         if not up.get("created", True) and uploaded.get("fork_commit") != sha:
             # Identical bytes are already stored under another commit's row: offering it
             # would credit this PR in the comment while rollback bookkeeping stays on that one.
-            raise refused(
-                f"the image is identical to firmware {uploaded['id']} ({uploaded['version']}), "
-                f"stored for commit {str(uploaded.get('fork_commit'))[:12]}; nothing was offered"
+            owner = uploaded.get("fork_commit")
+            raise CliError(
+                EXIT_USER_ERROR,
+                f"refused: the build is byte-identical to firmware {uploaded['id']} "
+                f"({uploaded['version']}), stored "
+                + (f"for commit {owner[:12]}" if owner else "without a fork commit")
+                + "; nothing was offered",
+                f"this PR changed no firmware bytes; to ship that image anyway run "
+                f"'xteink firmware offer {uploaded['id']} --all --apply'",
             )
         offered = _json(_xteink(args, "firmware", "offer", str(uploaded["id"]), "--all", "--apply"))
+        stage = "offer"
         ids = [int(i) for i in offered["offered"]]
         who = ", ".join(device_names(args, ids)) or "none"
         body = (
@@ -240,6 +254,15 @@ def cmd_release(args: argparse.Namespace) -> None:
             f"skipped (rolled back): {len(offered.get('skipped_rolled_back', []))}"
         )
         post_comment(args.fork, str(args.pr), body)
+    except CliError:
+        raise
+    except Exception as exc:  # noqa: BLE001 - an unexpected shape after a side effect
+        raise CliError(
+            EXIT_ENV_ERROR,
+            f"release failed after the {stage} step: {exc.__class__.__name__}: {exc}",
+            "the image may already be stored or offered: check 'xteink firmware list' and "
+            "'xteink device list' before re-running",
+        ) from exc
     finally:
         cleanup(args, tree, tmp)
     payload = {"version": uploaded["version"], "sha": sha, "offered": ids}

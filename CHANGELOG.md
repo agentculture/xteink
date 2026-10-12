@@ -22,7 +22,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Removed
 
-- scripts/firmware-release.py; use `xteink firmware release` and `xteink firmware report-rollbacks` (same flags and checks)
+- scripts/firmware-release.py; use `xteink firmware release` and `xteink firmware report-rollbacks`. The flags and checks are the same; the default output is now one text line (pass `--json` for the old JSON), errors use the CLI's error envelope, an error after the upload exits 2 instead of looking like a refusal, and the `xteink` calls run this same install (`python -m xteink`) instead of the first one on PATH
 
 ## [0.11.0] - 2026-10-12
 

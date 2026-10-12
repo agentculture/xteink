@@ -7,12 +7,15 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
 from xteink.cli import main
 from xteink.cli._commands import firmware_release as fr
+
+REAL_RUN = fr._run  # the fixture swaps in the fake; one test needs the real one
 
 SOURCE = Path(fr.__file__)
 SHA = "a" * 40
@@ -81,7 +84,8 @@ class Fake:
             (out / "firmware.bin").write_bytes(b"\xe9")
             return cp("")
         inner = cmd[cmd.index("--") + 1 :] if cmd[0] == "grant" else cmd
-        assert inner[0] == "xteink", cmd
+        assert inner[:3] == [sys.executable, "-m", "xteink"], cmd
+        inner = ["xteink", *inner[3:]]
         verb = inner[1:3]
         if verb == ["firmware", "list"]:
             return cp(json.dumps({"firmware": self.firmware}))
@@ -237,7 +241,7 @@ def test_tool_failure_is_exit_2_and_cleans_up(fake, monkeypatch):
 
 def test_no_grant_uses_bare_xteink(fake):
     assert release("--no-grant") == 0
-    assert fake.find("upload")[0][0] == "xteink"
+    assert fake.find("upload")[0][:3] == [sys.executable, "-m", "xteink"]
     assert not fake.find("grant")
 
 
@@ -336,3 +340,53 @@ def test_re_releasing_the_same_commit_offers_the_existing_upload(fake):
     }
     assert release() == 0
     assert fake.find("offer")
+
+
+def test_xteink_calls_use_this_install_not_path(fake):
+    assert release() == 0
+    (upload,) = fake.find("upload")
+    inner = upload[upload.index("--") + 1 :]
+    assert inner[:3] == [sys.executable, "-m", "xteink"]
+
+
+def test_unexpected_shape_after_the_offer_is_exit_2_not_a_refusal(fake, monkeypatch, capsys):
+    real = fake.__call__
+
+    def bad_offer(cmd, **kw):
+        if "offer" in cmd:
+            fake.calls.append(list(cmd))
+            return cp(json.dumps({"surprise": True}))
+        return real(cmd, **kw)
+
+    monkeypatch.setattr(fr, "_run", bad_offer)
+    assert release() == 2
+    err = json.loads(capsys.readouterr().err)
+    assert "after the offer step" in err["message"]
+    assert fake.find("worktree", "remove")
+
+
+def test_a_tool_that_cannot_start_is_exit_2(fake, monkeypatch):
+    def denied(cmd, **kw):
+        raise PermissionError(13, "Permission denied")
+
+    monkeypatch.setattr(fr.subprocess, "run", denied)
+    monkeypatch.setattr(fr, "_run", REAL_RUN)
+    assert release() == 2
+
+
+def test_dedupe_without_a_commit_names_the_way_to_ship_it(fake, capsys):
+    fake.upload_result = {
+        "firmware": {"id": 3, "version": "1.6.0", "fork_commit": None},
+        "created": False,
+    }
+    assert release() == 1
+    err = json.loads(capsys.readouterr().err)
+    assert "without a fork commit" in err["message"] and "None" not in err["message"]
+    assert "xteink firmware offer 3 --all --apply" in err["remediation"]
+
+
+def test_default_output_is_one_text_line(fake, capsys):
+    argv = ["firmware", "release", "7", "--fork-checkout", "/fork", "--pio", "/x/pio"]
+    assert main(argv) == 0
+    out = capsys.readouterr().out.strip()
+    assert out.startswith("released 1.7.0 (aaaaaaaaaaaa) to Reader One (#1), Reader Two (#2)")
