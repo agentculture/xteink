@@ -1,20 +1,30 @@
-"""``/api/devices``, ``/api/keys`` and ``/api/whoami`` routes (main app only).
+"""``/api/devices``, ``/api/firmware``, ``/api/keys`` and ``/api/whoami`` routes (main app only).
 
 Raw device/API keys appear only in the register/rotate/create responses.
 """
 
 from __future__ import annotations
 
+import tempfile
 from dataclasses import asdict
+from pathlib import Path
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, File, Form, Response, UploadFile
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+
+from xteink.core import ValidationError
+from xteink.core.fwimage import MAX_IMAGE_SIZE, FirmwareImageError, validate
 
 from .auth import Operator, Services, get_services, require_operator
 
 devices_router = APIRouter(
     prefix="/api/devices", tags=["devices"], dependencies=[Depends(require_operator)]
+)
+firmware_router = APIRouter(
+    prefix="/api/firmware", tags=["firmware"], dependencies=[Depends(require_operator)]
 )
 keys_router = APIRouter(prefix="/api/keys", tags=["keys"], dependencies=[Depends(require_operator)])
 whoami_router = APIRouter(prefix="/api", tags=["session"])
@@ -91,6 +101,116 @@ def queue_item(
     device_id: int, body: QueueRequest, services: Services = Depends(get_services)
 ) -> dict:
     return asdict(services.devices.queue_item(device_id, body.item_id))
+
+
+# --- firmware --------------------------------------------------------------
+
+
+class OfferRequest(BaseModel):
+    """Offer an image to one device (``device_id``) or to every provisioned one (``all``)."""
+
+    device_id: int | None = None
+    all: bool = False
+    dry_run: bool = False
+
+
+def _image_error(exc: FirmwareImageError) -> JSONResponse:
+    status = 413 if exc.code == "too_large" else 422
+    return JSONResponse(status_code=status, content={"detail": str(exc), "code": exc.code})
+
+
+def _validate_bytes(data: bytes):
+    # fwimage validates a path; the temp file is removed before returning.
+    with tempfile.TemporaryDirectory(prefix="xteink-fw-") as tmp:
+        path = Path(tmp) / "image.bin"
+        path.write_bytes(data)
+        return validate(path)
+
+
+@firmware_router.get("")
+def list_firmware(services: Services = Depends(get_services)) -> dict:
+    return {"firmware": [asdict(f) for f in services.firmware.list()]}
+
+
+@firmware_router.post("", status_code=201, responses={200: {"description": "dry run or known"}})
+async def upload_firmware(
+    response: Response,
+    file: UploadFile = File(...),
+    fork_commit: str | None = Form(None),
+    source_pr: str | None = Form(None),
+    version: str | None = Form(None),
+    dry_run: bool = Form(False),
+    services: Services = Depends(get_services),
+):
+    """Validate (ESP header, chip, board tag) and store a firmware image.
+
+    The version is read from the image; ``version`` is required only when the image carries
+    none, and overrides it otherwise. With ``dry_run`` the image is validated and nothing is
+    stored.
+    """
+    data = await file.read(MAX_IMAGE_SIZE + 1)
+    try:
+        info = await run_in_threadpool(_validate_bytes, data)
+    except FirmwareImageError as exc:
+        return _image_error(exc)
+    chosen = (version or "").strip() or info.version
+    if not chosen:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": "the image carries no version string; pass version explicitly",
+                "code": "version_required",
+            },
+        )
+    image = {"size": info.size, "board": info.board, "chip_id": info.chip_id, "version": chosen}
+    if dry_run:
+        response.status_code = 200
+        return {"dry_run": True, "image": image}
+    # Hashing, the blob write and SQLite (30 s busy timeout) stay off the event loop.
+    result = await run_in_threadpool(
+        services.firmware.add,
+        data,
+        version=chosen,
+        board=info.board or "x4",
+        fork_commit=fork_commit,
+        source_pr=source_pr,
+    )
+    if not result.created:
+        response.status_code = 200
+    return {"firmware": asdict(result.firmware), "created": result.created, "image": image}
+
+
+@firmware_router.get("/{firmware_id}")
+def get_firmware(firmware_id: int, services: Services = Depends(get_services)) -> dict:
+    return asdict(services.firmware.get(firmware_id))
+
+
+@firmware_router.get("/{firmware_id}/rollbacks")
+def firmware_rollbacks(firmware_id: int, services: Services = Depends(get_services)) -> dict:
+    """Devices that rolled this image back (read-only; used by the release flow)."""
+    return {"rollbacks": services.firmware.rollbacks_of(firmware_id)}
+
+
+@firmware_router.post("/{firmware_id}/offer")
+def offer_firmware(
+    firmware_id: int, body: OfferRequest, services: Services = Depends(get_services)
+) -> dict:
+    """Offer an image to one device or all. A revoked device, or one that rolled this image
+    back, is refused (single: 422) or skipped (``all``). ``dry_run`` reports without writing."""
+    if body.all == (body.device_id is not None):
+        raise ValidationError("give exactly one of device_id or all")
+    if body.all:
+        res = services.firmware.offer_all(firmware_id, dry_run=body.dry_run)
+        return {
+            "firmware": asdict(res.firmware),
+            "dry_run": body.dry_run,
+            "offered": list(res.offered),
+            "skipped_revoked": list(res.skipped_revoked),
+            "skipped_rolled_back": list(res.skipped_rolled_back),
+        }
+    device_id = int(body.device_id)  # type: ignore[arg-type]
+    fw = services.firmware.offer(device_id, firmware_id, dry_run=body.dry_run)
+    return {"firmware": asdict(fw), "dry_run": body.dry_run, "offered": [device_id]}
 
 
 # --- keys ------------------------------------------------------------------

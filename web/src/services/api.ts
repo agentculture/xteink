@@ -43,7 +43,15 @@ export type Device = {
   free_sd_bytes: number | null;
   firmware_version: string | null;
   last_error: string | null;
+  offered_firmware_id?: number | null;
+  last_run_at?: string | null;
+  last_run_trigger?: string | null;
+  last_fw_outcome?: string | null;
+  last_content_outcome?: string | null;
 };
+
+/** An uploaded device image (`GET /api/firmware`); only what the UI reads is typed. */
+export type Firmware = { id: number; version: string };
 
 export type QueueEntry = {
   id: number;
@@ -272,6 +280,10 @@ export function deviceQueue(
 
 export function queueItem(deviceId: number, itemId: number): Promise<QueueEntry> {
   return request(`/api/devices/${deviceId}/queue`, { method: "POST", json: { item_id: itemId } });
+}
+
+export function listFirmware(): Promise<{ firmware: Firmware[] }> {
+  return request("/api/firmware");
 }
 
 // --- API keys --------------------------------------------------------------

@@ -9,6 +9,7 @@ vi.mock("../services/api", async (orig) => {
   return {
     ...real,
     listDevices: vi.fn(),
+    listFirmware: vi.fn(),
     registerDevice: vi.fn(),
     deviceQueue: vi.fn(),
     revokeDevice: vi.fn(),
@@ -27,6 +28,11 @@ const device = (over: Partial<api.Device> = {}): api.Device => ({
   free_sd_bytes: null,
   firmware_version: null,
   last_error: null,
+  offered_firmware_id: null,
+  last_run_at: null,
+  last_run_trigger: null,
+  last_fw_outcome: null,
+  last_content_outcome: null,
   ...over,
 });
 
@@ -34,6 +40,7 @@ const RAW = "xtd_SECRETDEVICEKEY0123456789";
 
 beforeEach(() => {
   vi.mocked(api.listDevices).mockReset().mockResolvedValue({ devices: [] });
+  vi.mocked(api.listFirmware).mockReset().mockResolvedValue({ firmware: [] });
   vi.mocked(api.registerDevice).mockReset();
   vi.mocked(api.deviceQueue).mockReset().mockResolvedValue({ entries: [] });
   vi.mocked(api.revokeDevice).mockReset();
@@ -98,5 +105,58 @@ describe("DevicesView pairing", () => {
     expect(api.revokeDevice).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole("button", { name: "Revoke Bedside's key" }));
     expect(api.revokeDevice).toHaveBeenCalledWith(4);
+  });
+});
+
+describe("DevicesView offered firmware and last daily run", () => {
+  it("shows the offered version and the last run outcomes when present", async () => {
+    vi.mocked(api.listFirmware).mockResolvedValue({
+      firmware: [{ id: 7, version: "1.4.2" } as api.Firmware],
+    });
+    vi.mocked(api.listDevices).mockResolvedValue({
+      devices: [
+        device({
+          offered_firmware_id: 7,
+          last_run_at: "2026-10-06T09:00:00Z",
+          last_run_trigger: "power_on",
+          last_fw_outcome: "installed",
+          last_content_outcome: "ok",
+        }),
+      ],
+    });
+    render(<DevicesView />);
+    expect(await screen.findByText("Offered: 1.4.2")).toBeInTheDocument();
+    const run = screen.getByText(/^Last run: .+ - installed \/ ok$/);
+    expect(run).toBeInTheDocument();
+  });
+
+  it("shows a failed install's code as the server reports it", async () => {
+    vi.mocked(api.listDevices).mockResolvedValue({
+      devices: [
+        device({
+          last_run_at: "2026-10-06T09:00:00Z",
+          last_run_trigger: "wake",
+          last_fw_outcome: "failed:EFLASH",
+          last_content_outcome: "ok",
+        }),
+      ],
+    });
+    render(<DevicesView />);
+    expect(await screen.findByText(/^Last run: .+ - failed:EFLASH \/ ok$/)).toBeInTheDocument();
+  });
+
+  it("falls back to the firmware id when its version is unknown", async () => {
+    vi.mocked(api.listFirmware).mockRejectedValue(new Error("nope"));
+    vi.mocked(api.listDevices).mockResolvedValue({ devices: [device({ offered_firmware_id: 9 })] });
+    render(<DevicesView />);
+    expect(await screen.findByText("Offered: #9")).toBeInTheDocument();
+  });
+
+  it("renders nothing extra when there is no offer and no run", async () => {
+    vi.mocked(api.listDevices).mockResolvedValue({ devices: [device()] });
+    render(<DevicesView />);
+    await screen.findByRole("heading", { name: "Bedside" });
+    expect(screen.queryByText(/Offered:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Last run:/)).not.toBeInTheDocument();
   });
 });

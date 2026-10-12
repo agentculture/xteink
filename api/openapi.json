@@ -1,6 +1,58 @@
 {
   "components": {
     "schemas": {
+      "Body_upload_firmware_api_firmware_post": {
+        "properties": {
+          "dry_run": {
+            "default": false,
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "fork_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fork Commit"
+          },
+          "source_pr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Pr"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_firmware_api_firmware_post",
+        "type": "object"
+      },
       "Body_upload_item_api_library_post": {
         "properties": {
           "author": {
@@ -105,6 +157,34 @@
           "mirror"
         ],
         "title": "MirrorUpdate",
+        "type": "object"
+      },
+      "OfferRequest": {
+        "description": "Offer an image to one device (``device_id``) or to every provisioned one (``all``).",
+        "properties": {
+          "all": {
+            "default": false,
+            "title": "All",
+            "type": "boolean"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "dry_run": {
+            "default": false,
+            "title": "Dry Run",
+            "type": "boolean"
+          }
+        },
+        "title": "OfferRequest",
         "type": "object"
       },
       "QueueRequest": {
@@ -576,6 +656,239 @@
         "summary": "Rotate Device Key",
         "tags": [
           "devices"
+        ]
+      }
+    },
+    "/api/firmware": {
+      "get": {
+        "operationId": "list_firmware_api_firmware_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Firmware Api Firmware Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Firmware",
+        "tags": [
+          "firmware"
+        ]
+      },
+      "post": {
+        "description": "Validate (ESP header, chip, board tag) and store a firmware image.\n\nThe version is read from the image; ``version`` is required only when the image carries\nnone, and overrides it otherwise. With ``dry_run`` the image is validated and nothing is\nstored.",
+        "operationId": "upload_firmware_api_firmware_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_firmware_api_firmware_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "dry run or known"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload Firmware",
+        "tags": [
+          "firmware"
+        ]
+      }
+    },
+    "/api/firmware/{firmware_id}": {
+      "get": {
+        "operationId": "get_firmware_api_firmware__firmware_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "firmware_id",
+            "required": true,
+            "schema": {
+              "title": "Firmware Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Firmware Api Firmware  Firmware Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Firmware",
+        "tags": [
+          "firmware"
+        ]
+      }
+    },
+    "/api/firmware/{firmware_id}/offer": {
+      "post": {
+        "description": "Offer an image to one device or all. A revoked device, or one that rolled this image\nback, is refused (single: 422) or skipped (``all``). ``dry_run`` reports without writing.",
+        "operationId": "offer_firmware_api_firmware__firmware_id__offer_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "firmware_id",
+            "required": true,
+            "schema": {
+              "title": "Firmware Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Offer Firmware Api Firmware  Firmware Id  Offer Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Offer Firmware",
+        "tags": [
+          "firmware"
+        ]
+      }
+    },
+    "/api/firmware/{firmware_id}/rollbacks": {
+      "get": {
+        "description": "Devices that rolled this image back (read-only; used by the release flow).",
+        "operationId": "firmware_rollbacks_api_firmware__firmware_id__rollbacks_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "firmware_id",
+            "required": true,
+            "schema": {
+              "title": "Firmware Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Firmware Rollbacks Api Firmware  Firmware Id  Rollbacks Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Firmware Rollbacks",
+        "tags": [
+          "firmware"
         ]
       }
     },

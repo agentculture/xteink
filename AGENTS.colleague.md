@@ -38,11 +38,12 @@ fully offline. Your library never leaves hardware you own. **Landed:** the local
 server (main app :8780 with web UI + API, device-only app :8781, both key-gated),
 an MCP server (`push_file`, `list_library`, `send_to_device`; stdio or :8782),
 Docker/compose packaging, an opt-in two-tunnel Cloudflare setup, and CLI nouns
-`server`, `library`, `device`, `tunnel`, `mcp`. The device
+`server`, `library`, `device`, `firmware`, `tunnel`, `mcp`. The device
 firmware (separate repo, `agentculture/xteink-firmware`) is hardware-verified on
-the X3: books sync over the home LAN or a phone hotspot and read offline. Other
-Xteink models are build-verified only; large (≥ 5 MB) EPUB syncs over HTTPS are
-**not verified**. PDF ingest is *(planned)*. User docs: `README.md`, `docs/api.md`,
+the X3: books sync over the home LAN or a phone hotspot and read offline, and it
+updates over the air from the server (a once-a-day start-time routine; release
+flow in `docs/firmware-release.md`). Other Xteink models are build-verified only;
+large (≥ 5 MB) EPUB syncs through the tunnel are **not verified**. PDF ingest is *(planned)*. User docs: `README.md`, `docs/api.md`,
 `docs/mcp.md`. See `CLAUDE.md` § "Current state vs. roadmap".
 
 It is also an AgentCulture mesh agent (suffix `xteink`), scaffolded from

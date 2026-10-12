@@ -1,11 +1,12 @@
 """Device protocol v1 (docs/device-protocol.md) driven end-to-end by a fake device."""
 
+import hashlib
 import re
 from pathlib import Path
 
 import pytest
 
-from xteink.core import DeviceService, LibraryService
+from xteink.core import DeviceService, FirmwareStore, LibraryService, ValidationError
 
 from .conftest import bearer
 from .fake_device import FakeDevice
@@ -192,6 +193,7 @@ def test_ack_mismatch_409_and_not_queued_404(device_client, lib, devs):
         ("GET", "/api/device/items/1"),
         ("POST", "/api/device/ack"),
         ("POST", "/api/device/status"),
+        ("GET", "/api/device/firmware/1"),
     ],
 )
 def test_unknown_protocol_426(device_client, devs, version, method, path):
@@ -323,6 +325,7 @@ def test_inventory_is_per_device(device_client, lib, devs):
         ("GET", "/api/device/items/1"),
         ("POST", "/api/device/ack"),
         ("POST", "/api/device/status"),
+        ("GET", "/api/device/firmware/1"),
     ],
 )
 def test_revoked_key_401(device_client, devs, method, path):
@@ -400,3 +403,295 @@ def test_status_response_and_hash_helper(device_client, devs):
     assert r.json()["protocol"] == "1"
     assert r.json()["device"]["id"] == dev.id
     assert "key_id" not in r.json()["device"]
+
+
+# --- OTA + daily run: additive v1 fields and routes -------------------------
+
+FW_V1 = "xteink-fw 0.1.0"  # FakeDevice's default firmware_version
+IMAGE = bytes(range(256)) * 40  # 10 KiB stand-in image (the store does not parse it)
+
+
+@pytest.fixture
+def fws(store):
+    return FirmwareStore(store)
+
+
+def add_fw(fws, version="xteink-fw 0.2.0", data=IMAGE):
+    return fws.add(data, version=version, board="x3").firmware
+
+
+def status(client, raw, **body):
+    return client.post("/api/device/status", headers=h(raw), json=body)
+
+
+def test_protocol_doc_specifies_additive_v1_ota_fields():
+    text = DOC.read_text()
+    for needle in [
+        "GET /api/device/firmware/",
+        '"firmware"',
+        "run_started_at",
+        "run_trigger",
+        "power_on",
+        "wake",
+        "manual",
+        "fw_outcome",
+        "installed",
+        "failed:",
+        "deferred:",
+        "content_outcome",
+        "rolled_back_version",
+        "additive",
+    ]:
+        assert needle in text, needle
+
+
+def test_old_client_syncs_unchanged_with_an_offer_pending(device_client, lib, devs, fws):
+    dev, raw = register(devs)
+    a = add(lib, b"A" * 500, "Alpha")
+    devs.queue_item(dev.id, a.id)
+    fws.offer(dev.id, add_fw(fws).id)
+
+    fake = FakeDevice(device_client, raw)  # old client: default mode
+    assert set(fake.status_body()) == {
+        "free_sd_bytes",
+        "firmware_version",
+        "last_error",
+        "last_sync_result",
+        "inventory",
+    }
+    r = fake.post_status()
+    assert r.status_code == 200
+    assert r.json()["protocol"] == "1"
+    assert fake.get_queue().status_code == 200
+    res = fake.sync(drop_after={a.id: 100})
+    assert (res.delivered, res.resumed, res.firmware_offer) == ([a.id], [a.id], None)
+    assert fake.firmware_image is None
+    d = devs.get(dev.id)
+    assert (d.last_run_at, d.last_run_trigger, d.last_fw_outcome, d.last_content_outcome) == (
+        None,
+        None,
+        None,
+        None,
+    )
+    assert fws.rolled_back(dev.id) == []
+
+
+def test_new_client_receives_offer_and_downloads_with_resume(device_client, lib, devs, fws):
+    dev, raw = register(devs)
+    fw = add_fw(fws)
+    fws.offer(dev.id, fw.id)
+    fake = FakeDevice(device_client, raw, new_client=True)
+    fake.run_started_at, fake.run_trigger = "2026-10-11T06:00:00Z", "power_on"
+
+    res = fake.sync(firmware_drop_after=3000)
+    assert res.firmware_offer == {
+        "id": fw.id,
+        "version": "xteink-fw 0.2.0",
+        "size": len(IMAGE),
+        "sha256": fw.sha256,
+        "url": f"/api/device/firmware/{fw.id}",
+    }
+    assert res.firmware_resumed is True
+    assert fake.firmware_image == IMAGE
+    assert hashlib.sha256(fake.firmware_image).hexdigest() == fw.sha256
+
+    # After installing, the device reports the new version: the offer is no longer sent.
+    fake.firmware_version, fake.fw_outcome = "xteink-fw 0.2.0", "installed"
+    r = fake.post_status()
+    assert r.status_code == 200
+    assert "firmware" not in r.json()
+    d = devs.get(dev.id)
+    assert (d.last_fw_outcome, d.last_run_trigger) == ("installed", "power_on")
+
+
+def test_no_offer_when_versions_match_or_nothing_offered(device_client, devs, fws):
+    dev, raw = register(devs)
+    assert "firmware" not in status(device_client, raw, firmware_version=FW_V1).json()
+    fws.offer(dev.id, add_fw(fws, version=FW_V1).id)
+    assert "firmware" not in status(device_client, raw, firmware_version=FW_V1).json()
+    # Version omitted: the stored firmware_version decides.
+    assert "firmware" not in status(device_client, raw).json()
+    fws.offer(dev.id, add_fw(fws, version="9", data=b"other").id)
+    assert status(device_client, raw).json()["firmware"]["version"] == "9"
+
+
+def test_offer_is_withdrawn_once_the_device_runs_it(device_client, devs, fws):
+    """A fulfilled offer must not come back as a downgrade when the device later runs
+    another build (a USB flash, or an image that arrived another way)."""
+    dev, raw = register(devs)
+    fw = add_fw(fws, version=FW_V1)
+    fws.offer(dev.id, fw.id)
+    assert status(device_client, raw, firmware_version="xteink-fw 0.0.9").json()["firmware"]
+    assert fws.offered(dev.id).id == fw.id  # not running it yet: the offer stays
+
+    assert "firmware" not in status(device_client, raw, firmware_version=FW_V1).json()
+    assert fws.offered(dev.id) is None  # running it: the offer is fulfilled
+
+    later = status(device_client, raw, firmware_version="xteink-fw 0.3.0-dev").json()
+    assert "firmware" not in later  # no silent downgrade back to FW_V1
+    assert fws.offered(dev.id) is None
+
+
+def test_withdrawing_a_fulfilled_offer_keeps_a_newer_offer(device_client, devs, fws):
+    dev, raw = register(devs)
+    old = add_fw(fws, version=FW_V1)
+    new = add_fw(fws, version="xteink-fw 0.4.0", data=b"newer image")
+    fws.offer(dev.id, new.id)
+    # Still running the old build: the newer offer is not the one being run, so it stays.
+    assert status(device_client, raw, firmware_version=old.version).json()["firmware"]["id"] == (
+        new.id
+    )
+    assert fws.offered(dev.id).id == new.id
+
+
+def test_firmware_route_ranges_etag_and_416(device_client, devs, fws):
+    dev, raw = register(devs)
+    fw = add_fw(fws)
+    fws.offer(dev.id, fw.id)
+    url = f"/api/device/firmware/{fw.id}"
+    full = device_client.get(url, headers=h(raw))
+    assert full.status_code == 200
+    assert full.content == IMAGE
+    assert full.headers["etag"] == f'"{fw.sha256}"'
+    assert full.headers["accept-ranges"] == "bytes"
+    assert full.headers["content-type"] == "application/octet-stream"
+    r = device_client.get(url, headers=h(raw, Range="bytes=10-19"))
+    assert (r.status_code, r.content) == (206, IMAGE[10:20])
+    assert r.headers["content-range"] == f"bytes 10-19/{len(IMAGE)}"
+    r = device_client.get(url, headers=h(raw, Range=f"bytes={len(IMAGE)}-"))
+    assert r.status_code == 416
+    assert r.headers["content-range"] == f"bytes */{len(IMAGE)}"
+
+
+def test_firmware_route_serves_only_own_offer(device_client, devs, fws):
+    dev, raw = register(devs, "mine")
+    other, _ = register(devs, "other")
+    mine = add_fw(fws)
+    theirs = add_fw(fws, version="x", data=b"theirs")
+    fws.offer(other.id, theirs.id)
+    # Nothing offered to this device yet: even an existing image is 404.
+    assert device_client.get(f"/api/device/firmware/{mine.id}", headers=h(raw)).status_code == 404
+    fws.offer(dev.id, mine.id)
+    for fid in (theirs.id, 999):
+        r = device_client.get(f"/api/device/firmware/{fid}", headers=h(raw))
+        assert r.status_code == 404
+    assert device_client.get(f"/api/device/firmware/{mine.id}", headers=h(raw)).status_code == 200
+
+
+@pytest.mark.parametrize(
+    "outcome", ["none", "installed", "failed:E42", "failed:sha256", "deferred:low_battery"]
+)
+def test_fw_outcome_round_trips(device_client, main_client, api_key, devs, outcome):
+    dev, raw = register(devs)
+    r = status(device_client, raw, fw_outcome=outcome)
+    assert r.status_code == 200
+    assert r.json()["device"]["last_fw_outcome"] == outcome
+    assert devs.get(dev.id).last_fw_outcome == outcome
+    s = main_client.get(f"/api/devices/{dev.id}", headers=bearer(api_key)).json()
+    assert s["last_fw_outcome"] == outcome
+
+
+@pytest.mark.parametrize("trigger", ["power_on", "wake", "manual"])
+def test_run_fields_round_trip(device_client, devs, trigger):
+    dev, raw = register(devs)
+    r = status(
+        device_client,
+        raw,
+        run_started_at="2026-10-11T06:00:03Z",
+        run_trigger=trigger,
+        content_outcome="ok",
+    )
+    assert r.status_code == 200
+    d = devs.get(dev.id)
+    assert (d.last_run_at, d.last_run_trigger, d.last_content_outcome) == (
+        "2026-10-11T06:00:03Z",
+        trigger,
+        "ok",
+    )
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"fw_outcome": "bogus"},
+        {"fw_outcome": "failed:"},
+        {"fw_outcome": "deferred:"},
+        {"fw_outcome": "installed:yes"},
+        {"fw_outcome": "failed:" + "x" * 300},
+        {"run_trigger": "cron"},
+        {"run_started_at": "x" * 300},
+        {"content_outcome": "x" * 300},
+        {"rolled_back_version": "x" * 300},
+    ],
+)
+def test_new_status_fields_validated(device_client, devs, body):
+    _, raw = register(devs)
+    assert status(device_client, raw, **body).status_code == 422
+
+
+def test_rolled_back_version_records_rollback_and_stops_offer(device_client, devs, fws):
+    dev, raw = register(devs)
+    fw = add_fw(fws)
+    fws.offer(dev.id, fw.id)
+    fake = FakeDevice(device_client, raw, new_client=True)
+    assert fake.sync().firmware_offer["id"] == fw.id
+
+    fake.rolled_back_version, fake.fw_outcome = "xteink-fw 0.2.0", "failed:boot"
+    r = fake.post_status()
+    assert r.status_code == 200
+    assert "firmware" not in r.json()
+    assert [f.id for f in fws.rolled_back(dev.id)] == [fw.id]
+    assert fws.offered(dev.id) is None
+    assert devs.get(dev.id).last_fw_outcome == "failed:boot"
+    with pytest.raises(ValidationError):
+        fws.offer(dev.id, fw.id)
+    assert dev.id in fws.offer_all(fw.id).skipped_rolled_back
+    assert fake.sync().firmware_offer is None
+    r = device_client.get(f"/api/device/firmware/{fw.id}", headers=h(raw))
+    assert r.status_code == 404
+
+
+def test_unknown_rolled_back_version_is_ignored(device_client, devs, fws):
+    dev, raw = register(devs)
+    fw = add_fw(fws)
+    fws.offer(dev.id, fw.id)
+    r = status(device_client, raw, rolled_back_version="never-uploaded")
+    assert r.status_code == 200
+    assert r.json()["firmware"]["id"] == fw.id
+    assert fws.rolled_back(dev.id) == []
+
+
+def test_rolled_back_version_prefers_offered_then_newest(device_client, devs, fws):
+    dev, raw = register(devs)
+    old = add_fw(fws, version="dup", data=b"one")
+    new = add_fw(fws, version="dup", data=b"two")
+    fws.offer(dev.id, old.id)
+    status(device_client, raw, rolled_back_version="dup").raise_for_status()
+    assert [f.id for f in fws.rolled_back(dev.id)] == [old.id]
+
+    other, raw2 = register(devs, "other")
+    status(device_client, raw2, rolled_back_version="dup").raise_for_status()
+    assert [f.id for f in fws.rolled_back(other.id)] == [new.id]
+
+
+def test_real_version_formats_match_without_the_device_prefix(device_client, devs, fws):
+    """An uploaded image stores the bare version read from the image; the device reports
+    it with the ``xteink-fw `` prefix. They must compare as the same build."""
+    dev, raw = register(devs)
+    fw = add_fw(fws, version="1.6.5+xteink.f96ca3c6", data=b"release")
+    fws.offer(dev.id, fw.id)
+    old = status(device_client, raw, firmware_version="xteink-fw 1.6.5+xteink.0badc0de")
+    assert old.json()["firmware"]["version"] == "1.6.5+xteink.f96ca3c6"
+    installed = status(device_client, raw, firmware_version="xteink-fw 1.6.5+xteink.f96ca3c6")
+    assert "firmware" not in installed.json()
+
+
+def test_prefixed_rolled_back_version_finds_the_bare_upload(device_client, devs, fws):
+    dev, raw = register(devs)
+    fw = add_fw(fws, version="1.6.5+xteink.f96ca3c6", data=b"release")
+    fws.offer(dev.id, fw.id)
+    r = status(device_client, raw, rolled_back_version="xteink-fw 1.6.5+xteink.f96ca3c6")
+    assert r.status_code == 200
+    assert "firmware" not in r.json()
+    assert [f.id for f in fws.rolled_back(dev.id)] == [fw.id]
+    assert fws.offered(dev.id) is None

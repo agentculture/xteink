@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useState, type FormEvent } from "react";
 import {
   deviceQueue,
   listDevices,
+  listFirmware,
   registerDevice,
   revokeDevice,
   rotateDeviceKey,
@@ -21,12 +22,19 @@ export function DevicesView() {
   const [devices, setDevices] = useState<Device[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reveal, setReveal] = useState<Reveal | null>(null);
+  const [versions, setVersions] = useState<Record<number, string>>({});
 
   const load = useCallback(async () => {
     try {
       const res = await listDevices();
       setDevices(res.devices);
       setError(null);
+      if (res.devices.some((d) => d.offered_firmware_id != null)) {
+        // Display only: if the firmware list can't be read, the card falls back to "#<id>".
+        listFirmware()
+          .then((fw) => setVersions(Object.fromEntries(fw.firmware.map((f) => [f.id, f.version]))))
+          .catch(() => undefined);
+      }
     } catch (err) {
       setError(explain(err));
     }
@@ -69,6 +77,7 @@ export function DevicesView() {
             <li key={d.id}>
               <DeviceCard
                 device={d}
+                versions={versions}
                 onChanged={load}
                 onNewKey={(key) => setReveal({ label: d.name, key })}
               />
@@ -146,10 +155,12 @@ function PairForm({ onPaired }: { onPaired: (device: Device, key: string) => voi
 
 function DeviceCard({
   device,
+  versions,
   onChanged,
   onNewKey,
 }: {
   device: Device;
+  versions: Record<number, string>;
   onChanged: () => void;
   onNewKey: (key: string) => void;
 }) {
@@ -210,6 +221,18 @@ function DeviceCard({
             <dd>{device.firmware_version}</dd>
           </div>
         )}
+        {device.offered_firmware_id != null && (
+          <div>
+            <dt>Offered firmware</dt>
+            <dd>{`Offered: ${versions[device.offered_firmware_id] ?? `#${device.offered_firmware_id}`}`}</dd>
+          </div>
+        )}
+        {device.last_run_at && (
+          <div>
+            <dt>Daily run</dt>
+            <dd>{lastRunText(device)}</dd>
+          </div>
+        )}
         {device.last_error && (
           <div className="fact-error">
             <dt>Last error</dt>
@@ -266,6 +289,11 @@ function DeviceCard({
       </div>
     </article>
   );
+}
+
+function lastRunText(d: Device): string {
+  const outcomes = [d.last_fw_outcome, d.last_content_outcome].filter(Boolean).join(" / ");
+  return `Last run: ${formatWhen(d.last_run_at)}${outcomes ? ` - ${outcomes}` : ""}`;
 }
 
 export function DeliveryList({ entries }: { entries: QueueEntry[] }) {

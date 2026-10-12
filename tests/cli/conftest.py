@@ -25,11 +25,26 @@ DEVICES = [
     {"id": 1, "name": "Reader One", "revoked_at": None, "last_seen": None, "mirror": False},
     {"id": 2, "name": "Reader Two", "revoked_at": None, "last_seen": None, "mirror": True},
 ]
+FIRMWARE = [
+    {
+        "id": 1,
+        "version": "1.6.5-dev",
+        "sha256": "ab" * 32,
+        "size": 64,
+        "board": "x4",
+        "fork_commit": "abc123",
+        "source_pr": "https://example.test/pr/1",
+        "created_at": "2026-10-11T00:00:00+00:00",
+    }
+]
+IMAGE = {"size": 64, "board": "x4", "chip_id": 5, "version": "1.6.5-dev"}
 
 
 class FakeApi:
     def __init__(self) -> None:
         self.requests: list[tuple[str, str]] = []
+        self.bodies: list[bytes] = []
+        self.devices = [dict(d) for d in DEVICES]
         self.main_url = ""
         self.device_url = ""
 
@@ -54,8 +69,8 @@ def _handler(api: FakeApi, device_app: bool):
         def _route(self, method: str):
             path = self.path.split("?")[0]
             n = int(self.headers.get("Content-Length") or 0)
-            if n:
-                self.rfile.read(n)
+            body = self.rfile.read(n) if n else b""
+            api.bodies.append(body)
             api.requests.append((method, self.path))
             if device_app:
                 return self._send(401, {"detail": "no key", "code": "unauthorized"})
@@ -76,7 +91,35 @@ def _handler(api: FakeApi, device_app: bool):
                 if method == "DELETE":
                     return self._send(204)
             if method == "GET" and path == "/api/devices":
-                return self._send(200, {"devices": DEVICES})
+                return self._send(200, {"devices": api.devices})
+            if method == "GET" and path == "/api/firmware":
+                return self._send(200, {"firmware": FIRMWARE})
+            if method == "GET" and path == "/api/firmware/1/rollbacks":
+                row = {"device_id": 2, "device_name": "Reader Two", "rolled_back_at": "t"}
+                return self._send(200, {"rollbacks": [row]})
+            if method == "POST" and path == "/api/firmware":
+                if b"BADIMAGE" in body:
+                    msg = {"detail": "not an ESP image: bad magic byte", "code": "bad_magic"}
+                    return self._send(422, msg)
+                if b'name="dry_run"\r\n\r\ntrue' in body:
+                    return self._send(200, {"dry_run": True, "image": IMAGE})
+                return self._send(201, {"firmware": FIRMWARE[0], "created": True, "image": IMAGE})
+            if method == "POST" and path.endswith("/offer"):
+                req = json.loads(body)
+                if req.get("device_id") == 2:
+                    msg = {"detail": "device 2 rolled back firmware 1", "code": "http_422"}
+                    return self._send(422, msg)
+                offered = [1, 2] if req.get("all") else [req["device_id"]]
+                return self._send(
+                    200,
+                    {
+                        "firmware": FIRMWARE[0],
+                        "dry_run": req["dry_run"],
+                        "offered": offered,
+                        "skipped_revoked": [],
+                        "skipped_rolled_back": [],
+                    },
+                )
             if method == "POST" and path.endswith("/queue"):
                 return self._send(201, {"device_id": 1, "item_id": 1, "state": "queued"})
             if method == "POST" and path.endswith("/revoke"):

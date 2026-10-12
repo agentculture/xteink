@@ -1,0 +1,156 @@
+{
+  "plan_slug": "ota-and-daily-6am-sync",
+  "schema_version": 2,
+  "created": "2026-10-11T17:17:51Z",
+  "updated": "2026-10-12T04:06:40Z",
+  "deviations": [
+    {
+      "id": "d1",
+      "what": "t9 and t11 each add one add_subdirectory line to the fork's test/CMakeLists.txt (outside t11's 'only the new files' and t9's file list)",
+      "task_ref": "t11",
+      "reason": "googletest suites under test/ only build and run when registered in test/CMakeLists.txt; without the line the acceptance-criteria host tests would never run in CI",
+      "affects": [
+        "t9"
+      ],
+      "origin": "llm",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 1
+    },
+    {
+      "id": "d2",
+      "what": "t9: OtaUpdater keeps the fork's GitHub releases source as a fallback for UNPROVISIONED devices (no device key); provisioned devices use only the xteink server. t9's criterion 'grep finds no api.github.com in OtaUpdater on xteink builds' becomes: 'a provisioned device never requests api.github.com (host test on the source-selection logic); xteink-check-services.py still bans the upstream crosspoint feed and setInsecure'",
+      "task_ref": "t9",
+      "reason": "user decision: keep GitHub OTA for unprovisioned devices rather than leaving them with no OTA source (t9 had removed it entirely to satisfy the grep criterion)",
+      "affects": [
+        "t14"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 2
+    },
+    {
+      "id": "d3",
+      "what": "d2 withdrawn: no GitHub fallback. t9 ships as built (e113b5d4): OtaUpdater is server-only, unprovisioned devices report NOT_PROVISIONED, and xteink-check-services.py bans api.github.com in OtaUpdater. t9's original acceptance criterion stands",
+      "task_ref": "t9",
+      "reason": "user decision after review: the fork publishes no releases and isUpdateNewer can't see 1.6.5-dev builds, so the fallback would be dead code; unprovisioned devices are already on USB; it phones out to GitHub, against xteink's local-only goal; and server-only keeps the api.github.com guard",
+      "affects": [],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 3
+    },
+    {
+      "id": "d4",
+      "what": "t10 and t12 each add one add_subdirectory line to the fork's test/CMakeLists.txt (same as d1)",
+      "task_ref": "t10",
+      "reason": "new googletest suites only run when registered in test/CMakeLists.txt; user approved extending d1",
+      "affects": [
+        "t12"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 4
+    },
+    {
+      "id": "d5",
+      "what": "t1 (RTC power-off bench test) is skipped and deferred into t17. t12 no longer depends on t1; instead of 'clock source per t1's verdict', t12 self-validates on every start: trust the RTC when its time is plausible (>= the TrustedTime floor, and not near epoch 0), otherwise WifiJoin + SNTP before deciding. t17 records whether the RTC held through the power-off (scenario b)",
+      "task_ref": "t1",
+      "reason": "the user can't run the 30-minute power-off test right now; the self-validating gate is correct either way, and only changes how often a start pays the ~10 s SNTP join, which t17 measures on device",
+      "affects": [
+        "t12",
+        "t17"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 5
+    },
+    {
+      "id": "d6",
+      "what": "c27's 'the server marks the offer as needing a human' is dropped: no server-side needs-human flag. 'Can't complete unattended' means the device-side cases only (tunnel-only offer, OTA battery floor, failed download/verify). t17 scenario (d) uses a tunnel-only offer (deferred:tunnel) instead of a server-flagged one",
+      "task_ref": "t17",
+      "reason": "user decision: the agent publishes unattended (c55), so no offer is server-marked as needing a human; the flag would have been unused surface",
+      "affects": [
+        "t12"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 6
+    },
+    {
+      "id": "d7",
+      "what": "New fork task (d7-fix): large book downloads fail with ESD (SD write short) at about 1.0-1.4 MB, shortly after an e-ink progress refresh. Investigate, fix and host-test where possible before t14/t16, so the bootstrap build carries the fix; t17 validates with a real >1 MB book. t2 (the tunnel TLS test) is no longer a staged hotspot run: it happens naturally the next time the owner syncs away from home, using the server log as evidence",
+      "task_ref": "t2",
+      "reason": "t2 bench run found any download >~1 MB fails on the current issue-1 firmware even over LAN HTTP, breaking c1 ('the queued books arrive'); the owner doesn't want to stage hotspot runs",
+      "affects": [
+        "t14",
+        "t16",
+        "t17"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "needs-follow-up",
+      "seq": 7
+    },
+    {
+      "id": "d8",
+      "what": "c47 amended: the post-update health check passes when the new image gets ANY HTTP answer from the xteink server (2xx, 4xx or 5xx); only no answer within the window rolls back",
+      "task_ref": "t10",
+      "reason": "user decision after the colleague review: the check exists to prove the new image boots and reaches the network; a server hiccup (5xx while restarting) or a key problem (401) shouldn't roll back a good build. LAN and tunnel reach the same server, so failing over wouldn't help",
+      "affects": [
+        "t17"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 8
+    },
+    {
+      "id": "d9",
+      "what": "Code-review follow-ups on fork PR #2, all 10 findings fixed before the t16 bootstrap flash. Build identity (#3): xteink release builds carry the fork commit in CROSSPOINT_VERSION ('<base>+xteink.<sha8>', from a new xteink release env that the release flow (t15) builds), so every build is distinct; c36's offer-decides rule is unchanged",
+      "task_ref": "t9",
+      "reason": "/code-review (medium) found: release builds share the bare version '1.6.5' so OTA would work only once; no device-side memory of a rolled-back build plus an unrecorded early crash could reinstall a bad build daily; the note was missing on a failed install; plus budget, heap, TZ-thread-safety, duplicate-join and dead-code issues. The user chose to fix all 10 with version-carries-commit",
+      "affects": [
+        "t10",
+        "t12",
+        "t15",
+        "t16"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 9
+    },
+    {
+      "id": "d10",
+      "what": "New step before t16: redeploy the LIVE stack (compose project 'xteink') from ota/daily-sync, so the server offers firmware; back up the xteink-data volume first; the store migrates the live library.db in place; verify the library, devices and queue afterwards. This also lands the pending MCP bearer-key change from issue 1 (7d6264f)",
+      "task_ref": "t16",
+      "reason": "the X3 talks to the live server, which still runs the issue-1 code with no firmware routes, so t16/t17 could not validate OTA; the plan had no explicit redeploy step; approved by the user",
+      "affects": [
+        "t17"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "risky",
+      "seq": 10
+    },
+    {
+      "id": "d11",
+      "what": "add a post-validation firmware fix: the daily routine reports fw_outcome=installed when this boot's post-update health check verified the image (OtaCheck.verifiedInstall), instead of relying on the server still offering the running build; new fork PR, release, and one more OTA cycle to prove it",
+      "task_ref": "t17",
+      "reason": "t17 (a) on 2026-10-12: the install worked on the X3 but the server recorded last_fw_outcome=none (lapse l15); user said 'Please fix now'",
+      "affects": [],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 11
+    }
+  ],
+  "evidence": [],
+  "deltas": [],
+  "supersessions": []
+}

@@ -38,6 +38,12 @@ class Device:
     free_sd_bytes: int | None
     firmware_version: str | None
     last_error: str | None
+    # Schema v2 (OTA + daily run). Defaults keep the dataclass constructible without them.
+    offered_firmware_id: int | None = None
+    last_run_at: str | None = None
+    last_run_trigger: str | None = None
+    last_fw_outcome: str | None = None
+    last_content_outcome: str | None = None
 
 
 @dataclass(frozen=True)
@@ -64,3 +70,33 @@ class ApiKey:
     created_at: str
     revoked_at: str | None
     last_used: str | None
+
+
+@dataclass(frozen=True)
+class Firmware:
+    """An uploaded device image; its bytes live in the sha256 blob store."""
+
+    id: int
+    version: str
+    sha256: str
+    size: int
+    board: str
+    fork_commit: str | None
+    source_pr: str | None
+    created_at: str
+
+
+@dataclass(frozen=True)
+class AddFirmwareResult:
+    firmware: Firmware
+    created: bool  # False when an image with the same sha256 already existed
+
+
+@dataclass(frozen=True)
+class OfferAllResult:
+    """Outcome of offering one image to every provisioned device."""
+
+    firmware: Firmware
+    offered: tuple[int, ...]  # device ids now offered this image
+    skipped_revoked: tuple[int, ...]
+    skipped_rolled_back: tuple[int, ...]

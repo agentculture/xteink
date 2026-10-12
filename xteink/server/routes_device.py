@@ -8,6 +8,11 @@ Mirror deletes use no server-side tombstones: the device reports its inventory o
 server-delivered files in ``POST /status``; the inventory is held **in memory per
 process** (per app) and keyed by device id. After a server restart it is empty until the
 device's next ``POST /status``, which the protocol requires at the start of every sync.
+
+OTA and the daily run are **additive** v1 changes (same ``X-Xteink-Protocol: 1``): a
+status response may carry a ``firmware`` offer, ``GET /firmware/{id}`` serves the
+device's own offered image, and the status body accepts optional run fields. Old clients
+send none of them and ignore the extra response key.
 """
 
 from __future__ import annotations
@@ -15,13 +20,13 @@ from __future__ import annotations
 import re
 import threading
 from dataclasses import asdict
-from typing import Iterator
+from typing import Iterator, Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from xteink.core import Device, NotFoundError, ValidationError
+from xteink.core import Device, Firmware, FirmwareStore, NotFoundError, ValidationError
 
 from .auth import Services, get_services, require_device_key
 
@@ -32,6 +37,8 @@ SD_SAFETY_MARGIN = 1024 * 1024  # bytes kept free on the SD card (1 MiB)
 CHUNK = 64 * 1024
 
 _SHA256 = r"^[0-9a-f]{64}$"
+# none | installed | failed:<code> | deferred:<reason>; the suffix is free text.
+_FW_OUTCOME = r"^(none|installed|failed:\S.*|deferred:\S.*)$"
 _RANGE = re.compile(r"^bytes=(\d*)-(\d*)$")
 _MEDIA_TYPES = {
     "epub": "application/epub+zip",
@@ -77,6 +84,12 @@ class StatusReport(BaseModel):
     last_error: str | None = Field(default=None, max_length=2000)
     last_sync_result: str | None = Field(default=None, max_length=200)
     inventory: list[InventoryEntry] | None = None
+    # Additive v1 (daily run + OTA). All optional; old clients never send them.
+    run_started_at: str | None = Field(default=None, max_length=64)
+    run_trigger: Literal["power_on", "wake", "manual"] | None = None
+    fw_outcome: str | None = Field(default=None, max_length=200, pattern=_FW_OUTCOME)
+    content_outcome: str | None = Field(default=None, max_length=200)
+    rolled_back_version: str | None = Field(default=None, max_length=200)
 
 
 class Ack(BaseModel):
@@ -131,6 +144,64 @@ def _missing_shas(services: Services, shas: list[str]) -> set[str]:
         }
 
 
+_FW_PREFIX = "xteink-fw "
+
+
+def _same_build(a: str | None, b: str | None) -> bool:
+    """True when two firmware version strings name the same build.
+
+    Devices report ``xteink-fw <version>`` while an uploaded image stores the bare
+    ``<version>`` read from the image, so the prefix is ignored on both sides (the
+    firmware's own ``sameFirmwareVersion`` does the same).
+    """
+    if a is None or b is None:
+        return False
+
+    def bare(v: str) -> str:
+        v = v.strip()
+        return v[len(_FW_PREFIX) :] if v.startswith(_FW_PREFIX) else v
+
+    return bare(a) == bare(b)
+
+
+def _rollback_target(fws: FirmwareStore, device_id: int, version: str) -> Firmware | None:
+    """The image a reported ``rolled_back_version`` refers to, or None if unknown.
+
+    Several uploads may share a version string: prefer the device's current offer, else
+    the newest upload with that version.
+    """
+    matches = [f for f in fws.list() if _same_build(f.version, version)]
+    if not matches:
+        return None
+    offered = fws.offered(device_id)
+    if offered is not None and any(f.id == offered.id for f in matches):
+        return offered
+    return max(matches, key=lambda f: f.id)
+
+
+def _firmware_offer(fws: FirmwareStore, device: Device) -> dict | None:
+    """The status response's ``firmware`` object: only when the offer differs from the
+    firmware the device runs (as just reported, or as stored).
+
+    An offer the device already runs is fulfilled and is withdrawn here. Otherwise it
+    would come back as a silent downgrade the next time the device runs another build
+    (the device installs any version that differs from its own).
+    """
+    fw = fws.offered(device.id)
+    if fw is None:
+        return None
+    if _same_build(fw.version, device.firmware_version):
+        fws.withdraw_offer(device.id, fw.id)
+        return None
+    return {
+        "id": fw.id,
+        "version": fw.version,
+        "size": fw.size,
+        "sha256": fw.sha256,
+        "url": f"/api/device/firmware/{fw.id}",
+    }
+
+
 # --- routes -------------------------------------------------------------------
 
 
@@ -148,10 +219,24 @@ def post_status(
         free_sd_bytes=body.free_sd_bytes,
         firmware_version=body.firmware_version,
         last_error=body.last_error,
+        run_started_at=body.run_started_at,
+        run_trigger=body.run_trigger,
+        fw_outcome=body.fw_outcome,
+        content_outcome=body.content_outcome,
     )
     if body.inventory is not None:
         _inventories(request).set(device.id, body.inventory)
-    return {"protocol": PROTOCOL_VERSION, "device": _public(updated)}
+    fws = services.firmware
+    if body.rolled_back_version:
+        target = _rollback_target(fws, device.id, body.rolled_back_version)
+        if target is not None:  # an unknown version records nothing (still 200)
+            fws.record_rollback(device.id, target.id)
+        updated = services.devices.get(device.id)
+    out = {"protocol": PROTOCOL_VERSION, "device": _public(updated)}
+    offer = _firmware_offer(fws, updated)
+    if offer is not None:
+        out["firmware"] = offer
+    return out
 
 
 @router.get("/queue")
@@ -231,10 +316,34 @@ def download_item(
     if not any(e.item_id == item_id for e in services.devices.queue(device.id, state=None)):
         raise NotFoundError(f"item {item_id} is not queued for this device")
     item = services.library.get(item_id)
-    path = services.library.file_path(item_id)
-    size = item.size
-    headers = {"Accept-Ranges": "bytes", "ETag": f'"{item.sha256}"'}
     media = _MEDIA_TYPES.get(item.format, "application/octet-stream")
+    return _ranged_response(
+        services.library.file_path(item_id), item.size, item.sha256, media, range_header
+    )
+
+
+@router.get("/firmware/{firmware_id}")
+def download_firmware(
+    firmware_id: int,
+    range_header: str | None = Header(default=None, alias="Range"),
+    device: Device = Depends(require_device_key),
+    services: Services = Depends(get_services),
+) -> Response:
+    """The device's offered firmware image; same ``Range``/``ETag`` rules as items."""
+    fws = services.firmware
+    fw = fws.offered(device.id)
+    if fw is None or fw.id != firmware_id:
+        raise NotFoundError(f"firmware {firmware_id} is not offered to this device")
+    return _ranged_response(
+        fws.file_path(fw.id), fw.size, fw.sha256, "application/octet-stream", range_header
+    )
+
+
+def _ranged_response(
+    path, size: int, sha256: str, media: str, range_header: str | None
+) -> Response:
+    """Stream a blob with ``ETag: "<sha256>"``; a single ``Range`` gives 206 (or 416)."""
+    headers = {"Accept-Ranges": "bytes", "ETag": f'"{sha256}"'}
     if range_header is None:
         headers["Content-Length"] = str(size)
         return StreamingResponse(_iter_file(path, 0, size), media_type=media, headers=headers)

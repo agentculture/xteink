@@ -35,6 +35,7 @@ Commands
   xteink server status      Is the API reachable and the key valid?
   xteink library ...        list | add PATH | rm ID  (writes need --apply)
   xteink device ...         list | queue | revoke | backup | provision
+  xteink firmware ...       list | upload IMAGE | offer FW  (writes need --apply)
   xteink tunnel ...         status | plan  (prints cultureflare commands)
   xteink mcp serve          Run the MCP server (needs xteink[server])
 
@@ -75,6 +76,7 @@ def _as_json_payload() -> dict[str, object]:
             {"path": ["server", "status"], "summary": "API reachability and key check."},
             {"path": ["library"], "summary": "List, add (--apply) and remove (--apply) items."},
             {"path": ["device"], "summary": "Readers: list, queue, revoke, backup, provision."},
+            {"path": ["firmware"], "summary": "Firmware: list, upload (--apply), offer (--apply)."},
             {"path": ["tunnel"], "summary": "Remote access status and cultureflare plan."},
             {"path": ["mcp", "serve"], "summary": "Run the MCP server."},
         ],

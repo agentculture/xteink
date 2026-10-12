@@ -218,6 +218,52 @@ class Client:
             "entries"
         ]
 
+    # -- firmware ----------------------------------------------------------
+
+    def list_firmware(self) -> list[dict]:
+        return self._request("GET", "/api/firmware")["firmware"]
+
+    def get_firmware(self, firmware_id: int) -> dict:
+        return self._request("GET", f"/api/firmware/{int(firmware_id)}")
+
+    def firmware_rollbacks(self, firmware_id: int) -> list[dict]:
+        return self._request("GET", f"/api/firmware/{int(firmware_id)}/rollbacks")["rollbacks"]
+
+    def upload_firmware(
+        self,
+        path: str | os.PathLike,
+        *,
+        fork_commit: str | None = None,
+        source_pr: str | None = None,
+        version: str | None = None,
+        dry_run: bool = False,
+    ) -> dict:
+        """Upload an image; the server validates it. ``dry_run`` validates without storing."""
+        p = Path(path)
+        fields = {"dry_run": "true" if dry_run else "false"}
+        for name, value in (("fork_commit", fork_commit), ("source_pr", source_pr)):
+            if value:
+                fields[name] = value
+        if version:
+            fields["version"] = version
+        body, ctype = _multipart(fields, p.name, p.read_bytes())
+        return self._request("POST", "/api/firmware", raw_body=body, content_type=ctype)
+
+    def offer_firmware(
+        self,
+        firmware_id: int,
+        *,
+        device_id: int | None = None,
+        all_devices: bool = False,
+        dry_run: bool = False,
+    ) -> dict:
+        body: dict[str, Any] = {"dry_run": dry_run}
+        if all_devices:
+            body["all"] = True
+        else:
+            body["device_id"] = int(device_id) if device_id is not None else None
+        return self._request("POST", f"/api/firmware/{int(firmware_id)}/offer", json_body=body)
+
 
 def from_env(env: Mapping[str, str] | None = None) -> Client:
     """Build a client from ``XTEINK_URL`` / ``XTEINK_API_KEY``; raises ConfigError if no key."""

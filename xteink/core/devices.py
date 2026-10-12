@@ -148,20 +148,45 @@ class DeviceService:
         free_sd_bytes: int | None = None,
         firmware_version: str | None = None,
         last_error: str | None = None,
+        run_started_at: str | None = None,
+        run_trigger: str | None = None,
+        fw_outcome: str | None = None,
+        content_outcome: str | None = None,
     ) -> Device:
         """Record a device status report (also bumps last_seen).
 
         ``last_sync_result`` and ``last_error`` describe this report and replace the
         previous ones. ``free_sd_bytes`` and ``firmware_version`` are device facts: a
-        report that leaves them out keeps the stored values.
+        report that leaves them out keeps the stored values. The daily-run fields
+        (``run_started_at`` -> ``last_run_at``, ``run_trigger`` -> ``last_run_trigger``,
+        ``fw_outcome`` -> ``last_fw_outcome``, ``content_outcome`` ->
+        ``last_content_outcome``) describe the most recent run and are likewise kept
+        when a report leaves them out, so a run's start and end reports can each carry
+        only what they know.
         """
         with self.store.connect() as c:
             self._get(c, device_id)
             c.execute(
                 "UPDATE devices SET last_seen = ?, last_sync_result = ?,"
                 " free_sd_bytes = COALESCE(?, free_sd_bytes),"
-                " firmware_version = COALESCE(?, firmware_version), last_error = ? WHERE id = ?",
-                (now(), last_sync_result, free_sd_bytes, firmware_version, last_error, device_id),
+                " firmware_version = COALESCE(?, firmware_version), last_error = ?,"
+                " last_run_at = COALESCE(?, last_run_at),"
+                " last_run_trigger = COALESCE(?, last_run_trigger),"
+                " last_fw_outcome = COALESCE(?, last_fw_outcome),"
+                " last_content_outcome = COALESCE(?, last_content_outcome)"
+                " WHERE id = ?",
+                (
+                    now(),
+                    last_sync_result,
+                    free_sd_bytes,
+                    firmware_version,
+                    last_error,
+                    run_started_at,
+                    run_trigger,
+                    fw_outcome,
+                    content_outcome,
+                    device_id,
+                ),
             )
             return _device(self._get(c, device_id))
 
