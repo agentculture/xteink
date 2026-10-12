@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-12T14:38:02Z",
-  "updated": "2026-10-12T15:13:02Z",
+  "updated": "2026-10-12T15:16:10Z",
   "claims": [
     {
       "id": "c1",
@@ -688,7 +688,7 @@
       "behavior": "exactly one requestUpdate per local-minute change; none while the minute is unchanged across the 10-50 ms loop iterations",
       "source_text": "HomeActivity::loop() (HomeActivity.cpp:303, no timer today) checks halClock.getTime() and calls requestUpdate() when the local minute differs from the last drawn minute, so both the classic and cover-grid Home layouts tick",
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "o2",
@@ -697,7 +697,7 @@
       "behavior": "with the clock hidden or no RTC, the tick path issues zero requestUpdate calls",
       "source_text": "The minute tick only runs when the clock is actually shown (clockShowInHeader on and halClock.isAvailable()), so a hidden clock costs no extra refreshes",
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "o3",
@@ -706,7 +706,7 @@
       "behavior": "the tick and the 15-tick counter never write lastActivityTime and never make preventAutoSleep return true",
       "source_text": "The tick must not keep the device awake: requestUpdate() never touches lastActivityTime (main.cpp:819-824), so auto-sleep at sleepTimeoutMinutes (main.cpp:897-901) still fires on schedule",
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "o4",
@@ -715,7 +715,7 @@
       "behavior": "the 15th, 30th, ... minute tick since Home was entered renders with HALF_REFRESH; every other tick with FAST_REFRESH; the count restarts on Home re-entry",
       "source_text": "Home keeps a minute-tick counter and renders every 15th tick with HALF_REFRESH instead of FAST_REFRESH (HomeActivity.cpp:482/559); the counter lives in HomeActivity only and never touches lastActivityTime or preventAutoSleep, so sleep timing is unchanged",
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "o5",
@@ -724,7 +724,7 @@
       "behavior": "safe to call concurrently from the main loop task, the render task, and the routine; cache state is never read or written outside the guard",
       "source_text": "HalClock's poll-and-cache (HalClock.cpp:37-54: _cachedUtc, _lastPollMs, _hasCachedTime, no lock) is guarded so the main-loop minute tick and the render task's formatTime can both call it without a torn 64-bit cache read or interleaved RTC I2C transactions",
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "o6",
@@ -733,7 +733,7 @@
       "behavior": "writes the RTC and refreshes the cache from a UTC epoch without calling setenv/tzset/configTzTime; called only from the routine's task, only after SNTP reports COMPLETED",
       "source_text": "The daily routine's RTC write uses a new TZ-free HalClock setter (write UTC to the RTC + refresh the cache), never HalClock::syncFromNTP, which rewrites the process TZ via configTzTime (HalClock.cpp:88-93) \u2014 the exact TZ churn DailyRoutine.cpp:26-29 forbids because it races the render task",
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "o7",
@@ -742,7 +742,7 @@
       "behavior": "if SNTP has not completed, waits at most min(8 s, remaining cap) for it; on success writes the RTC, on timeout leaves the RTC untouched and the run's outcome unchanged",
       "source_text": "When the daily routine's Wi-Fi join gets an SNTP answer (trustedtime::startSync in the routine port's joinWifi, callback onTimeSynced in lib/TrustedTime/TrustedTime.cpp:55-70), the routine writes the synced UTC time to the RTC from its own task before Wi-Fi turns off, never from the lwIP callback (which would race the render task's I2C RTC reads via HalClock)",
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "o8",
@@ -751,7 +751,7 @@
       "behavior": "with the xteink flag: clockShowInHeader defaults 1 and the clock TZ defaults Asia/Jerusalem when none is chosen; without the flag both defaults are unchanged; saved settings always win",
       "source_text": "The xteink default-ON for Show on home is behind an xteink build flag set in the xteink envs (platformio.ini env:default / env:xteink_release), not a bare change to the shared CrossPointSettings.h:264 initializer, which every board env (x4pro, papermono, eego_a4, ...) also compiles",
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "o9",
@@ -760,7 +760,7 @@
       "behavior": "deterministic, no HAL or Arduino dependency, returns {redraw, refreshMode} from (lastMinute, nowMinute, tickCount); each tick logs one line with minute and FAST/HALF",
       "source_text": "The minute-tick and refresh-mode decision (minute changed? which tick is the 15th?) is a pure function covered by the fork's host tests (test/, as SntpPolicy.h is), and each tick logs one line with the minute and FAST/HALF so the 16-minute on-device check (c20) can be read from a serial log",
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     }
   ]
 }
