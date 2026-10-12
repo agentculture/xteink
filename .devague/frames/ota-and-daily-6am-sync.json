@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-11T16:28:00Z",
-  "updated": "2026-10-11T21:10:58Z",
+  "updated": "2026-10-12T04:03:36Z",
   "claims": [
     {
       "id": "c1",
@@ -1675,6 +1675,19 @@
       "refs": [
         "t17",
         "d8"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l15",
+      "code": "assumption-for-measurement",
+      "what": "device reports fw_outcome=installed only on OtaDecision::Current, but the server omits the offer once the device runs it (decision None), so a successful daily install is reported as 'none'; device and server were each unit-tested against fakes of the other",
+      "skipped_check": "a contract test pairing the server's post-install status response with the device's decideOta/firmwareStep",
+      "refs": [
+        "t17 (a) 2026-10-12 morning boot",
+        "DailyRoutine.cpp:474-477",
+        "routes_device.py:_firmware_offer"
       ],
       "origin": "llm",
       "status": "proposed"

@@ -24,9 +24,21 @@ A valid older build (`1.6.5+xteink.f96ca3c6`, firmware #3) was offered and insta
 
 This is consistent with d8's intent (the image booted and completed TLS to the internet), but it means stopping the server cannot trigger a rollback. The owner chose to skip a forced-failure test for now. Rollback is still evidenced only by bootloader config (`ota-bootloader-rollback-check.md`) and host tests.
 
+## (a) First start after 06:00 on USB: install and sync PASS, outcome report FAIL (fixed in fork PR #3)
+
+The owner woke the X3 at 07:02 Israel time on 2026-10-12, on USB. Attaching the serial logger reset the device once at boot (`rst:0x15`), before Wi-Fi came up.
+
+- **Boot 1:** at 4.2 s the device logged offer `install (1.6.5+xteink.2500570d, running 1.6.5+xteink.f96ca3c6)`. It logged `Installing … 5853664 B` at 4.7 s and `Update completed` at 35.4 s (31 s over LAN), then `Firmware installed; rebooting into it`. The splash screen stayed up for the whole install.
+- **Boot 2** (`rst:0xc`): at 4.1 s the device logged `Health check of xteink-fw 1.6.5+xteink.2500570d: valid (ok, 1 attempts, 1905 ms)`. The routine reused the health check's offer and synced (`Sync done: OK, 1 new … 0 failed`). It then logged `Daily routine: ran (clock system, fw none, content ok, 3967 ms)`.
+- **Server:** `firmware_version: xteink-fw 1.6.5+xteink.2500570d`, `last_run_at` 04:02:45Z. It also recorded **`last_fw_outcome: none`**, where it should have been `installed`.
+
+**Cause (lapse l15).** The server leaves out the offer once the device runs the offered build, so boot 2 saw decision `None`. The routine reported `installed` only on `Current`. The device tests modelled the server as still offering the running build, and no test paired the two sides. Approved fix (d11): the routine reports `installed` when this boot's post-update health check verified the image. This is agentculture/xteink-firmware#3. The on-device proof is the next update after that PR merges.
+
+`clock system` does not answer t1's question. On USB the chip never loses power, so the system clock simply ran on.
+
 ## Still to run
 
-- **(a)** First start after 06:00 on USB: the latest build (`…2500570d`, firmware #1) is offered to the X3, which currently runs `…f96ca3c6`. The routine should install it, pass the health check and sync.
+- **(a′)** After fork PR #3 merges and is released: one update (daily or Check for updates), and the server should show `last_fw_outcome: installed`.
 - **(b)** A battery start, timed from the power press (120 s target, lapse l2). This also answers t1's question (whether the RTC holds through power-off), from the routine's `clock rtc/system/sntp` log field.
 - **(d)** and **t2**: a tunnel-only offer and tunnel TLS, the next time the owner syncs away from home.
 

@@ -2,7 +2,7 @@
   "plan_slug": "ota-and-daily-6am-sync",
   "schema_version": 2,
   "created": "2026-10-11T17:17:51Z",
-  "updated": "2026-10-11T19:50:12Z",
+  "updated": "2026-10-12T04:06:40Z",
   "deviations": [
     {
       "id": "d1",
@@ -137,6 +137,17 @@
       "status": "approved",
       "classification": "risky",
       "seq": 10
+    },
+    {
+      "id": "d11",
+      "what": "add a post-validation firmware fix: the daily routine reports fw_outcome=installed when this boot's post-update health check verified the image (OtaCheck.verifiedInstall), instead of relying on the server still offering the running build; new fork PR, release, and one more OTA cycle to prove it",
+      "task_ref": "t17",
+      "reason": "t17 (a) on 2026-10-12: the install worked on the X3 but the server recorded last_fw_outcome=none (lapse l15); user said 'Please fix now'",
+      "affects": [],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 11
     }
   ],
   "evidence": [],
