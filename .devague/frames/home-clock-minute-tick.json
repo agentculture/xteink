@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-12T14:38:02Z",
-  "updated": "2026-10-12T15:16:10Z",
+  "updated": "2026-10-12T20:43:13Z",
   "claims": [
     {
       "id": "c1",
@@ -679,7 +679,21 @@
       "seeds": []
     }
   ],
-  "lapses": [],
+  "lapses": [
+    {
+      "id": "l1",
+      "code": "grader-unverified",
+      "what": "the TrustedTime and DailyRoutine test stubs did not model ESP-IDF's clear-on-read sntp_get_sync_status (and the daily fake reported SNTP done before the join), so tests passed while syncNow reported a successful sync as failed; found by /code-review, not by a failing test",
+      "skipped_check": "checking the SNTP stub's semantics against esp_sntp sntp.c:86-88 before trusting tests built on it",
+      "refs": [
+        "b2",
+        "test/test_trusted_time.py",
+        "test/xteink_daily/XteinkDailyTest.cpp"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    }
+  ],
   "obligations": [
     {
       "id": "o1",
