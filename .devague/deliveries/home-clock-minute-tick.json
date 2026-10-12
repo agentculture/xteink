@@ -2,7 +2,7 @@
   "plan_slug": "home-clock-minute-tick",
   "schema_version": 2,
   "created": "2026-10-12T18:27:55Z",
-  "updated": "2026-10-12T21:50:20Z",
+  "updated": "2026-10-12T21:56:09Z",
   "deviations": [
     {
       "id": "d1",
@@ -213,7 +213,7 @@
       ],
       "evidence_refs": [],
       "origin": "llm",
-      "status": "proposed",
+      "status": "approved",
       "superseded": false
     }
   ],

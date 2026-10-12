@@ -72,7 +72,7 @@ Quoted verbatim from the `devague summary` skeleton:
 - CI on xteink #6 (targeting `main`): all checks passed, SonarCloud 0 open issues.
 - lint (xteink): black, isort, flake8, bandit, markdownlint (0 errors), `teken cli doctor --strict`, `scan-secrets.py` and `harness-smoke.py --stage config` (6 passed) are all clean.
 - lint (fork): `./bin/clang-format-fix` exits 0, and SonarCloud has 0 open issues on PR #4.
-- devague records: evidence `e1`–`e7`, deltas `b1`–`b4` and lapse `l1`, all approved by the owner. Delta `b5` (the release-verb hardening) is proposed. Deviation `d1` is approved.
+- devague records: evidence `e1`–`e7`, deltas `b1`–`b5` (`b5` is the release-verb hardening) and lapse `l1`, all approved by the owner. Deviation `d1` is approved.
 - commits: fork `c6e8b2cf..2b3cbdea` (one squash), and xteink `c034c0b..d56e0d8` (one squash).
 - PRs: agentculture/xteink-firmware#4 (merged), agentculture/xteink#6 (merged), and agentculture/xteink#5 (the OTA base it stacked on, merged).
 - device: `xteink device list --json` shows device 3 on `xteink-fw 1.6.5+xteink.2b3cbdea`.
@@ -93,7 +93,7 @@ The evidence records are owner-approved. Approved lapse `l1` (`grader-unverified
 | `c24`: under the xteink flag, Show on home defaults on and the zone defaults to Jerusalem; other envs are unchanged | low | `e6` (build check and static_assert only). A fresh-device default is not proven (plan risk r1) |
 | `c25`: the tick decision is a pure, host-tested function | high | `e7` · `test/xteink_clock_tick/` · fork `c64e78a4` |
 | the release flow is a CLI verb and shipped this build | high | `b1` · `tests/test_firmware_release.py` (25 pass at `d56e0d8`) · fork PR #4 release comment · device 3 reports `1.6.5+xteink.2b3cbdea` |
-| the release verb refuses misleading outcomes: exit 2 after a side effect, refusal on a cross-commit dedupe | medium | `b5` (proposed) · `tests/test_firmware_release.py` · xteink #6 |
+| the release verb refuses misleading outcomes: exit 2 after a side effect, refusal on a cross-commit dedupe | high | `b5` · `tests/test_firmware_release.py` · xteink #6 |
 
 Lapse ledger evidence:
 
@@ -106,8 +106,7 @@ Lapse ledger evidence:
 - `t8`: after the first daily run past 06:00 on 2026-10-13, check `rtc_written yes` and that the RTC is within 2 s of NTP. Owner and agent.
 - `t7` criterion 3: the 16-minute serial check (16 ticks within 10 s, exactly one HALF, sleep on time), or the owner's decision to accept the visual check. Owner decision.
 - `c4`, `c5`, `c22` are untested: they need on-device measurement (the t7 serial run) or a host test seam for HomeActivity and HalClock. Follow-up.
-- Adjudicate delta `b5`. Owner.
-- Redeploy the live server from `main`, so the stale-offer fix from #5 is running. It was paused at the owner's interrupt; device 3 still holds the fulfilled offer #5. Owner's go, then agent.
+- After the X3's next daily run: confirm the redeployed server withdrew the fulfilled offer #5 (`offered_firmware` null for device 3). See `docs/evidence/ota-live-redeploy.md`.
 - Follow-ups from the reviews: call the API in-process instead of through `grant run -- python -m xteink`; report rollbacks by firmware id or sha256 (needs a firmware protocol field); a `validate_bytes()` without a temp file.
 - Plan risk r4: the web settings page shows the raw clock zone 255 when none is chosen. Follow-up.
 - Plan risk r1: the "default on" for Show on home is unproven on a wiped device. Open until a spare device exists.
