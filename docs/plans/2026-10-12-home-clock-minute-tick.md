@@ -60,7 +60,7 @@ slug: `home-clock-minute-tick` · status: `exported` · from frame: `home-clock-
 - depends on: t3, t4, t5
 - acceptance:
   - fork PR feat(xteink): home clock minute tick into feat/issue-1, conventional-commit title, no AI trailers; clang-format-fix clean (exit status checked), host ctest green, pio run -e default and -e x4pro green, harness-smoke all, Sonar gate checked
-  - after merge, uv run python scripts/firmware-release.py release <forkPR#> --fork-checkout <fork worktree> uploads and offers 1.6.5+xteink.<sha8> to device 3; the PR comment is posted
+  - after merge, `uv run python scripts/firmware-release.py release <forkPR#> --fork-checkout <fork-worktree>` uploads and offers `1.6.5+xteink.<sha8>` to device 3; the PR comment is posted
 
 ### t7 — On-device: install via Check for updates, flip Show on home, run the 16-minute Home check
 

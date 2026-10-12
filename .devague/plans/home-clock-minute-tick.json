@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-12T15:13:08Z",
-  "updated": "2026-10-12T15:16:10Z",
+  "updated": "2026-10-12T15:28:04Z",
   "targets": [
     {
       "id": "c1",
@@ -357,7 +357,7 @@
       "status": "confirmed",
       "acceptance_criteria": [
         "fork PR feat(xteink): home clock minute tick into feat/issue-1, conventional-commit title, no AI trailers; clang-format-fix clean (exit status checked), host ctest green, pio run -e default and -e x4pro green, harness-smoke all, Sonar gate checked",
-        "after merge, uv run python scripts/firmware-release.py release <forkPR#> --fork-checkout <fork worktree> uploads and offers 1.6.5+xteink.<sha8> to device 3; the PR comment is posted"
+        "after merge, `uv run python scripts/firmware-release.py release <forkPR#> --fork-checkout <fork-worktree>` uploads and offers `1.6.5+xteink.<sha8>` to device 3; the PR comment is posted"
       ],
       "deps": [
         "t3",
