@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-10-12
+
+### Added
+
+- CLI verbs xteink firmware release PR and xteink firmware report-rollbacks: the agent release flow, now under the firmware noun (deviation d1 of home-clock-minute-tick)
+- Home clock minute tick (firmware, agentculture/xteink-firmware#4): spec, plan, deviation record and evidence (docs/evidence/home-clock-validation.md)
+
+### Changed
+
+- Prompt files describe the Home clock tick, the RTC write after the daily sync and the release CLI verb
+
+### Removed
+
+- scripts/firmware-release.py; use `xteink firmware release` and `xteink firmware report-rollbacks` (same flags and checks)
+
 ## [0.11.0] - 2026-10-12
 
 ### Added
