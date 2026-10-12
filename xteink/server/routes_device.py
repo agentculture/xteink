@@ -181,9 +181,17 @@ def _rollback_target(fws: FirmwareStore, device_id: int, version: str) -> Firmwa
 
 def _firmware_offer(fws: FirmwareStore, device: Device) -> dict | None:
     """The status response's ``firmware`` object: only when the offer differs from the
-    firmware the device runs (as just reported, or as stored)."""
+    firmware the device runs (as just reported, or as stored).
+
+    An offer the device already runs is fulfilled and is withdrawn here. Otherwise it
+    would come back as a silent downgrade the next time the device runs another build
+    (the device installs any version that differs from its own).
+    """
     fw = fws.offered(device.id)
-    if fw is None or _same_build(fw.version, device.firmware_version):
+    if fw is None:
+        return None
+    if _same_build(fw.version, device.firmware_version):
+        fws.withdraw_offer(device.id, fw.id)
         return None
     return {
         "id": fw.id,
@@ -218,7 +226,7 @@ def post_status(
     )
     if body.inventory is not None:
         _inventories(request).set(device.id, body.inventory)
-    fws = FirmwareStore(services.store)
+    fws = services.firmware
     if body.rolled_back_version:
         target = _rollback_target(fws, device.id, body.rolled_back_version)
         if target is not None:  # an unknown version records nothing (still 200)
@@ -322,7 +330,7 @@ def download_firmware(
     services: Services = Depends(get_services),
 ) -> Response:
     """The device's offered firmware image; same ``Range``/``ETag`` rules as items."""
-    fws = FirmwareStore(services.store)
+    fws = services.firmware
     fw = fws.offered(device.id)
     if fw is None or fw.id != firmware_id:
         raise NotFoundError(f"firmware {firmware_id} is not offered to this device")

@@ -515,6 +515,35 @@ def test_no_offer_when_versions_match_or_nothing_offered(device_client, devs, fw
     assert status(device_client, raw).json()["firmware"]["version"] == "9"
 
 
+def test_offer_is_withdrawn_once_the_device_runs_it(device_client, devs, fws):
+    """A fulfilled offer must not come back as a downgrade when the device later runs
+    another build (a USB flash, or an image that arrived another way)."""
+    dev, raw = register(devs)
+    fw = add_fw(fws, version=FW_V1)
+    fws.offer(dev.id, fw.id)
+    assert status(device_client, raw, firmware_version="xteink-fw 0.0.9").json()["firmware"]
+    assert fws.offered(dev.id).id == fw.id  # not running it yet: the offer stays
+
+    assert "firmware" not in status(device_client, raw, firmware_version=FW_V1).json()
+    assert fws.offered(dev.id) is None  # running it: the offer is fulfilled
+
+    later = status(device_client, raw, firmware_version="xteink-fw 0.3.0-dev").json()
+    assert "firmware" not in later  # no silent downgrade back to FW_V1
+    assert fws.offered(dev.id) is None
+
+
+def test_withdrawing_a_fulfilled_offer_keeps_a_newer_offer(device_client, devs, fws):
+    dev, raw = register(devs)
+    old = add_fw(fws, version=FW_V1)
+    new = add_fw(fws, version="xteink-fw 0.4.0", data=b"newer image")
+    fws.offer(dev.id, new.id)
+    # Still running the old build: the newer offer is not the one being run, so it stays.
+    assert status(device_client, raw, firmware_version=old.version).json()["firmware"]["id"] == (
+        new.id
+    )
+    assert fws.offered(dev.id).id == new.id
+
+
 def test_firmware_route_ranges_etag_and_416(device_client, devs, fws):
     dev, raw = register(devs)
     fw = add_fw(fws)

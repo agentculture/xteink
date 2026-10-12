@@ -132,8 +132,9 @@ one if this report leaves it out), the response gains a `firmware` object:
 ```
 
 The key is absent when there is no offer, when the device already runs that
-version, or once the device has reported rolling it back. Old clients ignore
-it. The `url` is relative to the server root, like item URLs.
+version, or once the device has reported rolling it back. An offer the device
+reports running is fulfilled and is withdrawn, so it does not come back as a
+downgrade when the device later runs another build. Old clients ignore it. The `url` is relative to the server root, like item URLs.
 
 ### GET /api/device/queue
 

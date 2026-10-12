@@ -118,16 +118,31 @@ describe("DevicesView offered firmware and last daily run", () => {
         device({
           offered_firmware_id: 7,
           last_run_at: "2026-10-06T09:00:00Z",
-          last_run_trigger: "daily",
-          last_fw_outcome: "updated",
-          last_content_outcome: "synced",
+          last_run_trigger: "power_on",
+          last_fw_outcome: "installed",
+          last_content_outcome: "ok",
         }),
       ],
     });
     render(<DevicesView />);
     expect(await screen.findByText("Offered: 1.4.2")).toBeInTheDocument();
-    const run = screen.getByText(/^Last run: .+ - updated \/ synced$/);
+    const run = screen.getByText(/^Last run: .+ - installed \/ ok$/);
     expect(run).toBeInTheDocument();
+  });
+
+  it("shows a failed install's code as the server reports it", async () => {
+    vi.mocked(api.listDevices).mockResolvedValue({
+      devices: [
+        device({
+          last_run_at: "2026-10-06T09:00:00Z",
+          last_run_trigger: "wake",
+          last_fw_outcome: "failed:EFLASH",
+          last_content_outcome: "ok",
+        }),
+      ],
+    });
+    render(<DevicesView />);
+    expect(await screen.findByText(/^Last run: .+ - failed:EFLASH \/ ok$/)).toBeInTheDocument();
   });
 
   it("falls back to the firmware id when its version is unknown", async () => {

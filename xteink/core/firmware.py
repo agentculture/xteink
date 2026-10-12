@@ -182,6 +182,18 @@ class FirmwareStore:
                 return None
             return _fw(self._get(c, dev["offered_firmware_id"]))
 
+    def withdraw_offer(self, device_id: int, firmware_id: int) -> None:
+        """Clear a device's offer if it is still ``firmware_id`` (a fulfilled offer).
+
+        Leaves a different (newer) offer alone, like ``record_rollback``.
+        """
+        with self.store.connect() as c:
+            c.execute(
+                "UPDATE devices SET offered_firmware_id = NULL"
+                " WHERE id = ? AND offered_firmware_id = ?",
+                (device_id, firmware_id),
+            )
+
     # --- rollbacks ----------------------------------------------------------------
 
     def record_rollback(self, device_id: int, firmware_id: int) -> None:

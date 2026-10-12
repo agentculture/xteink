@@ -23,6 +23,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 
 - Device protocol compares firmware builds without the device's 'xteink-fw ' version prefix
+- A fulfilled firmware offer is withdrawn once the device reports running it, so it cannot come back as a silent downgrade after the device runs another build
+- Firmware upload stores the image (hash, blob write, SQLite) off the event loop
 
 ## [0.10.0] - 2026-10-07
 

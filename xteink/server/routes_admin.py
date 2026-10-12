@@ -166,7 +166,9 @@ async def upload_firmware(
     if dry_run:
         response.status_code = 200
         return {"dry_run": True, "image": image}
-    result = services.firmware.add(
+    # Hashing, the blob write and SQLite (30 s busy timeout) stay off the event loop.
+    result = await run_in_threadpool(
+        services.firmware.add,
         data,
         version=chosen,
         board=info.board or "x4",
