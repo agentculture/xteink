@@ -1,0 +1,475 @@
+{
+  "slug": "home-clock-minute-tick",
+  "title": "home clock minute tick",
+  "schema_version": 6,
+  "status": "exported",
+  "created": "2026-10-12T14:38:02Z",
+  "updated": "2026-10-12T14:47:18Z",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "announcement",
+      "text": "The X3's home screen shows a clock that ticks over every minute while the device is awake, and stops costing anything once it sleeps",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h1",
+          "text": "Ticking happens only while awake on Home; no tick logic runs in SleepActivity or after deep sleep",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c2",
+      "kind": "assumption",
+      "text": "Clock rendering already exists and is reused, not rebuilt: the X3 board profile has a DS3231 RTC (freeink-sdk BoardConfig.h:959), halClock.isAvailable() is true on X3, and the Xteink theme draws a centered header clock on Home gated by SETTINGS.clockShowInHeader && halClock.isAvailable() (BaseTheme.cpp:374-376, XteinkTheme.h:39, HomeActivity.cpp:509, CoverGridHomeUi.cpp:145)",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [
+        {
+          "id": "q1",
+          "text": "Is the existing device toggle (Settings > System > Clock > Show on home, default off) the switch, or should the xteink build default it on?",
+          "resolved": true,
+          "blocking": false,
+          "resolution": "Firmware default: the xteink build ships Show on home (clockShowInHeader) ON"
+        },
+        {
+          "id": "q3",
+          "text": "The RTC is only written by Clock > Sync now and the first Wi-Fi join (ClockSyncActivity.cpp:67, WifiSelectionActivity.cpp:533-537); the daily sync's SNTP sets system time only. Should the daily sync also write its SNTP answer to the RTC, so the clock stays correct without manual syncs?",
+          "resolved": true,
+          "blocking": false,
+          "resolution": "Yes: when the daily sync's SNTP answer arrives, write it to the RTC"
+        },
+        {
+          "id": "q5",
+          "text": "With no time zone picked, the clock shows UTC. Should the xteink build default the clock time zone to Asia/Jerusalem (matching the 06:00 rule), or keep UTC and set it on the device?",
+          "resolved": false,
+          "blocking": false,
+          "resolution": ""
+        }
+      ],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c3",
+      "kind": "requirement",
+      "text": "HomeActivity::loop() (HomeActivity.cpp:303, no timer today) checks halClock.getTime() and calls requestUpdate() when the local minute differs from the last drawn minute, so both the classic and cover-grid Home layouts tick",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h2",
+          "text": "A host or on-device check shows exactly one requestUpdate per minute change and none between changes (no redraw storm from the 50 ms idle loop)",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c4",
+      "kind": "requirement",
+      "text": "The minute tick only runs when the clock is actually shown (clockShowInHeader on and halClock.isAvailable()), so a hidden clock costs no extra refreshes",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h3",
+          "text": "With Show on home off or no RTC, Home issues zero timer-driven refreshes",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c5",
+      "kind": "boundary",
+      "text": "The tick must not keep the device awake: requestUpdate() never touches lastActivityTime (main.cpp:819-824), so auto-sleep at sleepTimeoutMinutes (main.cpp:897-901) still fires on schedule",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h4",
+          "text": "With the tick running, auto-sleep fires at sleepTimeoutMinutes after the last button press, same as with the clock off",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c6",
+      "kind": "non_goal",
+      "text": "No clock while sleeping: deep sleep is a full chip reset (main.cpp:171-177) and SleepActivity renders no time; the sleep image is unchanged",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c7",
+      "kind": "non_goal",
+      "text": "Reader screens are untouched: the reader's status-bar clock is the separate statusBarClock setting (SettingsList.h:501) and is out of scope",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c8",
+      "kind": "assumption",
+      "text": "Each tick is a full-panel FAST_REFRESH (HomeActivity.cpp:482/559): Uc8253X3Driver does not override displayWindow, so PanelDriver.h:54 falls back to a whole-screen fast refresh, the same visual cost as a page turn",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [
+        {
+          "id": "q2",
+          "text": "Accept a whole-screen fast refresh each minute with ghosting building until the next half refresh, or add a periodic HALF_REFRESH every N ticks (Home has no ghosting counter; the reader's pagesUntilFullRefresh at ReaderActivity.cpp:27 is the existing pattern)?",
+          "resolved": true,
+          "blocking": false,
+          "resolution": "Home does a HALF_REFRESH every 15 minute-ticks to clear ghosting; the counter never blocks or delays auto-sleep"
+        }
+      ],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c9",
+      "kind": "assumption",
+      "text": "The displayed minute may lag the RTC by up to 10 s because HalClock caches the RTC read for CLOCK_POLL_MS (HalClock.h:17, HalClock.cpp:41); acceptable for a minute clock",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c10",
+      "kind": "audience",
+      "text": "The X3 owner looking at the Home screen between books",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h9",
+          "text": "The only person reading the X3 Home screen is its owner; no multi-user behavior is needed",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c11",
+      "kind": "before_state",
+      "text": "Today the Home header clock (Settings > System > Clock > Show on home, off by default per CrossPointSettings.h:264) shows the time of the last redraw and goes stale until a button press",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h10",
+          "text": "Confirmed on the current X3 build: the header clock does not change without a button press",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c12",
+      "kind": "decision",
+      "text": "Show on home (clockShowInHeader) defaults ON in the xteink firmware build",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c13",
+      "kind": "decision",
+      "text": "Home runs a HALF_REFRESH every 15 minute-ticks; ticking and the refresh counter never block or delay auto-sleep",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c14",
+      "kind": "decision",
+      "text": "The daily sync writes its SNTP time to the RTC so the clock stays correct without manual Sync now",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c15",
+      "kind": "requirement",
+      "text": "Show on home defaults ON: CrossPointSettings.h:264 clockShowInHeader initializer becomes 1 for the xteink build",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h5",
+          "text": "A freshly flashed/settings-wiped device shows the clock on Home without any user action",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [
+        {
+          "id": "q4",
+          "text": "Your X3 already stores clockShowHeader=0, so a new default won't reach it. Add a one-time settings migration that turns it on for existing devices (it would also override anyone who deliberately turned it off), or will you flip the toggle once on the device?",
+          "resolved": false,
+          "blocking": false,
+          "resolution": ""
+        }
+      ],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c16",
+      "kind": "requirement",
+      "text": "Home keeps a minute-tick counter and renders every 15th tick with HALF_REFRESH instead of FAST_REFRESH (HomeActivity.cpp:482/559); the counter lives in HomeActivity only and never touches lastActivityTime or preventAutoSleep, so sleep timing is unchanged",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h6",
+          "text": "Over 30 awake minutes on Home, exactly 2 HALF_REFRESH renders occur (ticks 15 and 30); all other ticks are FAST_REFRESH",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c17",
+      "kind": "requirement",
+      "text": "When the daily routine's Wi-Fi join gets an SNTP answer (trustedtime::startSync in the routine port's joinWifi, callback onTimeSynced in lib/TrustedTime/TrustedTime.cpp:55-70), the routine writes the synced UTC time to the RTC from its own task before Wi-Fi turns off, never from the lwIP callback (which would race the render task's I2C RTC reads via HalClock)",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h7",
+          "text": "The RTC write happens off the lwIP task and only after SNTP reports completed; with no internet the RTC is left untouched",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c18",
+      "kind": "after_state",
+      "text": "While the X3 sits awake on Home, the header shows the correct local time, changing within ~10 s of each minute boundary, with a ghost-clearing half refresh every 15 minutes, and it still auto-sleeps on its normal timeout",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h8",
+          "text": "Verified on the X3 itself, not only in host tests",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c19",
+      "kind": "why_it_matters",
+      "text": "The X3 doubles as a glanceable bedside/desk clock without a separate device, and the time stays right because the daily sync keeps the RTC honest",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h11",
+          "text": "The clock is accurate enough to be relied on (within 10 s display lag, RTC within 2 s after a sync)",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c20",
+      "kind": "success_signal",
+      "text": "On the X3, Home left awake for 16 min shows 16 consecutive minute changes, each within 10 s of a reference clock, exactly 1 half refresh (at tick 15), and the device enters sleep at sleepTimeoutMinutes +/- 10 s after the last button press",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h12",
+          "text": "Measured on the X3 with a reference clock, results recorded in docs/evidence/",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c21",
+      "kind": "success_signal",
+      "text": "After a daily sync with internet reachable, the RTC differs from NTP time by < 2 s (checked via Clock settings row or the [DAILY] serial log)",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h13",
+          "text": "Measured after a real morning daily sync, recorded in docs/evidence/",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    }
+  ],
+  "open_vagueness": [],
+  "scope_entries": [
+    {
+      "id": "s1",
+      "surface": "lib/hal/HalClock + freeink-sdk BoardConfig.h",
+      "finding": "X3 has a DS3231 RTC at 0x68 (BoardConfig.h:959); localTime caches RTC reads 10 s; RTC written only by ClockSync and first Wi-Fi join",
+      "seeds": [
+        "c2",
+        "c9",
+        "q3"
+      ]
+    },
+    {
+      "id": "s2",
+      "surface": "src/components/themes (BaseTheme, XteinkTheme) + ClockSettingsActivity",
+      "finding": "Home header already draws a centered clock when Show on home (clockShowInHeader, default 0) is on; nothing redraws it on a timer",
+      "seeds": [
+        "c2",
+        "c11",
+        "q1"
+      ]
+    },
+    {
+      "id": "s3",
+      "surface": "src/activities/home/HomeActivity.cpp",
+      "finding": "loop() at :303 is input-only; render() repaints the full screen with FAST_REFRESH (:482 cover-grid, :559 classic); a minute-change check + requestUpdate() is the insertion point",
+      "seeds": [
+        "c3",
+        "c4"
+      ]
+    },
+    {
+      "id": "s4",
+      "surface": "src/main.cpp sleep + SleepActivity",
+      "finding": "auto-sleep keys off lastActivityTime, reset only by input or preventAutoSleep (:819-824, :897-901); self-requested redraws don't reset it; sleep is deep sleep/chip reset with no clock on the sleep image",
+      "seeds": [
+        "c5",
+        "c6"
+      ]
+    },
+    {
+      "id": "s5",
+      "surface": "freeink-sdk FreeInkDisplay PanelDriver + Uc8253X3Driver",
+      "finding": "X3 driver has no displayWindow override; PanelDriver.h:54 falls back to whole-screen Fast refresh, so no partial clock-only refresh on X3 without driver work",
+      "seeds": [
+        "c8",
+        "q2"
+      ]
+    },
+    {
+      "id": "s6",
+      "surface": "src/SettingsList.h statusBarClock",
+      "finding": "reader status-bar clock is a separate setting; reader is out of scope",
+      "seeds": [
+        "c7"
+      ]
+    },
+    {
+      "id": "s7",
+      "surface": "lib/TrustedTime/TrustedTime.cpp + DailyRoutine.cpp port",
+      "finding": "routine's joinWifi starts background SNTP (trustedtime::startSync); onTimeSynced runs on the lwIP task; chooseLocalClock (DailyRoutine.cpp:265) prefers system/RTC so SNTP is not awaited; nothing writes SNTP time to the RTC except ClockSync and first Wi-Fi join",
+      "seeds": [
+        "c17"
+      ]
+    },
+    {
+      "id": "s8",
+      "surface": "src/CrossPointSettings.cpp toJson/load",
+      "finding": "every persisted key is written (toJson loop :68) and a saved value overrides the initializer on load (:122), so changing the clockShowInHeader default does not flip the user's already-provisioned X3",
+      "seeds": [
+        "c15"
+      ]
+    },
+    {
+      "id": "s9",
+      "surface": "DailyRoutine.cpp port timezone() + Timezones",
+      "finding": "shipped clock default is UTC (clockTimezone 255); the routine falls back to Asia/Jerusalem only for its 06:00 rule, so an unset device shows UTC on the Home clock",
+      "seeds": [
+        "c2"
+      ]
+    }
+  ],
+  "lapses": [],
+  "obligations": []
+}
