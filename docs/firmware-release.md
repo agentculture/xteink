@@ -1,22 +1,25 @@
 # Firmware release flow
 
-`scripts/firmware-release.py` is the agent's release flow for the Xteink reader
+`xteink firmware release` is the agent's release flow for the Xteink reader
 firmware. It takes a **merged** pull request on the firmware fork
 (`agentculture/xteink-firmware`), builds the merge commit, uploads the image to
 the xteink server, offers it over the air to every device, and comments on the
-PR. It is stdlib-only and is not a vendored skill.
+PR. It lives in `xteink/cli/_commands/firmware_release.py`, under the CLI's
+`firmware` noun (it replaced the earlier standalone `scripts/firmware-release.py`).
+Run it from an xteink checkout with `uv run xteink firmware release …`, so the
+`xteink` calls it makes resolve to the same install.
 
 It never invokes esptool and never opens a serial port. Devices receive the
 image over Wi-Fi: the server offers it and the device pulls it. A test asserts
-this on both the script source and every command it runs.
+this on both the module source and every command it runs.
 
 ## Release
 
 ```bash
-python3 scripts/firmware-release.py release PR_NUMBER \
+uv run xteink firmware release PR_NUMBER \
   [--integration-branch BRANCH] [--fork-checkout PATH] \
   [--pio-env xteink_release] [--pio PATH] [--version V] [--fork OWNER/REPO] \
-  [--key-name SECRET] [--no-grant]
+  [--key-name SECRET] [--no-grant] [--json]
 ```
 
 Order of operations:
@@ -40,8 +43,14 @@ Order of operations:
    `pr-reply.sh --print-body`, which resolves the nick from `culture.yaml`.
 9. The temp worktree is always removed (submodules deinitialised first).
 
+Step 6 also refuses (exit `1`, nothing offered) when the upload dedupes onto an
+image already stored for a different fork commit: offering it would credit this
+PR while its rollback bookkeeping stays on the other one.
+
 Any refusal in steps 1 to 5 exits `1` with nothing uploaded or offered. A tool
-that fails or is missing exits `2`.
+that fails or is missing exits `2`. Errors follow the CLI's error contract
+(`{code, message, remediation}` with `--json`). On success, `--json` prints
+`{version, sha, offered}`.
 
 Each `xteink` call runs under `grant run --inject
 XTEINK_API_KEY=XTEINK_MCP_API_KEY --`, so the admin key never touches a file or
@@ -63,12 +72,12 @@ The integration branch is configuration, not a constant: today it is the fork's
 ## Reporting rollbacks
 
 ```bash
-python3 scripts/firmware-release.py report-rollbacks [--dry-run]
+uv run xteink firmware report-rollbacks [--dry-run] [--json]
 ```
 
 A device that boots a new image and rolls back reports it on its next run, and
 the server records it (`GET /api/firmware/{id}/rollbacks`, `xteink firmware
-rollbacks`). This subcommand lists every uploaded image that has a `source_pr`
+rollbacks`). This verb lists every uploaded image that has a `source_pr`
 and a rollback, and comments once per rollback on the PR that shipped it. Each
 comment carries a hidden marker, `<!-- xteink-rollback device=ID fw=SHA -->`, and
 a rollback whose marker is already on the PR is skipped, so it is safe to run on

@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-10-12
+
+### Added
+
+- CLI verbs xteink firmware release PR and xteink firmware report-rollbacks: the agent release flow, now under the firmware noun (deviation d1 of home-clock-minute-tick)
+- Home clock minute tick (firmware, agentculture/xteink-firmware#4): spec, plan, deviation record and evidence (docs/evidence/home-clock-validation.md)
+
+### Changed
+
+- Prompt files describe the Home clock tick, the RTC write after the daily sync and the release CLI verb
+
+### Fixed
+
+- `xteink firmware release` refuses, before offering, when the upload dedupes onto an image stored for another fork commit; a failed device-name lookup now warns instead of silently listing ids
+
+### Removed
+
+- scripts/firmware-release.py; use `xteink firmware release` and `xteink firmware report-rollbacks`. The flags and checks are the same; the default output is now one text line (pass `--json` for the old JSON), errors use the CLI's error envelope, an error after the upload exits 2 instead of looking like a refusal, and the `xteink` calls run this same install (`python -m xteink`) instead of the first one on PATH
+
 ## [0.11.0] - 2026-10-12
 
 ### Added

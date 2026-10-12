@@ -1,0 +1,208 @@
+{
+  "plan_slug": "home-clock-minute-tick",
+  "schema_version": 2,
+  "created": "2026-10-12T18:27:55Z",
+  "updated": "2026-10-12T20:42:43Z",
+  "deviations": [
+    {
+      "id": "d1",
+      "what": "before t6, fold scripts/firmware-release.py into the xteink CLI as 'xteink firmware release <pr>' and 'xteink firmware report-rollbacks', delete the script; t6 ships fork PR #4 with 'xteink firmware release 4' instead of the script",
+      "task_ref": "t6",
+      "reason": "CLAUDE.md requires product components under a CLI noun group, not a separate entry point; the script (ac1515c, OTA plan) broke that rule and the user asked for it to be part of the CLI",
+      "affects": [
+        "t9"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 1
+    }
+  ],
+  "evidence": [
+    {
+      "id": "e1",
+      "obligation_ref": "o1",
+      "test_ref": "ClockTick.UnchangedMinuteDoesNothing, ClockTick.MinuteChangeRedrawsFast, ClockTick.FirstObservationDrawsNothing",
+      "behavior_text": "the tick decision redraws once on a minute change, never on an unchanged minute, and not on the first reading",
+      "contract_text": "exactly one requestUpdate per local-minute change; none while the minute is unchanged across the 10-50 ms loop iterations",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "fork host tests (ctest, test/), built from xteink-firmware 498dc69d, tree-identical to the merge 2b3cbdea; ran green. Covers the pure decision function only; the HomeActivity::pollClockTick -> requestUpdate wiring is not host-tested",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-12T20:41:32Z",
+        "commit": "498dc69d"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 2
+    },
+    {
+      "id": "e2",
+      "obligation_ref": "o1",
+      "test_ref": "owner observation on x3-ori, 1.6.5+xteink.2b3cbdea, 2026-10-12",
+      "behavior_text": "before the install the header clock stayed stale without a key press; after it, the Home clock changed on its own",
+      "contract_text": "exactly one requestUpdate per local-minute change; none while the minute is unchanged across the 10-50 ms loop iterations",
+      "evidence_type": "observation",
+      "strength": "fidelity",
+      "strength_basis": "the owner reported 'bug confirmed, fix confirmed' on the real device; the tick count and timing were not measured (no serial log)",
+      "outcome": "pass",
+      "run": null,
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 3
+    },
+    {
+      "id": "e3",
+      "obligation_ref": "o4",
+      "test_ref": "ClockTick.Tick14IsFast, ClockTick.Tick15IsHalf, ClockTick.Tick16IsFastAgain, ClockTick.Tick30IsHalf, ClockTick.ResetOnReentryRestartsCounting",
+      "behavior_text": "ticks 15 and 30 decide HALF, ticks 14 and 16 FAST, and the count restarts on Home re-entry",
+      "contract_text": "the 15th, 30th, ... minute tick since Home was entered renders with HALF_REFRESH; every other tick with FAST_REFRESH; the count restarts on Home re-entry",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "fork host tests (ctest, test/), built from xteink-firmware 498dc69d, tree-identical to the merge 2b3cbdea; ran green. Decision function only; the render() refresh-mode wiring and the on-device HALF were not observed",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-12T20:41:32Z",
+        "commit": "498dc69d"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 4
+    },
+    {
+      "id": "e4",
+      "obligation_ref": "o6",
+      "test_ref": "DailyRtc.AlreadySyncedWritesTheRtcWithoutWaiting, DailyRtc.ARunWithoutWiFiNeverWaitsOrWrites, DailyRtc.AnImplausibleSystemClockIsNeverWritten, DailyRtc.AnSntpAnswerBehindTheFloorStillCorrectsAFastRtc, DailyRtc.AnEarlierSntpAnswerIsNotOverwrittenByAFastRtc, DailyRtc.AnInstallRebootWritesOnlyAnAnsweredClockWithoutWaiting",
+      "behavior_text": "the routine writes the RTC through the port only after SNTP answered, with the SNTP epoch, and never from a fast RTC or an implausible clock",
+      "contract_text": "writes the RTC and refreshes the cache from a UTC epoch without calling setenv/tzset/configTzTime; called only from the routine's task, only after SNTP reports COMPLETED",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "fork host tests (ctest, test/), built from xteink-firmware 498dc69d, tree-identical to the merge 2b3cbdea; ran green against a fake port. The TZ-free HalClock::setUtc itself is not host-tested (no setenv/tzset assertion); that part rests on code review",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-12T20:41:32Z",
+        "commit": "498dc69d"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 5
+    },
+    {
+      "id": "e5",
+      "obligation_ref": "o7",
+      "test_ref": "DailyRtc.ALateAnswerWithinTheBudgetIsWaitedForThenWritten, DailyRtc.ATimeoutLeavesTheRtcAndTheRunUntouched, DailyRtc.TheWaitIsClippedToWhatIsLeftOfTheCap, DailyRtc.ANetworkClockIsWrittenWithoutWaiting, DailyRtc.AFailedClockSyncDoesNotWaitAgain",
+      "behavior_text": "an unanswered SNTP is waited for at most min(8 s, remaining cap); success writes the RTC; a timeout leaves the RTC and the run outcome unchanged",
+      "contract_text": "if SNTP has not completed, waits at most min(8 s, remaining cap) for it; on success writes the RTC, on timeout leaves the RTC untouched and the run's outcome unchanged",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "fork host tests (ctest, test/), built from xteink-firmware 498dc69d, tree-identical to the merge 2b3cbdea; ran green against a fake port. On-device (t8, rtc_written yes after a real 06:00 run) is still pending",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-12T20:41:32Z",
+        "commit": "498dc69d"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 6
+    },
+    {
+      "id": "e6",
+      "obligation_ref": "o8",
+      "test_ref": "pio run -e default and -e x4pro at 498dc69d (static_assert on JERUSALEM_INDEX in src/util/Timezones.cpp)",
+      "behavior_text": "both envs build; the Jerusalem default index is checked at compile time",
+      "contract_text": "with the xteink flag: clockShowInHeader defaults 1 and the clock TZ defaults Asia/Jerusalem when none is chosen; without the flag both defaults are unchanged; saved settings always win",
+      "evidence_type": "automated",
+      "strength": "coverage",
+      "strength_basis": "a build check only: no test asserts clockShowInHeader=1 on a fresh device, the non-flag defaults, or saved-settings precedence (plan risk r1: not proven on a wiped device)",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-12T19:30:00Z",
+        "commit": "498dc69d"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 7
+    },
+    {
+      "id": "e7",
+      "obligation_ref": "o9",
+      "test_ref": "test/xteink_clock_tick (10 ClockTick tests)",
+      "behavior_text": "the decision is a constexpr function of (state, minuteKey) that builds and runs on the host with no HAL or Arduino headers",
+      "contract_text": "deterministic, no HAL or Arduino dependency, returns {redraw, refreshMode} from (lastMinute, nowMinute, tickCount); each tick logs one line with minute and FAST/HALF",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "fork host tests (ctest, test/), built from xteink-firmware 498dc69d, tree-identical to the merge 2b3cbdea; ran green. The one-log-line-per-tick part is in HomeActivity (LOG_INF) and is not asserted by a test",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-12T20:41:32Z",
+        "commit": "498dc69d"
+      },
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false,
+      "seq": 8
+    }
+  ],
+  "deltas": [
+    {
+      "id": "b1",
+      "kind": "amended",
+      "behavior_text": "the agent release flow is the CLI verb 'xteink firmware release PR' (plus 'report-rollbacks'); scripts/firmware-release.py is removed. Same checks and flags; refusals exit 1, tool failures exit 2 through CliError. tests/test_firmware_release.py (17) drives the CLI; first live run shipped fork PR #4 as 1.6.5+xteink.2b3cbdea",
+      "caused_by": [
+        "d1"
+      ],
+      "evidence_refs": [],
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false
+    },
+    {
+      "id": "b2",
+      "kind": "added",
+      "behavior_text": "TrustedTime::syncNow keeps its own COMPLETED reading (ESP-IDF clears the status on read), so a successful SNTP sync is no longer reported as failed; a pre-existing bug in the released c6e8b2cf build, found in /code-review; test/test_trusted_time.py's stub now clears on read",
+      "caused_by": [
+        "c17"
+      ],
+      "evidence_refs": [],
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false
+    },
+    {
+      "id": "b3",
+      "kind": "amended",
+      "behavior_text": "when SNTP already answered this boot (e.g. the post-OTA health check), the routine uses the system clock as network time instead of adopting a possibly fast RTC; a contradictory implausible answer blocks the RTC write for that run",
+      "caused_by": [
+        "c23"
+      ],
+      "evidence_refs": [
+        "e4"
+      ],
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false
+    },
+    {
+      "id": "b4",
+      "kind": "amended",
+      "behavior_text": "the Home tick polls the clock once a second (not every loop iteration) and is skipped when the theme's header shows no clock (metrics.headerShowsClock)",
+      "caused_by": [
+        "c3"
+      ],
+      "evidence_refs": [
+        "e1"
+      ],
+      "origin": "llm",
+      "status": "proposed",
+      "superseded": false
+    }
+  ],
+  "supersessions": []
+}

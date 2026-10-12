@@ -1,27 +1,25 @@
-"""scripts/firmware-release.py with every external command stubbed (no gh, git, pio, device)."""
+"""`xteink firmware release` / `report-rollbacks` with every external command stubbed.
+
+No gh, git, pio or device is touched.
+"""
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "firmware-release.py"
+from xteink.cli import main
+from xteink.cli._commands import firmware_release as fr
+
+REAL_RUN = fr._run  # the fixture swaps in the fake; one test needs the real one
+
+SOURCE = Path(fr.__file__)
 SHA = "a" * 40
 PR_URL = "https://github.com/agentculture/xteink-firmware/pull/7"
-
-
-def _load():
-    spec = importlib.util.spec_from_file_location("firmware_release", SCRIPT)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
-fr = _load()
 
 
 def cp(out="", rc=0, err=""):
@@ -47,6 +45,10 @@ class Fake:
         self.firmware = []  # existing uploaded images
         self.rollbacks: dict[int, list[dict]] = {}
         self.pr_comments: list[dict] = []
+        self.upload_result = {
+            "firmware": {"id": 5, "version": "1.7.0", "fork_commit": SHA},
+            "created": True,
+        }
         self.__dict__.update(over)
 
     def names(self):
@@ -82,15 +84,15 @@ class Fake:
             (out / "firmware.bin").write_bytes(b"\xe9")
             return cp("")
         inner = cmd[cmd.index("--") + 1 :] if cmd[0] == "grant" else cmd
-        assert inner[0] == "xteink", cmd
+        assert inner[:3] == [sys.executable, "-m", "xteink"], cmd
+        inner = ["xteink", *inner[3:]]
         verb = inner[1:3]
         if verb == ["firmware", "list"]:
             return cp(json.dumps({"firmware": self.firmware}))
         if verb == ["firmware", "rollbacks"]:
             return cp(json.dumps({"rollbacks": self.rollbacks.get(int(inner[3]), [])}))
         if verb == ["firmware", "upload"]:
-            fw = {"id": 5, "version": "1.7.0", "fork_commit": SHA}
-            return cp(json.dumps({"firmware": fw, "created": True}))
+            return cp(json.dumps(self.upload_result))
         if verb == ["firmware", "offer"]:
             return cp(
                 json.dumps({"offered": [1, 2], "skipped_revoked": [], "skipped_rolled_back": []})
@@ -111,7 +113,12 @@ def fake(tmp_path, monkeypatch):
 
 
 def release(*extra):
-    return fr.main(["release", "7", "--fork-checkout", "/fork", "--pio", "/x/pio", *extra])
+    argv = ["firmware", "release", "7", "--fork-checkout", "/fork", "--pio", "/x/pio", "--json"]
+    return main([*argv, *extra])
+
+
+def report(*extra):
+    return main(["firmware", "report-rollbacks", "--json", *extra])
 
 
 def test_happy_path_order_and_comment(fake, capsys):
@@ -158,7 +165,7 @@ def test_happy_path_order_and_comment(fake, capsys):
 
 
 def assert_refused_before_upload(fake, rc):
-    assert rc != 0
+    assert rc == 1  # refused: a precondition failed
     assert not fake.find("upload")
     assert not fake.find("offer")
     assert not [c for c in fake.calls if c[0] == "gh" and "comment" in c]
@@ -236,7 +243,7 @@ def test_tool_failure_is_exit_2_and_cleans_up(fake, monkeypatch):
 
 def test_no_grant_uses_bare_xteink(fake):
     assert release("--no-grant") == 0
-    assert fake.find("upload")[0][0] == "xteink"
+    assert fake.find("upload")[0][:3] == [sys.executable, "-m", "xteink"]
     assert not fake.find("grant")
 
 
@@ -253,7 +260,7 @@ def comments(fake):
 def test_rollback_report_comments_once_per_rollback(fake):
     fake.firmware = [FW]
     fake.rollbacks = {3: [ROW, {**ROW, "device_id": 4, "device_name": "Other"}]}
-    assert fr.main(["report-rollbacks"]) == 0
+    assert report() == 0
     assert len(comments(fake)) == 2
     assert fr.ROLLBACK_MARKER.format(device=2, sha=SHA) in fake.inputs[0]
     assert "1.7.0" in fake.inputs[0]
@@ -262,16 +269,16 @@ def test_rollback_report_comments_once_per_rollback(fake):
     # second run: gh now shows both markers -> nothing more is posted
     fake.pr_comments = [{"body": b} for b in fake.inputs]
     fake.calls.clear()
-    assert fr.main(["report-rollbacks"]) == 0
+    assert report() == 0
     assert comments(fake) == []
 
 
 def test_rollback_report_dry_run_and_no_rollbacks(fake):
     fake.firmware = [FW]
-    assert fr.main(["report-rollbacks"]) == 0
+    assert report() == 0
     assert comments(fake) == []
     fake.rollbacks = {3: [ROW]}
-    assert fr.main(["report-rollbacks", "--dry-run"]) == 0
+    assert report("--dry-run") == 0
     assert comments(fake) == []
 
 
@@ -280,8 +287,8 @@ def test_rollback_report_dry_run_and_no_rollbacks(fake):
 FORBIDDEN = ("esptool", "ttyACM", "ttyUSB", "serial", "upload_port", "-t upload", "pio device")
 
 
-def test_script_source_has_no_flash_or_serial_access():
-    src = SCRIPT.read_text().lower()
+def test_release_source_has_no_flash_or_serial_access():
+    src = SOURCE.read_text().lower()
     code = "\n".join(ln for ln in src.splitlines() if not ln.lstrip().startswith("#"))
     # the module docstring states the rule in words; strip it before scanning
     code = code.split('"""', 2)[2]
@@ -293,10 +300,98 @@ def test_no_flash_or_serial_command_is_ever_run(fake, tmp_path):
     release()
     fake.firmware = [FW]
     fake.rollbacks = {3: [ROW]}
-    fr.main(["report-rollbacks"])
+    report()
     flat = " ".join(" ".join(c) for c in fake.calls).lower().replace(str(tmp_path).lower(), "")
     for word in FORBIDDEN:
         assert word.lower() not in flat, word
     pio = fake.find("run", "-e")
     assert pio
     assert all("-t" not in c and "--target" not in c for c in pio)
+
+
+def test_device_name_lookup_failure_warns_and_still_comments(fake, monkeypatch, capsys):
+    real = fake.__call__
+
+    def no_devices(cmd, **kw):
+        if "device" in cmd and "list" in cmd:
+            fake.calls.append(list(cmd))
+            return cp(rc=2, err="server unreachable")
+        return real(cmd, **kw)
+
+    monkeypatch.setattr(fr, "_run", no_devices)
+    assert release() == 0
+    (body,) = fake.inputs
+    assert "devices offered: #1, #2" in body
+    assert "device names unavailable" in capsys.readouterr().err
+
+
+def test_dedupe_onto_another_commits_upload_refuses_before_offering(fake):
+    other = "b" * 40
+    fake.upload_result = {
+        "firmware": {"id": 3, "version": "1.6.0", "fork_commit": other},
+        "created": False,
+    }
+    assert release() == 1
+    assert not fake.find("offer")
+    assert not [c for c in fake.calls if c[0] == "gh" and "comment" in c]
+    assert fake.find("worktree", "remove")
+
+
+def test_re_releasing_the_same_commit_offers_the_existing_upload(fake):
+    fake.upload_result = {
+        "firmware": {"id": 5, "version": "1.7.0", "fork_commit": SHA},
+        "created": False,
+    }
+    assert release() == 0
+    assert fake.find("offer")
+
+
+def test_xteink_calls_use_this_install_not_path(fake):
+    assert release() == 0
+    (upload,) = fake.find("upload")
+    inner = upload[upload.index("--") + 1 :]
+    assert inner[:3] == [sys.executable, "-m", "xteink"]
+
+
+def test_unexpected_shape_after_the_offer_is_exit_2_not_a_refusal(fake, monkeypatch, capsys):
+    real = fake.__call__
+
+    def bad_offer(cmd, **kw):
+        if "offer" in cmd:
+            fake.calls.append(list(cmd))
+            return cp(json.dumps({"surprise": True}))
+        return real(cmd, **kw)
+
+    monkeypatch.setattr(fr, "_run", bad_offer)
+    assert release() == 2
+    err = json.loads(capsys.readouterr().err)
+    assert "after the offer step" in err["message"]
+    assert fake.find("worktree", "remove")
+
+
+def test_a_tool_that_cannot_start_is_exit_2(fake, monkeypatch):
+    def denied(cmd, **kw):
+        raise PermissionError(13, "Permission denied")
+
+    monkeypatch.setattr(fr.subprocess, "run", denied)
+    monkeypatch.setattr(fr, "_run", REAL_RUN)
+    assert release() == 2
+
+
+def test_dedupe_without_a_commit_names_the_way_to_ship_it(fake, capsys):
+    fake.upload_result = {
+        "firmware": {"id": 3, "version": "1.6.0", "fork_commit": None},
+        "created": False,
+    }
+    assert release() == 1
+    err = json.loads(capsys.readouterr().err)
+    assert "without a fork commit" in err["message"]
+    assert "None" not in err["message"]
+    assert "xteink firmware offer 3 --all --apply" in err["remediation"]
+
+
+def test_default_output_is_one_text_line(fake, capsys):
+    argv = ["firmware", "release", "7", "--fork-checkout", "/fork", "--pio", "/x/pio"]
+    assert main(argv) == 0
+    out = capsys.readouterr().out.strip()
+    assert out.startswith("released 1.7.0 (aaaaaaaaaaaa) to Reader One (#1), Reader Two (#2)")

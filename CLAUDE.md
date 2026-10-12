@@ -48,7 +48,8 @@ Landed and in the tree (read the code, not this list, when in doubt):
   `xteink.culture.dev` tunnel-only to `api:8781`. Tokens are hidden grant secrets
   injected with `grant run --inject`; xteink never calls the Cloudflare API.
 - **CLI nouns**: `server`, `library`, `device` (`list`, `queue`, `revoke`,
-  `backup`, `provision`), `firmware` (`list`, `upload`, `offer`, `rollbacks`),
+  `backup`, `provision`), `firmware` (`list`, `upload`, `offer`, `rollbacks`, `release`,
+  `report-rollbacks`),
   `tunnel` (`status`, `plan`), `mcp` (`serve`), beside
   `whoami`, `learn`, `explain`, `overview`, `doctor`, `cli overview`. Mutating
   verbs are dry-run unless `--apply`.
@@ -57,11 +58,19 @@ Landed and in the tree (read the code, not this list, when in doubt):
   stored, offered per device, and never offered again to a device that rolled
   one back (`xteink/core` firmware table, admin API, device protocol v1
   additions). The agent's release flow builds a merged fork PR, uploads it,
-  offers it to every device and comments on the PR (`docs/firmware-release.md`).
+  offers it to every device and comments on the PR (`xteink firmware release
+  PR`, `docs/firmware-release.md`).
   On the device, a start-only daily routine (once per local day, which turns
   over at 06:00) installs an offered image, runs a health check and syncs.
   Hardware-verified on the X3 (`docs/evidence/ota-daily-validation.md`).
   Tunnel OTA stays off (`XTEINK_OTA_TUNNEL=0`) until the tunnel path is proven.
+- **Home clock** (firmware): while awake, the X3's Home header clock changes every
+  minute (a fast refresh, with a half refresh every 15th change) without blocking
+  sleep, and the daily sync writes the network (SNTP) time to the RTC. Show on home
+  defaults on and the clock zone defaults to Asia/Jerusalem in the xteink build.
+  The minute tick is owner-confirmed on the X3; the on-device timing and the RTC
+  accuracy after a daily sync are not measured yet
+  (`docs/evidence/home-clock-validation.md`).
 - User docs: `README.md` (quickstart), `docs/api.md`, `docs/mcp.md`,
   `docs/firmware-release.md`.
 - **Device firmware** (separate repo, `agentculture/xteink-firmware`, a

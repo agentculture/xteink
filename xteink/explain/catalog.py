@@ -217,6 +217,11 @@ validate the image (or check the offer) but stores and offers nothing.
     xteink firmware upload IMAGE --commit SHA --pr URL [--version V] [--apply] [--json]
     xteink firmware offer FIRMWARE (--device ID|NAME | --all) [--apply] [--json]
     xteink firmware rollbacks FIRMWARE [--json]
+    xteink firmware release PR_NUMBER [--fork-checkout DIR] [--integration-branch B]
+        [--pio-env ENV] [--pio PATH] [--version V] [--fork OWNER/REPO]
+        [--key-name SECRET] [--no-grant] [--json]
+    xteink firmware report-rollbacks [--dry-run] [--fork OWNER/REPO] [--key-name SECRET]
+        [--no-grant] [--json]
     xteink firmware overview
 
 - `rollbacks` lists the devices that rolled that image back (device id, name, time); read-only.
@@ -231,8 +236,18 @@ validate the image (or check the offer) but stores and offers nothing.
   (`{id, version}` or null) and last daily run (`last_run_at`, `last_run_trigger`,
   `last_fw_outcome`, `last_content_outcome`).
 
+- `release` is the agent's release flow for a merged fork PR: it refuses unless the PR is
+  merged into the integration branch (default `feat/issue-1`) with green checks, its merge
+  commit is on that branch and no device rolled that commit back. It then builds the
+  `xteink_release` env in a temporary worktree of `--fork-checkout`, uploads and offers the
+  image to every device (`--apply`), and comments on the PR. The admin key comes from `grant`
+  unless `--no-grant`. It never runs esptool or opens a serial port: devices pull the image
+  over the air. See `docs/firmware-release.md`.
+- `report-rollbacks` comments once per (device, commit) rollback on the PR that shipped it.
+
 Exit codes: `0` success, `1` user error (bad image, unknown firmware/device, rolled-back
-offer), `2` server unreachable or no key set.
+offer, a release precondition refused), `2` server unreachable, no key set, or a tool
+(gh, git, pio) failed.
 """
 
 _TUNNEL = """\
@@ -306,6 +321,8 @@ ENTRIES: dict[tuple[str, ...], str] = {
     ("firmware", "upload"): _FIRMWARE,
     ("firmware", "offer"): _FIRMWARE,
     ("firmware", "rollbacks"): _FIRMWARE,
+    ("firmware", "release"): _FIRMWARE,
+    ("firmware", "report-rollbacks"): _FIRMWARE,
     ("tunnel",): _TUNNEL,
     ("tunnel", "overview"): _TUNNEL,
     ("tunnel", "status"): _TUNNEL,
