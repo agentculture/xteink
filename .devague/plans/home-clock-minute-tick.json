@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-12T15:13:08Z",
-  "updated": "2026-10-12T15:28:04Z",
+  "updated": "2026-10-12T16:16:01Z",
   "targets": [
     {
       "id": "c1",
@@ -449,6 +449,54 @@
       "text": "the clock/home-minute xteink branch stacks on the unpushed ota/daily-sync branch (itself on open PR #4); its PR base depends on how those land",
       "kind": "follow_up",
       "task_id": "t9",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r4",
+      "text": "web settings page shows the raw clockTimezone value (255) rather than the Jerusalem fallback the device's Clock row shows (SettingsList.h:511 raw Value; reported by t3)",
+      "kind": "follow_up",
+      "task_id": "t3",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r5",
+      "text": "HalClock::syncFromNTP sets TZ to UTC0 for up to 5 s (configTzTime outside the clock lock), so a Home header render in that window shows UTC; pre-existing, now more visible with the clock on (review N1; fix: syncNow + setUtc)",
+      "kind": "follow_up",
+      "task_id": "t1",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r6",
+      "text": "returning to Home after a child activity pops can cost one extra FAST refresh when the minute changed meanwhile (review N3)",
+      "kind": "follow_up",
+      "task_id": "t4",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r7",
+      "text": "setUtc from the daily routine does not set SETTINGS.clockHasBeenSynced, so the first manual Wi-Fi connect still runs a blocking ~5 s SNTP sync (review N4)",
+      "kind": "follow_up",
+      "task_id": "t5",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r8",
+      "text": "after an RTC that ran ahead is corrected, the persisted TrustedTime floor stays ahead, so the next mornings take the 8 s SNTP path until true time passes the floor (consequence of fix 0bd9c52e; self-limiting)",
+      "kind": "follow_up",
+      "task_id": "t5",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r9",
+      "text": "DailyRoutine's 'timezone chosen' test (clockUtcOffsetQ != 48) disagrees with timezones::activeIndex (<= 104 && != 48); with XTEINK_CLOCK_DEFAULTS the special case is redundant (code-review finding 9, pre-existing)",
+      "kind": "follow_up",
+      "task_id": "t5",
       "resolved": false,
       "resolution": ""
     }
