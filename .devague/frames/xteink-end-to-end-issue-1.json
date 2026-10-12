@@ -1,0 +1,2462 @@
+{
+  "slug": "xteink-end-to-end-issue-1",
+  "title": "xteink end-to-end (issue 1)",
+  "schema_version": 6,
+  "status": "exported",
+  "created": "2026-10-06T17:07:48Z",
+  "updated": "2026-10-07T01:46:34Z",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "announcement",
+      "text": "xteink ships end-to-end: one docker compose stack on spark serves the library API, MCP, CLI-backed management and a React web UI on startup, reachable at ebooks.culture.dev behind a key via cultureflare; Xteink readers (X3 first, all models) run our firmware that auto-joins a phone hotspot or home Wi-Fi, downloads books, and reads fully offline with a button-driven menu for pages and zoom",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h1",
+          "text": "Every surface in the announcement exists and is exercised by at least one automated or recorded test",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "spec-to-plan maps each announcement clause to a task with acceptance criteria",
+      "revisions": []
+    },
+    {
+      "id": "c2",
+      "kind": "requirement",
+      "text": "Four front doors over one core: CLI, HTTP API, MCP server, and a React web UI (flows for upload/library/device), all served on startup",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h2",
+          "text": "CLI, MCP and web UI contain no library/business logic of their own: all go through one service layer exposed by the HTTP API",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "grep-level check: xteink/cli and xteink/mcp import only the API client; API contract tests cover each operation once",
+      "revisions": []
+    },
+    {
+      "id": "c3",
+      "kind": "requirement",
+      "text": "Deployment is docker compose (preferred), auto-started on host boot (restart: unless-stopped)",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h3",
+          "text": "A fresh clone runs with 'cp .env.example .env && docker compose up -d' on linux/arm64, and every service has restart: unless-stopped and a healthcheck",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "CI builds images for arm64 (buildx); compose config lint; reboot test in c49",
+      "revisions": []
+    },
+    {
+      "id": "c4",
+      "kind": "requirement",
+      "text": "Public access via cultureflare: https://ebooks.culture.dev (web UI, Cloudflare Access SSO) and https://xteink.culture.dev (device endpoint, xteink device key)",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h4",
+          "text": "ebooks.culture.dev is provisioned only via 'cultureflare remote-login setup' and never serves the web UI without an Access session or /api/* without a valid key",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "curl matrix: anon browser -> Access login; /api without key -> 401; with key -> 200",
+      "revisions": [
+        {
+          "text": "Public access via cultureflare at https://ebooks.culture.dev, gated by a key",
+          "kind": "requirement",
+          "reason": "two-hostname decision"
+        }
+      ]
+    },
+    {
+      "id": "c5",
+      "kind": "requirement",
+      "text": "Our own firmware on the reader, designed to look good (custom UI, not stock)",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h5",
+          "text": "The reader boots our fork (custom theme/splash/boot screen visibly distinct from stock CrossPoint) on the X3",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "photo/screenshot evidence of the boot + library screens on the X3",
+      "revisions": []
+    },
+    {
+      "id": "c6",
+      "kind": "requirement",
+      "text": "Device Wi-Fi auto-connects to a known iPhone hotspot and to the home LAN, whichever is available, to download books; reading then works with Wi-Fi off",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h6",
+          "text": "With both networks saved, the device joins whichever is in range without user action; with neither, it does not block reading",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "hardware run: home LAN only, hotspot only, neither -> reading works",
+      "revisions": []
+    },
+    {
+      "id": "c7",
+      "kind": "requirement",
+      "text": "Button map: left/right = previous/next page (or zoom -/+ while zoom mode is on, per c40); bottom keys = Menu/OK and Back/Cancel; top key = zoom-mode toggle",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h7",
+          "text": "Left/right page, Menu/OK and Back/Cancel work as specified on the X3; top button toggles zoom mode per c40",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "on-device test checklist in the fork repo, executed on the X3",
+      "revisions": [
+        {
+          "text": "Button map: left/right = previous/next page; bottom keys = Menu/OK and Back/Cancel; top keys = zoom in / zoom out",
+          "kind": "requirement",
+          "reason": "user refined zoom UX (c40)"
+        }
+      ]
+    },
+    {
+      "id": "c8",
+      "kind": "requirement",
+      "text": "On-device menu covers zoom (font size) and page navigation (go-to page / progress)",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h8",
+          "text": "Menu offers go-to-page/progress and zoom; zoom scale is visible while zoom mode is on and right increases text size",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "on-device checklist + photo evidence",
+      "revisions": []
+    },
+    {
+      "id": "c9",
+      "kind": "requirement",
+      "text": "Support all Xteink models; X3 is the first target since it is the unit on hand",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h9",
+          "text": "Every Xteink firmware env builds in CI; X3 is hardware-verified; other models are build-verified until a unit is available",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "fork CI matrix; mark per-model verification level in the fork README",
+      "revisions": []
+    },
+    {
+      "id": "c10",
+      "kind": "assumption",
+      "text": "Host is spark-f8a9 (aarch64, DGX Spark) with Docker 29.1.3 + Compose v5.0.1, cloudflared, node/npm already installed, so the compose images must build for linux/arm64",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c11",
+      "kind": "open_question",
+      "text": "The Xteink X3 is not visible on this host's USB bus (lsusb shows no ESP32/USB-serial device; no /dev/ttyACM*, /dev/ttyUSB*, /dev/serial/by-id); where is it connected and is it on stock firmware?",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c12",
+      "kind": "assumption",
+      "text": "cultureflare `remote-login setup --hostname HOST --service http://127.0.0.1:PORT [--no-access | --allow EMAIL --with-service-token] --shushu` provisions tunnel+DNS(+Access) dry-run-first; xteink cites this command rather than reimplementing Cloudflare API calls",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "cultureflare 'remote-login setup --hostname ebooks.culture.dev --service http://127.0.0.1:<port> [--no-access | --allow EMAIL --with-service-token] --shushu' provisions tunnel+DNS(+Access) dry-run-first; xteink cites this command rather than reimplementing Cloudflare API calls",
+          "kind": "assumption",
+          "reason": "export hygiene: backtick command, no bare angle-bracket placeholder (MD033)"
+        }
+      ]
+    },
+    {
+      "id": "c13",
+      "kind": "boundary",
+      "text": "Tunnel creation, DNS, Access apps and service tokens are owned by cultureflare; xteink only runs the cloudflared connector (compose service) with the sealed tunnel token and never handles CLOUDFLARE_API_TOKEN",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h10",
+          "text": "No CLOUDFLARE_API_TOKEN or tunnel credential is ever read by xteink code or committed; cloudflared gets TUNNEL_TOKEN only from env/vault",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "scan-secrets clean; grep xteink/ for CLOUDFLARE_API_TOKEN returns nothing",
+      "revisions": []
+    },
+    {
+      "id": "c14",
+      "kind": "open_question",
+      "text": "What is 'the key' at ebooks.culture.dev: (A) Cloudflare Access service token (CF-Access-Client-Id/Secret headers, SSO for humans) or (B) --no-access with xteink-enforced API key/bearer token? Firmware likely cannot send Access headers, so a hybrid (Access for web UI, app key for device/API paths) may be needed",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c15",
+      "kind": "assumption",
+      "text": "Web UI is designed with the frontend-design skill and verified end-to-end with the Playwright MCP (browser flows), which are available in this environment",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c16",
+      "kind": "decision",
+      "text": "Server/API/MCP runtime deps (HTTP framework, MCP SDK) ship as an optional extra (e.g. xteink[server]) so the base CLI keeps dependencies = [] (pyproject.toml:16); the docker image installs the extra",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c17",
+      "kind": "requirement",
+      "text": "The CLI is a thin client of the HTTP API (server lifecycle, library add/list/rm, device list/queue, tunnel up/down), with --json, explain-catalog entries per verb, and write verbs dry-run by default with --apply",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h11",
+          "text": "Every new verb has --json, an explain entry, and mutating verbs refuse to change state without --apply",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "teken cli doctor --strict passes; tests assert dry-run makes no changes",
+      "revisions": []
+    },
+    {
+      "id": "c18",
+      "kind": "requirement",
+      "text": "New top-level web/ (Vite+React+TS, mirroring reterminal-cli web/) and docker/ compose assets get path-filtered CI jobs in this repo (publish.yml only triggers on pyproject.toml and xteink/**); firmware CI lives in the fork repo",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h12",
+          "text": "web/ build and tests run in CI on PRs touching web/**; the wheel/image includes the built assets",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "workflow job + a test that the server serves index.html from packaged assets",
+      "revisions": [
+        {
+          "text": "New top-level dirs web/ (Vite+React+TS, mirroring reterminal-cli web/) and firmware/ (PlatformIO) get their own path-filtered CI jobs; publish.yml only triggers on pyproject.toml and xteink/**",
+          "kind": "requirement",
+          "reason": "firmware moved to its own repo (c36)"
+        }
+      ]
+    },
+    {
+      "id": "c19",
+      "kind": "boundary",
+      "text": "No secrets in tracked files: Wi-Fi SSIDs/passwords, tunnel token and API keys live in gitignored .env / secrets.h with tracked *.example files; scan-secrets.py flags token/password literals >=20 chars and non-localhost url keys in JSON",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h13",
+          "text": "Tracked tree contains only *.example config; real .env, secrets and device keys are gitignored",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "scan-secrets.py clean in CI; .gitignore covers .env, secrets.h, *.key",
+      "revisions": []
+    },
+    {
+      "id": "c20",
+      "kind": "assumption",
+      "text": ".gitignore lacks node_modules/, web build output and docker/.env, and markdownlint must ignore web/node_modules, so web/compose scaffolding adjusts .gitignore and markdownlint ignores (firmware dirs live in the fork repo, so the lib/ ignore at .gitignore:17 is moot here)",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": ".gitignore 'lib/' (line 17) would swallow a PlatformIO firmware/lib/ dir, and node_modules/, .pio/, secrets.h, *.bin are not ignored yet, so firmware/web scaffolding must adjust .gitignore and markdownlint ignores",
+          "kind": "assumption",
+          "reason": "firmware moved to its own repo (c36)"
+        }
+      ]
+    },
+    {
+      "id": "c21",
+      "kind": "requirement",
+      "text": "MCP server exposes push_file / list_library / send_to_device (queue for device) over the same core as the API; culture-rules calls it via MCP or a CodeRunner argv step (xteink library add ... --apply)",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h14",
+          "text": "An MCP client (Claude Code) can push_file, list_library and send_to_device against the running stack, authenticated with an API key",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "MCP integration test using the official mcp SDK client over stdio/streamable-http",
+      "revisions": []
+    },
+    {
+      "id": "c22",
+      "kind": "non_goal",
+      "text": "No changes to culture-rules in this issue: it has no outbound MCP/HTTP plugin point (actors/code.py CodeRunner, urllib actors), so integration is a follow-up there",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c23",
+      "kind": "assumption",
+      "text": "Document conversion (PDF/Markdown/HTML -> device format) can reuse reterminal-cli board/pdf.py containment pattern (size cap, magic bytes, timeout-bounded subprocess, rasterize once and cache)",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c24",
+      "kind": "open_question",
+      "text": "MCP library: FastMCP (reachy-mini-mcp precedent) or official mcp SDK (culture-rules, agentfront precedent)?",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c25",
+      "kind": "open_question",
+      "text": "Fix leftover template strings (cli/__init__.py:74, learn.py:15, catalog.py:15/84, overview.py:4, doctor.py:7/40, whoami.py:7) as part of issue 1 or a separate cleanup PR?",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c26",
+      "kind": "decision",
+      "text": "Firmware = a fork of CrossPoint Reader (now crosspoint-reader/crosspoint-reader, default branch develop; MIT, PlatformIO) with our own theme/UI, button map and server-sync, not a from-scratch firmware: it already supports X3/X4 (ESP32-C3) and X4Pro/X4C (ESP32-S3) from one codebase, saved-network STA auto-join (max 8), OPDS, EPUB/TXT/BMP/XTC",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "Firmware = a CrossPoint Reader fork (MIT, PlatformIO) with our own theme/UI, button map and server-sync, not a from-scratch firmware: CrossPoint already supports X3/X4 (ESP32-C3) and X4Pro/X4C (ESP32-S3) from one codebase, saved-network STA auto-join, OPDS, WebDAV, EPUB/TXT/XTC",
+          "kind": "decision",
+          "reason": "upstream repo moved from daveallie/crosspoint-reader (GitHub API 301); default branch is develop"
+        }
+      ]
+    },
+    {
+      "id": "c27",
+      "kind": "requirement",
+      "text": "Model matrix from upstream platformio.ini: X3/X4 share the esp32-c3 env (X3 via -DFREEINK_DEVICE_X3=1), X4Pro and X4C have esp32-s3 envs; our fork keeps every upstream env building in CI so 'all versions' is a CI-checked claim",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h15",
+          "text": "The fork keeps all upstream Xteink envs and adds no model-specific code paths without a HAL flag",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "pio run for each env in CI",
+      "revisions": []
+    },
+    {
+      "id": "c28",
+      "kind": "requirement",
+      "text": "Device sync pulls from the xteink server (OPDS feed and/or a small JSON 'queue' endpoint) on Wi-Fi join; books land on the microSD and reading never touches the network",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h16",
+          "text": "A queued book is fully on microSD and sha256-verified before the device ACKs, and an interrupted download resumes or retries without corrupting the library",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "fake-device contract tests incl. dropped-connection case",
+      "revisions": []
+    },
+    {
+      "id": "c29",
+      "kind": "assumption",
+      "text": "X3 panel is 792x528 SSD1677, no touch/frontlight, has gyro + 16GB microSD (pocketink.io/devices/x3, third-party source, unverified against the unit)",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c30",
+      "kind": "open_question",
+      "text": "Is the user's X3 USB-unlocked (Xteink restricts third-party firmware on some 2026 units; locked units need the SD update.bin route or OTA Unlocker, which does not restore USB flashing)? What stock firmware version is it on?",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c31",
+      "kind": "assumption",
+      "text": "ESP32-C3 is 2.4 GHz only, so the iPhone hotspot needs 'Maximize Compatibility' enabled; 'iPhone (5)' is read as a hotspot SSID, not an iPhone 5 handset (unverified, needs user confirmation)",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c32",
+      "kind": "open_question",
+      "text": "Physical X3 button layout: does the X3 actually have top buttons usable for zoom in/out (X4 has power/up/down/left/right/confirm/back with ADC-ladder buttons)? Confirm the user's 'top' and 'bottom' keys on the unit",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c33",
+      "kind": "boundary",
+      "text": "Firmware never exposes an unauthenticated network service by default: upstream CrossPoint's file-transfer web server (ports 80/81, no auth) and open 'CrossPoint-Reader' AP must be off or gated in our build",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h17",
+          "text": "Our firmware never starts an unauthenticated HTTP server or open AP by default",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "fork test/config check; port scan of the device on LAN shows nothing listening unless explicitly enabled",
+      "revisions": []
+    },
+    {
+      "id": "c34",
+      "kind": "open_question",
+      "text": "Where does the firmware live: firmware/ in this repo (needs a PlatformIO CI job) or a separate agentculture repo forked from daveallie/crosspoint-reader (keeps upstream merges clean)?",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c35",
+      "kind": "non_goal",
+      "text": "Not targeting non-Xteink CrossPoint devices (reTerminal Sticky, M5PaperMono) even though the fork inherits their envs",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c36",
+      "kind": "decision",
+      "text": "Firmware is a CrossPoint Reader fork in its own agentculture repo (not firmware/ in xteink); xteink owns server/API/MCP/CLI/web/compose and the device sync protocol contract",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c37",
+      "kind": "decision",
+      "text": "Auth is hybrid: Cloudflare Access (email SSO) gates the web UI at ebooks.culture.dev; device, API and MCP paths use an xteink-enforced API key so firmware never sends CF-Access headers",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c38",
+      "kind": "decision",
+      "text": "'iPhone (5)' is the hotspot SSID; firmware stores it as a saved network alongside the home LAN SSID",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c39",
+      "kind": "assumption",
+      "text": "The X3 is physically on spark: kernel log 20:03:01 shows Espressif 'USB JTAG/serial debug unit' (ESP32-C3 native USB) as ttyACM0, MAC 68:C6:3A:3B:C2:4C, then disconnect at 20:03:02, so the data cable works and the native USB is exposed but drops when the reader sleeps; lock status still unverified (needs esptool chip_id/read_mac with the device awake)",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c40",
+      "kind": "decision",
+      "text": "Zoom UX: the top button toggles zoom mode (shows/hides an on-screen zoom scale); while zoom mode is on, left/right decrease/increase zoom (right = larger text); while it is off, left/right turn pages",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c41",
+      "kind": "decision",
+      "text": "MCP server uses the official mcp Python SDK (not FastMCP), matching culture-rules and agentfront",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c42",
+      "kind": "decision",
+      "text": "Leftover template strings are fixed in this repo before /think (separate small PR)",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c43",
+      "kind": "open_question",
+      "text": "Bottom-row mapping confirmed (Menu/OK, Back/Cancel); which X3 button is 'top' (single key or a pair), and does the second top key (if any) get a role?",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c44",
+      "kind": "audience",
+      "text": "The operator (a single household/owner) reading on Xteink readers, plus agents and code (culture-rules, Claude via MCP) that push documents to the library",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h18",
+          "text": "Both audiences have a documented entry point: README quickstart for humans, MCP/API docs for agents",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "docs review",
+      "revisions": []
+    },
+    {
+      "id": "c45",
+      "kind": "before_state",
+      "text": "Books reach an Xteink only through the vendor's stock firmware/app or manual SD-card copying; there is no private server, no agent push path, and xteink itself is only an agent scaffold (no server, API, MCP, web UI or firmware)",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h19",
+          "text": "The before state is accurate for this repo: no server/API/MCP/web/firmware code exists on main at spec time",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "git ls-files at spec commit",
+      "revisions": []
+    },
+    {
+      "id": "c46",
+      "kind": "why_it_matters",
+      "text": "Privacy is the product: the library and reading data stay on hardware the owner controls, while agents can still deliver generated documents to a reader that works with zero network",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h20",
+          "text": "No book or reading data leaves owned hardware except over the opt-in tunnel to the owner's own clients",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "egress test c51",
+      "revisions": []
+    },
+    {
+      "id": "c47",
+      "kind": "after_state",
+      "text": "After 'docker compose up -d' on spark, the library is browsable and uploadable at http://localhost and https://ebooks.culture.dev (behind SSO); a book pushed by CLI, web UI or MCP shows up on the X3 at its next Wi-Fi join (home LAN or the 'iPhone (5)' hotspot) and stays readable with Wi-Fi off",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h21",
+          "text": "The after state is reproducible from docs alone by someone other than the author",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "follow README on a clean checkout",
+      "revisions": []
+    },
+    {
+      "id": "c48",
+      "kind": "success_signal",
+      "text": "End-to-end on the real X3: a book uploaded via MCP push_file appears on the device within 60 s of the device joining Wi-Fi, and opens and pages with Wi-Fi off",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h22",
+          "text": "The measurement is taken on the real X3, not an emulator",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "evidence includes device serial 68:C6:3A:3B:C2:4C",
+      "revisions": []
+    },
+    {
+      "id": "c49",
+      "kind": "success_signal",
+      "text": "After a host reboot, all compose services (api+web, mcp, cloudflared) are healthy within 120 s with no manual step, and https://ebooks.culture.dev returns the SSO wall for an anonymous browser and 401 for an API call without a key",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h23",
+          "text": "The reboot test is actually performed on spark",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "record ps/curl output after reboot",
+      "revisions": []
+    },
+    {
+      "id": "c50",
+      "kind": "success_signal",
+      "text": "CI builds every Xteink firmware env (X3/X4 C3, X4Pro, X4C) in the fork repo, and the xteink repo's test, web and lint jobs pass with coverage >= 60%",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h24",
+          "text": "Coverage gate stays at fail_under=60 or higher",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "pyproject coverage config unchanged or raised",
+      "revisions": []
+    },
+    {
+      "id": "c51",
+      "kind": "success_signal",
+      "text": "Privacy: with the tunnel off, the stack makes 0 outbound connections other than to the device LAN (no telemetry), verified by a network-namespace/egress test",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h25",
+          "text": "The egress test runs in CI, not only manually",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "CI job with an internal-only docker network",
+      "revisions": []
+    },
+    {
+      "id": "c52",
+      "kind": "boundary",
+      "text": "Tunnel is opt-in: compose profile 'remote' runs cloudflared; without it nothing is reachable from outside the LAN",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h26",
+          "text": "Without the remote profile, docker compose up starts no cloudflared container",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "docker compose config --profiles; ps shows no cloudflared",
+      "revisions": []
+    },
+    {
+      "id": "c53",
+      "kind": "boundary",
+      "text": "Firmware fork keeps upstream CrossPoint's reader engine (EPUB layout, fonts, SD, power) untouched where possible; our changes are theme/UI, button map/zoom, saved-network config and the xteink sync client, to keep upstream merges cheap",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h27",
+          "text": "Diff of the fork vs upstream is confined to theme/UI, input, Wi-Fi config and sync modules",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "git diff --stat upstream/master in the fork",
+      "revisions": []
+    },
+    {
+      "id": "c54",
+      "kind": "non_goal",
+      "text": "No user accounts / multi-tenant library, no DRM'd store integration, no Calibre replacement, no KOReader progress server in issue 1",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c55",
+      "kind": "requirement",
+      "text": "Device sync contract (versioned, documented in docs/device-protocol.md): device authenticates with a per-device key, GETs its queue (book id, title, size, sha256, url), downloads each to microSD, verifies sha256, ACKs; server marks delivered. Works identically over LAN IP and ebooks.culture.dev",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h28",
+          "text": "Protocol is versioned and the server rejects unknown versions with a clear error",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "contract test for version mismatch",
+      "revisions": []
+    },
+    {
+      "id": "c56",
+      "kind": "requirement",
+      "text": "Web UI flows: (1) upload by drag-drop with format check, (2) library browse/search/delete, (3) send-to-device queue with delivery status, (4) devices: pair (show device key/QR), last seen, (5) settings: tunnel status and API keys. Designed with frontend-design, verified by Playwright flows",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h29",
+          "text": "Each flow has a passing Playwright test against the compose stack",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "playwright test suite in CI",
+      "revisions": []
+    },
+    {
+      "id": "c57",
+      "kind": "open_question",
+      "text": "Wi-Fi + server provisioning onto the device: (a) 'xteink device provision' writes SSIDs/passwords, server URL and device key over USB serial; (b) a config file on the microSD written by the CLI/web; (c) on-device entry via CrossPoint's settings/AP page?",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c58",
+      "kind": "open_question",
+      "text": "Device-side server address: LAN mDNS (xteink.local) first, falling back to https://ebooks.culture.dev when on the iPhone hotspot (no LAN route)? The device must hit the tunnel with the app key, which the hybrid auth (c37) allows on /api/device/*",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c59",
+      "kind": "decision",
+      "text": "Provisioning is over USB: 'xteink device provision --port /dev/ttyACM0 --apply' writes saved networks (home LAN + 'iPhone (5)'), server URLs and a freshly minted per-device key over serial; the device key is stored in NVS, Wi-Fi creds in upstream's obfuscated SD store",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [
+        {
+          "id": "q1",
+          "text": "Upstream keeps Wi-Fi passwords on the microSD (obfuscated with a hardware key, /.crosspoint/wifi.json); c59 says secrets never go on the SD. Accept upstream's obfuscated-on-SD storage (cheap, keeps c53's minimal diff) or move Wi-Fi creds + device key to ESP32 NVS (diverges from upstream)?",
+          "resolved": true,
+          "blocking": true,
+          "resolution": "Device key in NVS (revocable); Wi-Fi creds stay obfuscated on SD per upstream"
+        }
+      ],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "Provisioning is over USB: 'xteink device provision --port /dev/ttyACM0 --apply' writes saved networks (home LAN + 'iPhone (5)'), server URLs and a freshly minted per-device key over serial; secrets never go on the microSD",
+          "kind": "decision",
+          "reason": "user decision on q1"
+        }
+      ]
+    },
+    {
+      "id": "c60",
+      "kind": "decision",
+      "text": "Device tries the LAN server first (mDNS xteink.local via host avahi, or provisioned IP), then falls back to https://xteink.culture.dev with its device key, so it can download over the iPhone hotspot",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": [
+        {
+          "text": "Device tries the LAN server first (mDNS xteink.local or provisioned IP), then falls back to https://ebooks.culture.dev/api/device/* with its device key, so it can download over the iPhone hotspot",
+          "kind": "decision",
+          "reason": "two-hostname decision"
+        }
+      ]
+    },
+    {
+      "id": "c61",
+      "kind": "requirement",
+      "text": "Firmware sync client supports HTTPS (TLS) to xteink.culture.dev within ESP32-C3 RAM limits (no PSRAM on X3/X4), since the hotspot fallback goes through the tunnel; upstream already runs TLS on C3 via wolfSSL",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h30",
+          "text": "A >=5 MB EPUB downloads over TLS on the X3 without OOM or watchdog reset",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "fork CI builds C3 envs with TLS enabled; hardware run downloads a >=5 MB EPUB over the hotspot",
+      "revisions": [
+        {
+          "text": "Firmware sync client supports HTTPS (TLS) to ebooks.culture.dev within ESP32-C3 RAM limits (no PSRAM on X3/X4), since the hotspot fallback goes through the tunnel",
+          "kind": "requirement",
+          "reason": "device hostname is xteink.culture.dev (c76); TLS-on-C3 counter-evidence (c64)"
+        }
+      ]
+    },
+    {
+      "id": "c62",
+      "kind": "requirement",
+      "text": "Firmware verifies the server certificate on every HTTPS sync: replace upstream's http.setInsecure() (src/network/HttpDownloader.cpp:36) with a pinned CA bundle for xteink.culture.dev's Cloudflare edge chain, so the device key cannot be MITM'd on a hotspot",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h31",
+          "text": "No code path in the fork's sync client calls setInsecure()",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "fork test: sync against a self-signed MITM proxy fails closed; against ebooks.culture.dev succeeds",
+      "revisions": [
+        {
+          "text": "Firmware verifies the server certificate on every HTTPS sync: replace upstream's http.setInsecure() (src/network/HttpDownloader.cpp:36) with a pinned CA bundle for ebooks.culture.dev's Cloudflare edge chain, so the device key cannot be MITM'd on a hotspot",
+          "kind": "requirement",
+          "reason": "device hostname is xteink.culture.dev"
+        }
+      ]
+    },
+    {
+      "id": "c63",
+      "kind": "requirement",
+      "text": "Fork repoints OTA (upstream src/network/OtaUpdater.cpp:22 hardcodes api.github.com/repos/crosspoint-reader/crosspoint-reader/releases/latest) to the fork's own releases, or disables it, so an on-device 'update' never silently replaces our firmware with stock CrossPoint",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h32",
+          "text": "An OTA check on the X3 running our fork never offers an upstream CrossPoint build",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "grep the fork for the upstream releases URL returns nothing; OTA from fork releases tested once on the X3",
+      "revisions": []
+    },
+    {
+      "id": "c64",
+      "kind": "assumption",
+      "text": "Counter-evidence to earlier reasoning: upstream firmware already sends custom headers on same-origin requests (HttpDownloader.cpp, caller headers + basic auth) and already does TLS on ESP32-C3 via wolfSSL for OTA (OtaUpdater.cpp:144), so sending a device key header is easy and the TLS-RAM risk (v3) is smaller than assumed",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c65",
+      "kind": "assumption",
+      "text": "Upstream stores Wi-Fi credentials on the microSD at /.crosspoint/wifi.json, passwords obfuscated with a hardware-derived key (src/WifiCredentialStore.h/.cpp:17), max 8 networks",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c66",
+      "kind": "requirement",
+      "text": "Before the first flash of any unit, 'xteink device backup --port ... --apply' dumps the full stock flash (esptool read-flash) to the server's private store, and docs give the restore path (esptool write-flash / crosspoint-tools boot repair)",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h33",
+          "text": "A restorable full-flash backup exists for every unit before it is first flashed",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "backup file exists with sha256 for MAC 68:C6:3A:3B:C2:4C before first flash; restore rehearsed once",
+      "revisions": []
+    },
+    {
+      "id": "c67",
+      "kind": "requirement",
+      "text": "Remote access uses two cultureflare hostnames: `remote-login setup --hostname ebooks.culture.dev --allow OWNER_EMAIL` (Access SSO, web UI) and `remote-login setup --hostname xteink.culture.dev --no-access` (device endpoints; xteink enforces the device key), both in front of the same origin",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h34",
+          "text": "Anonymous requests to the UI get SSO while key-authenticated /api/device/* requests are admitted without SSO, verified by curl",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [
+        {
+          "id": "q2",
+          "text": "Path-scoped Access via a cultureflare enhancement, or two hostnames (UI behind Access, API/device tunnel-only with app key)?",
+          "resolved": true,
+          "blocking": true,
+          "resolution": "Two hostnames: ebooks.culture.dev (Access SSO, web UI) and xteink.culture.dev (tunnel-only, device key)"
+        }
+      ],
+      "links": [],
+      "instruction": "curl matrix after both setups: anon https://ebooks.culture.dev -> Access login; https://xteink.culture.dev/api/device/queue without key -> 401, with key -> 200; any other path via xteink.culture.dev -> 404",
+      "revisions": [
+        {
+          "text": "Hybrid auth needs path-scoped Access: SSO on / (web UI) but bypass for /api/device/* and /api/* (key-authenticated). cultureflare remote-login creates one Access app per hostname with no path/bypass support, so either extend cultureflare (cross-repo issue) or split hostnames (e.g. ebooks.culture.dev for UI, api.ebooks.culture.dev --no-access for API/device)",
+          "kind": "requirement",
+          "reason": "user chose two hostnames over a cultureflare enhancement"
+        },
+        {
+          "text": "Remote access uses two cultureflare hostnames: 'remote-login setup --hostname ebooks.culture.dev --allow <owner email>' (Access SSO, web UI) and 'remote-login setup --hostname xteink.culture.dev --no-access' (device endpoints; xteink enforces the device key), both in front of the same origin",
+          "kind": "requirement",
+          "reason": "export hygiene: backtick commands, no bare angle-bracket placeholder (MD033)"
+        }
+      ]
+    },
+    {
+      "id": "c68",
+      "kind": "open_question",
+      "text": "LAN trust: on the home LAN the web UI and API are reached directly (no Cloudflare Access). Is the LAN trusted (no login on LAN), or does the origin also require a login/key on LAN?",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c69",
+      "kind": "assumption",
+      "text": "On spark, ports 80/443 are free but 8000, 8001, 8770 (reterminal board), 8791 and others are taken; avahi-daemon is active on the host, so xteink.local must be published by host avahi (a service file), not from a bridge-network container",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c70",
+      "kind": "requirement",
+      "text": "Zoom = reader font point size: built-in fonts offer 12/14/16/18 pt, vector fonts 8-22 pt (upstream src/ReaderFontSizes.h). The zoom scale shows these steps; re-layout happens once when zoom mode exits (not per press), and position/progress is kept by reading position (percent/chapter offset), not page number, since reflow renumbers pages",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h35",
+          "text": "Changing zoom never loses the reader's place in the book",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "on-device: toggle zoom, step 3x right, exit -> same passage stays on screen; go-to-page reflects new pagination",
+      "revisions": []
+    },
+    {
+      "id": "c71",
+      "kind": "open_question",
+      "text": "Format conversion scope for issue 1: device reads EPUB/TXT/BMP/XTC only. Do server-side conversions (Markdown/HTML -> EPUB via pandoc; PDF -> per-page BMP via the reterminal pdf.py pattern) ship in issue 1, or only accept native formats and convert later?",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c72",
+      "kind": "requirement",
+      "text": "Lifecycle: removing a book from the server's device queue/library removes it from the device on next sync only if the device-side copy is unmodified (opt-in 'mirror' per device); low-SD-space is reported to the server and blocks the download instead of failing mid-write; a lost device's key is revocable from CLI/web",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h36",
+          "text": "Device-side deletes only remove unmodified copies the server delivered, never user-sideloaded files",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "contract tests: delete propagation, insufficient-space response, revoked key -> 401",
+      "revisions": []
+    },
+    {
+      "id": "c73",
+      "kind": "requirement",
+      "text": "Observability: the server records per-device last_seen, last sync result and queue state (visible in web UI and 'xteink device list --json'); the device shows a one-line sync status (ok / n new / error code) on the home screen",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h37",
+          "text": "After each sync the server's device status matches what is actually on the device",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "API test for device status fields; on-device photo of status line",
+      "revisions": []
+    },
+    {
+      "id": "c74",
+      "kind": "requirement",
+      "text": "Upload containment: size cap, magic-byte/format check, EPUB zip-bomb guard (max entries/uncompressed size), timeout-bounded conversion subprocesses; applies equally to web, API and MCP uploads",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h38",
+          "text": "Every upload path (web, API, MCP) runs the same containment checks",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "tests with an oversized file, wrong magic bytes and a zip bomb all rejected with 4xx",
+      "revisions": []
+    },
+    {
+      "id": "c75",
+      "kind": "decision",
+      "text": "Device key lives in ESP32 NVS (internal flash) and is revocable; Wi-Fi credentials stay in upstream's hardware-key-obfuscated /.crosspoint/wifi.json on the microSD",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c76",
+      "kind": "decision",
+      "text": "Two hostnames via cultureflare: ebooks.culture.dev = web UI behind Cloudflare Access SSO; xteink.culture.dev = tunnel-only (--no-access) endpoint for the device, authenticated by the xteink device key",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c77",
+      "kind": "decision",
+      "text": "LAN auth: API, MCP and device endpoints always require a key (LAN included); the web UI is open on the LAN and gated by Access only on the tunnel",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c78",
+      "kind": "decision",
+      "text": "Conversion in issue 1: Markdown/HTML -> EPUB server-side (pandoc in the image); PDF conversion is a follow-up",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c79",
+      "kind": "open_question",
+      "text": "Remote API/MCP clients (e.g. culture-rules off-LAN, Claude elsewhere): do they also use xteink.culture.dev with an API key, or is remote MCP out of scope for issue 1 (LAN/local MCP only)?",
+      "origin": "llm",
+      "status": "rejected",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c80",
+      "kind": "decision",
+      "text": "Remote MCP/API is out of scope for issue 1: only clients inside our network (home LAN, Tailscale, Culture mesh hosts) can push books and articles; xteink.culture.dev serves device endpoints only",
+      "origin": "user",
+      "status": "confirmed",
+      "honesty_conditions": [],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "",
+      "revisions": []
+    },
+    {
+      "id": "c81",
+      "kind": "requirement",
+      "text": "The API/MCP listener is reachable from the LAN and the Tailscale/mesh interfaces of spark (not just 127.0.0.1), while the tunnel ingress for xteink.culture.dev routes only /api/device/* to the origin; any other path through the tunnel returns 404",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h39",
+          "text": "No library-write or MCP endpoint is reachable through either Cloudflare hostname",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "curl via tailnet IP with key -> 200; curl https://xteink.culture.dev/api/library with key -> 404",
+      "revisions": []
+    },
+    {
+      "id": "c82",
+      "kind": "requirement",
+      "text": "Articles are first-class: push_file / web upload accept Markdown and HTML articles (with title/author metadata) and convert them to EPUB (c78), listed alongside books with a kind=article tag",
+      "origin": "llm",
+      "status": "confirmed",
+      "honesty_conditions": [
+        {
+          "id": "h40",
+          "text": "A converted article opens and paginates on the X3 like any EPUB",
+          "status": "confirmed",
+          "instruction": ""
+        }
+      ],
+      "hard_questions": [],
+      "links": [],
+      "instruction": "MCP test pushes a Markdown article -> EPUB appears in library with kind=article and syncs to the device",
+      "revisions": []
+    }
+  ],
+  "open_vagueness": [
+    {
+      "id": "v1",
+      "text": "X3 USB lock status and stock firmware version (esptool get-security-info pending; device must be awake on ttyACM0). Locked => flash via SD update.bin / OTA Unlocker and USB provisioning (c59) may be unavailable",
+      "kind": "unknown_nonblocking",
+      "claim_id": "c30",
+      "resolved": true,
+      "resolution": "Unit is not locked: secure boot and flash encryption disabled (esptool get-security-info, 2026-10-06); flash over USB",
+      "resolution_claim_id": null
+    },
+    {
+      "id": "v2",
+      "text": "Exact physical X3 button set: which key is 'top' and whether a second top key exists (c43); verify on the unit before finalizing the input map in the fork",
+      "kind": "unknown_nonblocking",
+      "claim_id": "c43",
+      "resolved": false,
+      "resolution": "",
+      "resolution_claim_id": null
+    },
+    {
+      "id": "v3",
+      "text": "TLS memory headroom on ESP32-C3 alongside the EPUB renderer is unmeasured",
+      "kind": "unknown_nonblocking",
+      "claim_id": "c61",
+      "resolved": false,
+      "resolution": "",
+      "resolution_claim_id": null
+    },
+    {
+      "id": "v4",
+      "text": "Real-world sync time and battery cost per sync on the X3 (Wi-Fi join + TLS + download) is unmeasured; the 60 s success signal (c48) may need revising after the first hardware run",
+      "kind": "unknown_nonblocking",
+      "claim_id": "c48",
+      "resolved": false,
+      "resolution": "",
+      "resolution_claim_id": null
+    },
+    {
+      "id": "v5",
+      "text": "Upstream CrossPoint moves fast (pushed 2026-10-06); merge cadence and conflict cost for the fork are unknown until the first upstream sync",
+      "kind": "unknown_nonblocking",
+      "claim_id": "c26",
+      "resolved": false,
+      "resolution": "",
+      "resolution_claim_id": null
+    },
+    {
+      "id": "v6",
+      "text": "Unexamined in this pass: X4Pro/X4C (ESP32-S3) hardware behaviour, iOS hotspot edge cases (sleep, SSID with spaces/parentheses), Cloudflare tunnel limits on large EPUB uploads (100 MB request cap on free plans, unverified)",
+      "kind": "unknown_nonblocking",
+      "claim_id": null,
+      "resolved": false,
+      "resolution": "",
+      "resolution_claim_id": null
+    }
+  ],
+  "scope_entries": [
+    {
+      "id": "s1",
+      "surface": "host spark-f8a9 (docker/compose/cloudflared/node, uname -m)",
+      "finding": "aarch64 host already has Docker 29.1.3, Compose v5.0.1, cloudflared, node/npm; compose images must target linux/arm64",
+      "seeds": [
+        "c10",
+        "c3"
+      ]
+    },
+    {
+      "id": "s2",
+      "surface": "host USB bus (lsusb, /dev/ttyACM*, /dev/serial/by-id)",
+      "finding": "point-in-time lsusb showed no device, but kernel log shows the X3 enumerating briefly as ttyACM0 then dropping (see s20); it is connected but only visible while awake",
+      "seeds": [
+        "c11"
+      ]
+    },
+    {
+      "id": "s3",
+      "surface": "xteink issue #1 (guildmaster build brief)",
+      "finding": "brief asks for server+tunnel+CLI+shared API+MCP+device software; prefers stock CrossPoint (option a) over fork/new firmware; names culture-rules as MCP consumer; requires write verbs dry-run by default with --apply; remote access off by default",
+      "seeds": [
+        "c2",
+        "c5"
+      ]
+    },
+    {
+      "id": "s4",
+      "surface": "cultureflare README.md:50-66 + cli/_commands/remote_login.py",
+      "finding": "remote-login setup provisions tunnel+CNAME+ingress, optional Access app/service token; --no-access mode requires the backend to enforce its own auth (README security note); --shushu seals tunnel_token into the vault",
+      "seeds": [
+        "c12",
+        "c13"
+      ]
+    },
+    {
+      "id": "s5",
+      "surface": "cultureflare _remote_login/_access_policy.py:95-102; ~/.cloudflared, /etc/cloudflared",
+      "finding": "service-token headers are 302'd to SSO unless a non_identity policy exists, so device firmware would need to send CF-Access headers; no existing tunnel config on disk for this host",
+      "seeds": [
+        "c14"
+      ]
+    },
+    {
+      "id": "s6",
+      "surface": "user message: frontend-design + playwright MCP",
+      "finding": "frontend-design skill and Playwright MCP tools are available in-session for the React UI design and flow verification",
+      "seeds": [
+        "c15"
+      ]
+    },
+    {
+      "id": "s7",
+      "surface": "xteink pyproject.toml:16 + CLAUDE.md 'The CLI'",
+      "finding": "runtime dependencies = [] by convention; server/MCP deps need an optional extra or deliberate change; hatch wheel ships only xteink/",
+      "seeds": [
+        "c16"
+      ]
+    },
+    {
+      "id": "s8",
+      "surface": "xteink/cli/__init__.py:64-95 + _commands/cli.py:30-43 + explain/catalog.py",
+      "finding": "new noun groups register in _build_parser (marked spot :91-93), need an overview verb, explain-catalog entries, and teken cli doctor --strict; no --apply convention exists yet",
+      "seeds": [
+        "c17"
+      ]
+    },
+    {
+      "id": "s9",
+      "surface": ".github/workflows/tests.yml + publish.yml:5-14",
+      "finding": "CI is Python-only (node only for markdownlint); publish triggers on pyproject.toml and xteink/** only; web/ and firmware/ need new path-filtered jobs; version-check still requires a bump",
+      "seeds": [
+        "c18"
+      ]
+    },
+    {
+      "id": "s10",
+      "surface": "scripts/scan-secrets.py:51-79,179-220",
+      "finding": "flags token/password/secret literals >=20 chars in any tracked file and non-localhost http(s) under url/host keys in JSON; `${VAR}` and `<placeholder>` values are exempt",
+      "seeds": [
+        "c19"
+      ]
+    },
+    {
+      "id": "s11",
+      "surface": ".gitignore:17 + .markdownlint-cli2.yaml",
+      "finding": "lib/ is ignored (would hide firmware/lib); node_modules/.pio/secrets.h/*.bin not ignored; markdownlint lints every .md so web/firmware READMEs must pass",
+      "seeds": [
+        "c20"
+      ]
+    },
+    {
+      "id": "s12",
+      "surface": "culture-rules actors/code.py:148-172, mcp/server.py:28, deploy/cloudflared/",
+      "finding": "no outbound MCP/HTTP plugin point; integration path is a CodeRunner argv step or a urllib actor; culture-rules uses official mcp SDK and a systemd cloudflared unit with grant-injected TUNNEL_TOKEN",
+      "seeds": [
+        "c21",
+        "c22",
+        "c24"
+      ]
+    },
+    {
+      "id": "s13",
+      "surface": "reterminal-cli board/pdf.py, web/package.json, deployments/systemd/",
+      "finding": "closest prior art: stdlib board server, PDF rasterize-once cache with containment, Vite6/React18/TS web built into package assets, cloudflared via systemd (no compose)",
+      "seeds": [
+        "c23",
+        "c18"
+      ]
+    },
+    {
+      "id": "s14",
+      "surface": "reachy-mini-mcp/pyproject.toml:27",
+      "finding": "FastMCP precedent (fastmcp>=0.1.0, stdio serve)",
+      "seeds": [
+        "c24"
+      ]
+    },
+    {
+      "id": "s15",
+      "surface": "xteink template leftovers (cli/__init__.py:74, learn.py:15, catalog.py:15/84, overview.py:4, doctor.py:7/40, whoami.py:7)",
+      "finding": "still describe a clonable template; touched by any new CLI work",
+      "seeds": [
+        "c25"
+      ]
+    },
+    {
+      "id": "s16",
+      "surface": "daveallie/crosspoint-reader platformio.ini + README.md (fetched)",
+      "finding": "MIT, PlatformIO; esp32-c3 envs default/gh_release/slim with -DFREEINK_DEVICE_X3=1; esp32-s3 envs x4pro/x4c/sticky; README lists X3/X4 (C3) and X4Pro/X4Classic (S3), themes, button remapping, tilt page turn on X3",
+      "seeds": [
+        "c26",
+        "c27",
+        "c35"
+      ]
+    },
+    {
+      "id": "s17",
+      "surface": "crosspoint docs/webserver.md + pocketink.io flash guide (subagent web research)",
+      "finding": "STA tries last-used then saved networks by RSSI; file-transfer server on 80/81 has no auth; open AP 'CrossPoint-Reader'; some 2026 X3/X4 units are USB-locked (SD update.bin / OTA Unlocker routes); bootloop risk recoverable via crosspoint-tools repair",
+      "seeds": [
+        "c28",
+        "c30",
+        "c33"
+      ]
+    },
+    {
+      "id": "s18",
+      "surface": "pocketink.io/devices/x3 + circuitpython.org xteink_x4 pinouts",
+      "finding": "X3: ESP32-C3, 792x528 SSD1677, gyro, microSD; X4: 7 buttons via ADC ladder (power GPIO3); X3 button layout differs from X4 and is unverified",
+      "seeds": [
+        "c29",
+        "c32"
+      ]
+    },
+    {
+      "id": "s19",
+      "surface": "ESP32-C3 radio / iPhone Personal Hotspot",
+      "finding": "2.4 GHz only; iPhone hotspot needs Maximize Compatibility; hotspot sleeps without clients (agent knowledge, unverified in-session)",
+      "seeds": [
+        "c31"
+      ]
+    },
+    {
+      "id": "s20",
+      "surface": "journalctl -k (spark-f8a9, last 30 min)",
+      "finding": "X3 enumerated as Espressif USB JTAG/serial (ESP32-C3) ttyACM0 MAC 68:C6:3A:3B:C2:4C, disconnected ~1s later; supersedes the earlier 'not visible' finding from a point-in-time lsusb",
+      "seeds": [
+        "c39",
+        "c30"
+      ]
+    },
+    {
+      "id": "s21",
+      "surface": "challenge pass / security lens: crosspoint src/network/HttpDownloader.cpp:36",
+      "finding": "upstream HTTPS downloads call setInsecure() (no cert validation); unacceptable once a device key rides the tunnel path over a hotspot",
+      "seeds": [
+        "c62"
+      ]
+    },
+    {
+      "id": "s22",
+      "surface": "challenge pass / lifecycle lens: crosspoint src/network/OtaUpdater.cpp:22",
+      "finding": "built-in OTA pulls upstream GitHub releases; unchanged, it would revert the device to stock",
+      "seeds": [
+        "c63"
+      ]
+    },
+    {
+      "id": "s23",
+      "surface": "challenge pass / counter-evidence lens: crosspoint HttpDownloader.cpp + OtaUpdater.cpp:140-150",
+      "finding": "the 'firmware cannot send CF-Access headers' premise behind the hybrid choice was wrong (headers are supported); hybrid still stands on key revocability, but the frame should not cite that premise; TLS on C3 is proven upstream",
+      "seeds": [
+        "c64"
+      ]
+    },
+    {
+      "id": "s24",
+      "surface": "challenge pass / security lens: crosspoint src/WifiCredentialStore.h + .cpp:17",
+      "finding": "credentials persist on SD obfuscated, not in NVS; contradicts c59 as worded",
+      "seeds": [
+        "c65"
+      ]
+    },
+    {
+      "id": "s25",
+      "surface": "challenge pass / recovery lens: pocketink flash guide (bootloop risk) + crosspoint-tools repair",
+      "finding": "no rollback path existed in the frame for a failed first flash of the only unit on hand",
+      "seeds": [
+        "c66"
+      ]
+    },
+    {
+      "id": "s26",
+      "surface": "challenge pass / adjacent-systems lens: cultureflare/_remote_login/*.py (grep path|bypass: no hits)",
+      "finding": "remote-login has no path-scoped Access or bypass rules; the hybrid decision c37 has a hidden cross-repo dependency",
+      "seeds": [
+        "c67"
+      ]
+    },
+    {
+      "id": "s27",
+      "surface": "challenge pass / security lens: hybrid auth (c37) vs direct LAN origin access",
+      "finding": "Access only protects the tunnel path; LAN clients hit the origin directly, so the origin must decide its own LAN auth policy",
+      "seeds": [
+        "c68"
+      ]
+    },
+    {
+      "id": "s28",
+      "surface": "challenge pass / adjacent-systems lens: ss -ltn + systemctl is-active avahi-daemon + docker ps on spark",
+      "finding": "port plan must avoid 8000/8001/8770/8791; mDNS advertisement belongs to host avahi; existing containers (model-gear, culture-rules-mongod, weather) share the host",
+      "seeds": [
+        "c69"
+      ]
+    },
+    {
+      "id": "s29",
+      "surface": "challenge pass / UX lens: crosspoint src/ReaderFontSizes.h",
+      "finding": "zoom maps to discrete point sizes; reflow on the C3 is slow and renumbers pages, which the go-to-page menu (c8) must account for",
+      "seeds": [
+        "c70"
+      ]
+    },
+    {
+      "id": "s30",
+      "surface": "challenge pass / input lens: crosspoint src/MappedInputManager.h",
+      "finding": "logical buttons are Back, Confirm, Left, Right, Up, Down, Power, PageBack, PageForward; the user's 'top' key most likely maps to Up/Down (needs on-device check, v2); remapping via ButtonRemapActivity exists",
+      "seeds": [
+        "c7"
+      ]
+    },
+    {
+      "id": "s31",
+      "surface": "challenge pass / data-flow lens: crosspoint README formats + culture-rules output (JSON/markdown, no epub)",
+      "finding": "agent-generated docs will not be in a device format; conversion is an unplanned dependency of the MCP push story",
+      "seeds": [
+        "c71"
+      ]
+    },
+    {
+      "id": "s32",
+      "surface": "challenge pass / lifecycle lens: c55 sync contract",
+      "finding": "contract covered add/ACK only; delete propagation, SD-full and key revocation were unstated",
+      "seeds": [
+        "c72"
+      ]
+    },
+    {
+      "id": "s33",
+      "surface": "challenge pass / observability lens: frame-wide",
+      "finding": "no signal existed for 'did the book reach the device' beyond the user checking the reader",
+      "seeds": [
+        "c73"
+      ]
+    },
+    {
+      "id": "s34",
+      "surface": "challenge pass / containment lens: reterminal-cli board/pdf.py pattern + public upload endpoint",
+      "finding": "uploads become reachable over the tunnel with only a key; no input containment was specified",
+      "seeds": [
+        "c74"
+      ]
+    },
+    {
+      "id": "s35",
+      "surface": "challenge pass / depth + entry condition",
+      "finding": "rigorous (hardware, security, distributed state, data loss); run before /think converged because confirmations were pending, so findings join the same review; lenses swept: adjacent systems, counter-evidence, lifecycle, security, recovery, UX, input, data flow, observability, containment",
+      "seeds": []
+    }
+  ],
+  "lapses": [
+    {
+      "id": "l1",
+      "code": "assumption-for-measurement",
+      "what": "During /scope I stated 'firmware likely cannot send CF-Access headers' and used it as rationale for the hybrid auth option without reading the firmware's HTTP client; HttpDownloader.cpp shows custom headers are supported",
+      "skipped_check": "",
+      "refs": [
+        "scope / c14 + AskUserQuestion auth option text"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l2",
+      "code": "provenance-missing",
+      "what": "The 'cultureflare has no path-scoped Access' finding (s26) rests on a grep for path|bypass over _remote_login/*.py, not a full read of the Access app creation code",
+      "skipped_check": "full read of cultureflare _remote_login access-app creation",
+      "refs": [
+        "challenge pass / adjacent-systems lens: cultureflare"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l3",
+      "code": "grader-unverified",
+      "what": "t5: reported scan-secrets 'clean' but a literal fake key in tests/mcp/test_client.py:60 trips the scanner once tracked; the check was likely run before commit (untracked files are not scanned), so the reported result did not cover the delivered files",
+      "skipped_check": "",
+      "refs": [
+        "plan t5 / tests/mcp/test_client.py:60"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l4",
+      "code": "assumption-for-measurement",
+      "what": "t1: SQLite store thread-safety is claimed 'by design' but concurrent multi-thread access was never tested",
+      "skipped_check": "concurrent access test on xteink/core/store.py",
+      "refs": [
+        "plan t1 / xteink/core/store.py"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l5",
+      "code": "control-absent",
+      "what": "t1: DeviceService.rotate_key clears revoked_at (re-enables a revoked device) without a test for that case or a spec decision",
+      "skipped_check": "test for rotate_key on a revoked device",
+      "refs": [
+        "plan t1 / xteink/core/devices.py"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l6",
+      "code": "control-absent",
+      "what": "t2: pandoc conversion (--sandbox, real EPUB output, no network fetch) only tested against a fake pandoc; the real-pandoc test skipped because pandoc is not on spark",
+      "skipped_check": "real-pandoc conversion test (runs in Docker image/CI via t8/t10)",
+      "refs": [
+        "plan t2 / xteink/core/ingest.py"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l7",
+      "code": "assumption-for-measurement",
+      "what": "t2: ingest default limits (50 MiB upload, 5000 EPUB entries, 500 MiB uncompressed, 60 s timeout) are chosen, not measured against real libraries",
+      "skipped_check": "",
+      "refs": [
+        "plan t2 / IngestLimits"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l8",
+      "code": "control-absent",
+      "what": "t3: suite ran on local Python 3.13.11, not the 3.12 CI targets; serve() (two uvicorn servers in one process) has no automated test, only a manual smoke run",
+      "skipped_check": "py3.12 run; automated serve() test",
+      "refs": [
+        "plan t3 / xteink/server/app.py"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l9",
+      "code": "control-absent",
+      "what": "t5: tests passed on first run; red-first (failing before implementation) was never demonstrated and no mutation check was done",
+      "skipped_check": "red-first run of tests/mcp",
+      "refs": [
+        "plan t5 / tests/mcp"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l10",
+      "code": "provenance-missing",
+      "what": "Main agent: during the t5 merge-gate revert ran 'git reset --hard' on feat/issue-1, which discarded uncommitted tracked .devague state (risks r8-r10 and six lapses); all were re-filed from the session record the same turn, but their original filing order/timestamps are lost",
+      "skipped_check": "",
+      "refs": [
+        "assign-to-workforce / t5 revert"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l11",
+      "code": "control-absent",
+      "what": "t4: 'dropped connection' resume is simulated (TestClient stops reading after N bytes, then Range resume); no real socket drop was exercised; suite ran on Python 3.13 not 3.12",
+      "skipped_check": "real socket-drop resume test; py3.12 run",
+      "refs": [
+        "plan t4 / tests/server/fake_device.py"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l12",
+      "code": "assumption-for-measurement",
+      "what": "t16: only env default was built (x4pro/x4c share main.cpp but were not built); slim behaviour reasoned from #ifdef, not built; USB RX chunking advice (128 B / 10 ms) estimated from the 256 B HWCDC queue, not measured; nothing run on hardware",
+      "skipped_check": "x4pro/x4c/slim builds; RX drop measurement",
+      "refs": [
+        "plan t16 / src/xteink/ProvisioningProtocol"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l13",
+      "code": "grader-unverified",
+      "what": "t6: CLI tests run against a stdlib stub API whose JSON shapes were written from reading route code, not captured from the live FastAPI app; mcp serve, server status and tunnel status never exercised against real servers",
+      "skipped_check": "CLI run against the real API (covered later by t9/t20)",
+      "refs": [
+        "plan t6 / tests/cli/conftest.py"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l14",
+      "code": "assumption-for-measurement",
+      "what": "t8: assumed Debian's pandoc supported --sandbox EPUB output (it fails: missing epub.css); caught only by the real-pandoc test; amd64 image path, cloudflared ready-healthcheck and MCP tool calls in compose were not run; web stage tested with a fake web/, not the real Vite app",
+      "skipped_check": "amd64 build; cloudflared run; real web/ build in image",
+      "refs": [
+        "plan t8 / Dockerfile"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l15",
+      "code": "control-absent",
+      "what": "t14: x4c not built and full ctest not run by the task agent (main agent gate runs full ctest + default; CI builds x4pro/x4c); scale overlay FAST-refresh behaviour on e-ink and physical top-key identity unverified; zoom is EPUB-only (XTC pre-rendered pages cannot reflow)",
+      "skipped_check": "x4c build; full ctest; on-panel refresh check",
+      "refs": [
+        "plan t14 / src/activities/reader/EpubReaderActivity.cpp"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l16",
+      "code": "grader-unverified",
+      "what": "t8/t11: check-compose.sh exported placeholder values for required variables, which masked that compose's ${VAR:?} interpolation (applied to every service, even inactive-profile ones) broke plain 'docker compose up -d' and the create-key bootstrap on a fresh clone; found only during real deployment; also a failed mint piped an empty value into 'grant set' (fixed by re-minting with a guard)",
+      "skipped_check": "",
+      "refs": [
+        "plan t8,t11 / compose.yaml, scripts/check-compose.sh"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l17",
+      "code": "grader-unverified",
+      "what": "t16: reported running bin/clang-format-fix, but its final sources were not clang-format clean (caught by the main-agent fork gate; upstream's clang-format CI job would have failed)",
+      "skipped_check": "",
+      "refs": [
+        "plan t16 / src/xteink/ProvisioningProtocol.*, ProvisionUsbActivity.*"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l18",
+      "code": "provenance-missing",
+      "what": "t7: Playwright MCP wrote .playwright-mcp/ into the main checkout (outside the task worktree; removed); screenshots 07-library.png and 10-pair-reveal.png predate final CSS tweaks; 10-pair-reveal.png shows a real device key + QR from a throwaway server (data dir deleted, key useless); root .gitignore 'lib/' silently dropped web/src/lib/ until renamed",
+      "skipped_check": "",
+      "refs": [
+        "plan t7 / web/docs/screens"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l19",
+      "code": "assumption-for-measurement",
+      "what": "t13: TLS heap figures and verification behaviour measured on a 64-bit host build of the firmware's wolfSSL, not on the ESP32-C3; root CA fingerprints cross-checked only against the local Mozilla store, not the CAs' published values",
+      "skipped_check": "on-device heap measurement; CA fingerprint cross-check",
+      "refs": [
+        "plan t13 / docs/xteink/tls.md"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l20",
+      "code": "control-absent",
+      "what": "t15: no preview images (no host renderer for firmware screens); theme sizes/spacing are estimates never seen on a panel; Library tab still uses upstream's grey dither",
+      "skipped_check": "on-panel visual check",
+      "refs": [
+        "plan t15 / src/components/themes/xteink"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l21",
+      "code": "grader-unverified",
+      "what": "t18: tests written in the same pass as the implementation (no red-first); esptool output parsing (read-mac 'MAC:', flash-id 'Detected flash size') verified only against a fake esptool and remembered v5 formats, not a live device; revoke-failure path untested; edited tests/cli/test_nouns.py outside its owned set to register the new verbs",
+      "skipped_check": "real esptool read-mac/flash-id against the X3 (planned in t19)",
+      "refs": [
+        "plan t18 / xteink/cli/_commands/device_usb.py"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l22",
+      "code": "control-absent",
+      "what": "t9: first throwaway 'compose up --build' started without noticing compose.yaml's hardcoded image tag xteink:local and could have retagged the production image (killed before completion; prod image id verified unchanged; fixed by the XTEINK_IMAGE override); two specs first written without running",
+      "skipped_check": "",
+      "refs": [
+        "plan t9 / compose.yaml image tag"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l23",
+      "code": "control-absent",
+      "what": "t5: MCP _brief() selected 'size_bytes' while the API returns 'size', so tool results silently dropped item size; the integration tests never asserted the size field (found by t21, fixed by main agent with a red-green test)",
+      "skipped_check": "",
+      "refs": [
+        "plan t5 / xteink/mcp/tools.py:91"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l24",
+      "code": "control-absent",
+      "what": "t21: fresh-clone README run used the pre-existing xteink:local image (compose skipped the build), so the build-from-empty-cache path was not exercised; final README tweak not re-run end to end; edited AGENTS.override.md outside its owned set",
+      "skipped_check": "",
+      "refs": [
+        "plan t21 / README.md"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l25",
+      "code": "control-absent",
+      "what": "t10: the arm64 'image' job, the 'changes' path-filter job and Playwright's --with-deps install were not run locally (no sudo; GitHub runner only) \u2014 first real run will be the PR's CI",
+      "skipped_check": "GitHub Actions run of image/changes jobs",
+      "refs": [
+        "plan t10 / .github/workflows/tests.yml"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l26",
+      "code": "control-absent",
+      "what": "t17: sync client compiled but never run against the real server or fake device (host tests cover pure functions only); heap thresholds estimated from host TLS numbers; ~19 KB of its +41 KB flash unattributed; partial downloads do not survive across syncs (no HalStorage append); status-line placement checked by arithmetic only",
+      "skipped_check": "on-device sync run; heap calibration",
+      "refs": [
+        "plan t17 / src/xteink/XteinkSync.cpp"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l27",
+      "code": "control-absent",
+      "what": "Main agent (t19): asked the operator to wake the X3 while the flash was armed to start the instant the port appeared, so a button press reset the chip mid-write (partial flash, unbootable); also filtered esptool output with grep, hiding progress, and the retry loop watched /dev/ttyACM0 while the device re-enumerated as ttyACM1. Recovered via the /dev/serial/by-id path with verified write",
+      "skipped_check": "arming the flash only after the device was awake and idle; stable by-id port path",
+      "refs": [
+        "plan t19 / docs/evidence/t19-x3-bringup.md"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l28",
+      "code": "assumption-for-measurement",
+      "what": "fork d2/r21 fix: B2 root cause (11 s LAN probe) not measured \u2014 bounded the probe and added timing logs, whether the time was the probe or inventory/free-space work awaits the next X3 log; hostname LAN URL DNS (xteink.local) still outside the 4 s budget; nothing hardware-verified",
+      "skipped_check": "",
+      "refs": [
+        "fork xteink/d2-nav-sntp / src/xteink/XteinkSync.cpp"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l29",
+      "code": "control-absent",
+      "what": "Main agent (t19/t20): reflashed the X3 with the full factory image at 0x0, whose NVS region (0x9000-0xE000) is 0xFF, wiping the provisioned device key and server URLs; should have written the app image only (firmware.bin at 0x10000) for an update. Old key revoked; device re-provisioned",
+      "skipped_check": "check that an update flash preserves NVS",
+      "refs": [
+        "plan t19 / flash procedure"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l30",
+      "code": "control-absent",
+      "what": "Challenge/scope passes and t11 never inspected the culture.dev zone's cache rules; the catch-all 2 h edge cache on every host was only found when the SSO UI failed to reach origin",
+      "skipped_check": "zone ruleset inspection for new hostnames",
+      "refs": [
+        "t11 / cultureflare remote-login (does not manage cache rules)"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l31",
+      "code": "assumption-for-measurement",
+      "what": "d5 reset-boot battery guard thresholds (>=3% and >=3400 mV) are a judgement, not measured on the X3",
+      "skipped_check": "measure gauge readings at the brownout edge",
+      "refs": [
+        "d5",
+        "fork:c590cd1a"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l32",
+      "code": "assumption-for-measurement",
+      "what": "d3 line scroll assumes page elements are stored in top-to-bottom yPos order; not checked against real EPUB layouts",
+      "skipped_check": "dump element yPos order from a laid-out page on hardware or in a host fixture",
+      "refs": [
+        "d3",
+        "fork:7a7a610b"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l33",
+      "code": "assumption-for-measurement",
+      "what": "d3 line scroll keeps two Page objects resident while rendering; heap headroom not measured",
+      "skipped_check": "log free heap during a scrolled render on the X3",
+      "refs": [
+        "d3",
+        "fork:7a7a610b"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l34",
+      "code": "control-absent",
+      "what": "d5 x4pro/x4c builds and clang-format ran only on the final tree, not after each of the six commits",
+      "skipped_check": "build every board at each commit",
+      "refs": [
+        "d5",
+        "fork:xteink/d5-x3-keys"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l35",
+      "code": "control-absent",
+      "what": "fix E (Wi-Fi auto-join timeout/budget) has no host test because its helper sits in a header that host builds cannot compile",
+      "skipped_check": "unit test for the 45 s budget / 10 s floor arithmetic",
+      "refs": [
+        "r25",
+        "fork:3925ed4d"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "l36",
+      "code": "control-absent",
+      "what": "Before opening PR #4 the local validation ran harness-smoke --stage config only (not toolchain with CI's newer steward) and never queried SonarCloud or GitGuardian, so the steward portability failure, the Sonar S2083/S5332 security rating and the GitGuardian false positive surfaced only in PR CI",
+      "skipped_check": "harness-smoke --stage all with uvx steward; Sonar gate check before push",
+      "refs": [
+        "t24"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l37",
+      "code": "grader-unverified",
+      "what": "Fork format gate never ran this session: clang-format is not installed on spark, bin/clang-format-fix exited 1 with output discarded (>/dev/null), and 'git diff --exit-code' then reported clean; the d5 subagent's and the main agent's 'clang-format clean' claims (d5, d6, rotate) were unverified until PR CI's clang-format-21 job failed on one line",
+      "skipped_check": "check the formatter's exit status; install clang-format 21 (now via uv tool)",
+      "refs": [
+        "t24",
+        "fork:PR1"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    },
+    {
+      "id": "l38",
+      "code": "grader-unverified",
+      "what": "Evidence e13 (o13: MCP tools refused without a key) was filed as pass from tests that only covered stdio; the streamable-http transport had no auth while holding the operator's key on 0.0.0.0:8782, found by /code-review on PR #4 and fixed in 7d6264f",
+      "skipped_check": "an HTTP-transport test without a key",
+      "refs": [
+        "o13",
+        "e13"
+      ],
+      "origin": "llm",
+      "status": "proposed"
+    }
+  ],
+  "obligations": [
+    {
+      "id": "o1",
+      "claim_id": "c2",
+      "seam": "service layer (xteink core)",
+      "behavior": "Every library/device operation is implemented once in the core; CLI, MCP and web UI reach it only through the HTTP API client",
+      "source_text": "Four front doors over one core: CLI, HTTP API, MCP server, and a React web UI (flows for upload/library/device), all served on startup",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o2",
+      "claim_id": "c3",
+      "seam": "docker compose",
+      "behavior": "'docker compose up -d' from a fresh clone + .env starts api/web and mcp healthy on linux/arm64, each with restart: unless-stopped and a healthcheck",
+      "source_text": "Deployment is docker compose (preferred), auto-started on host boot (restart: unless-stopped)",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o3",
+      "claim_id": "c4",
+      "seam": "Cloudflare edge (both hostnames)",
+      "behavior": "Anonymous GET https://ebooks.culture.dev -> Access login; GET https://xteink.culture.dev/api/device/queue without key -> 401, with a valid device key -> 200",
+      "source_text": "Public access via cultureflare: https://ebooks.culture.dev (web UI, Cloudflare Access SSO) and https://xteink.culture.dev (device endpoint, xteink device key)",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o4",
+      "claim_id": "c5",
+      "seam": "firmware UI (X3 screen)",
+      "behavior": "Boot, home and library screens render our theme, visibly distinct from stock CrossPoint",
+      "source_text": "Our own firmware on the reader, designed to look good (custom UI, not stock)",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o5",
+      "claim_id": "c6",
+      "seam": "firmware network (Wi-Fi join)",
+      "behavior": "With home LAN and 'iPhone (5)' saved, the device auto-joins whichever is in range; with neither, reading still works without prompts",
+      "source_text": "Device Wi-Fi auto-connects to a known iPhone hotspot and to the home LAN, whichever is available, to download books; reading then works with Wi-Fi off",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o6",
+      "claim_id": "c7",
+      "seam": "firmware input (MappedInputManager)",
+      "behavior": "Left/Right page back/forward; Confirm=Menu/OK; Back=Back/Cancel; top key toggles zoom mode, in which Left/Right step font size down/up",
+      "source_text": "Button map: left/right = previous/next page (or zoom -/+ while zoom mode is on, per c40); bottom keys = Menu/OK and Back/Cancel; top key = zoom-mode toggle",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o7",
+      "claim_id": "c8",
+      "seam": "firmware reader menu",
+      "behavior": "Menu offers go-to position/progress and zoom; zoom scale is shown while zoom mode is on",
+      "source_text": "On-device menu covers zoom (font size) and page navigation (go-to page / progress)",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o8",
+      "claim_id": "c9",
+      "seam": "firmware build matrix",
+      "behavior": "Every upstream Xteink env (C3 X3/X4, S3 X4Pro/X4C) builds in the fork's CI; README records per-model verification level",
+      "source_text": "Support all Xteink models; X3 is the first target since it is the unit on hand",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o9",
+      "claim_id": "c13",
+      "seam": "xteink codebase boundary",
+      "behavior": "No xteink code reads CLOUDFLARE_API_TOKEN or calls the Cloudflare API; cloudflared receives TUNNEL_TOKEN only via env",
+      "source_text": "Tunnel creation, DNS, Access apps and service tokens are owned by cultureflare; xteink only runs the cloudflared connector (compose service) with the sealed tunnel token and never handles CLOUDFLARE_API_TOKEN",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o10",
+      "claim_id": "c17",
+      "seam": "CLI",
+      "behavior": "Every verb supports --json and has an explain entry; mutating verbs make no change without --apply; 'teken cli doctor --strict' passes",
+      "source_text": "The CLI is a thin client of the HTTP API (server lifecycle, library add/list/rm, device list/queue, tunnel up/down), with --json, explain-catalog entries per verb, and write verbs dry-run by default with --apply",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o11",
+      "claim_id": "c18",
+      "seam": "CI workflows",
+      "behavior": "PRs touching web/** run web build+tests; the image/wheel serves the built index.html",
+      "source_text": "New top-level web/ (Vite+React+TS, mirroring reterminal-cli web/) and docker/ compose assets get path-filtered CI jobs in this repo (publish.yml only triggers on pyproject.toml and xteink/**); firmware CI lives in the fork repo",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o12",
+      "claim_id": "c19",
+      "seam": "tracked repository files",
+      "behavior": "scan-secrets.py is clean; only *.example config is tracked; .env, keys and secrets are gitignored",
+      "source_text": "No secrets in tracked files: Wi-Fi SSIDs/passwords, tunnel token and API keys live in gitignored .env / secrets.h with tracked *.example files; scan-secrets.py flags token/password literals >=20 chars and non-localhost url keys in JSON",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o13",
+      "claim_id": "c21",
+      "seam": "MCP server (official mcp SDK)",
+      "behavior": "push_file, list_library and send_to_device work from an mcp SDK client with an API key; without a key they are refused",
+      "source_text": "MCP server exposes push_file / list_library / send_to_device (queue for device) over the same core as the API; culture-rules calls it via MCP or a CodeRunner argv step (xteink library add ... --apply)",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o14",
+      "claim_id": "c27",
+      "seam": "firmware HAL flags",
+      "behavior": "Model differences are behind HAL/build flags only (e.g. -DFREEINK_DEVICE_X3=1), no ad-hoc model branches",
+      "source_text": "Model matrix from upstream platformio.ini: X3/X4 share the esp32-c3 env (X3 via -DFREEINK_DEVICE_X3=1), X4Pro and X4C have esp32-s3 envs; our fork keeps every upstream env building in CI so 'all versions' is a CI-checked claim",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o15",
+      "claim_id": "c28",
+      "seam": "device sync client",
+      "behavior": "On Wi-Fi join the device fetches its queue, stores each book on microSD, verifies sha256 before ACK, and reads offline afterwards",
+      "source_text": "Device sync pulls from the xteink server (OPDS feed and/or a small JSON 'queue' endpoint) on Wi-Fi join; books land on the microSD and reading never touches the network",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o16",
+      "claim_id": "c33",
+      "seam": "firmware network services",
+      "behavior": "No HTTP server listens and no open AP is up on the device unless explicitly enabled from the device menu",
+      "source_text": "Firmware never exposes an unauthenticated network service by default: upstream CrossPoint's file-transfer web server (ports 80/81, no auth) and open 'CrossPoint-Reader' AP must be off or gated in our build",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o17",
+      "claim_id": "c47",
+      "seam": "end-to-end operator flow",
+      "behavior": "Following the README on spark: compose up, upload via web, book reaches the X3, readable with Wi-Fi off",
+      "source_text": "After 'docker compose up -d' on spark, the library is browsable and uploadable at http://localhost and https://ebooks.culture.dev (behind SSO); a book pushed by CLI, web UI or MCP shows up on the X3 at its next Wi-Fi join (home LAN or the 'iPhone (5)' hotspot) and stays readable with Wi-Fi off",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o18",
+      "claim_id": "c48",
+      "seam": "hardware end-to-end (X3 68:C6:3A:3B:C2:4C)",
+      "behavior": "MCP push_file -> book on device <= 60 s after Wi-Fi join; >= 10 pages read in airplane mode",
+      "source_text": "End-to-end on the real X3: a book uploaded via MCP push_file appears on the device within 60 s of the device joining Wi-Fi, and opens and pages with Wi-Fi off",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o19",
+      "claim_id": "c49",
+      "seam": "host reboot (spark)",
+      "behavior": "After reboot, all services healthy <= 120 s with no manual step; anon -> SSO, keyless API over tunnel -> 401",
+      "source_text": "After a host reboot, all compose services (api+web, mcp, cloudflared) are healthy within 120 s with no manual step, and https://ebooks.culture.dev returns the SSO wall for an anonymous browser and 401 for an API call without a key",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o20",
+      "claim_id": "c50",
+      "seam": "CI (both repos)",
+      "behavior": "Fork CI builds all Xteink envs; xteink CI test/web/lint green with coverage >= 60%",
+      "source_text": "CI builds every Xteink firmware env (X3/X4 C3, X4Pro, X4C) in the fork repo, and the xteink repo's test, web and lint jobs pass with coverage >= 60%",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o21",
+      "claim_id": "c51",
+      "seam": "network egress",
+      "behavior": "With the tunnel profile off, the stack's test suite + a fake-device sync pass on an egress-denied network (0 outbound connections)",
+      "source_text": "Privacy: with the tunnel off, the stack makes 0 outbound connections other than to the device LAN (no telemetry), verified by a network-namespace/egress test",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o22",
+      "claim_id": "c52",
+      "seam": "compose profiles",
+      "behavior": "Without --profile remote, no cloudflared container runs",
+      "source_text": "Tunnel is opt-in: compose profile 'remote' runs cloudflared; without it nothing is reachable from outside the LAN",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o23",
+      "claim_id": "c53",
+      "seam": "fork diff vs upstream",
+      "behavior": "git diff against upstream develop touches only theme/UI, input, Wi-Fi/sync config, sync client, OTA URL and TLS verification",
+      "source_text": "Firmware fork keeps upstream CrossPoint's reader engine (EPUB layout, fonts, SD, power) untouched where possible; our changes are theme/UI, button map/zoom, saved-network config and the xteink sync client, to keep upstream merges cheap",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o24",
+      "claim_id": "c55",
+      "seam": "device protocol (docs/device-protocol.md)",
+      "behavior": "Versioned contract: auth by device key, queue fetch, download, sha256 ACK; unknown protocol version -> explicit error; identical over LAN and xteink.culture.dev",
+      "source_text": "Device sync contract (versioned, documented in docs/device-protocol.md): device authenticates with a per-device key, GETs its queue (book id, title, size, sha256, url), downloads each to microSD, verifies sha256, ACKs; server marks delivered. Works identically over LAN IP and ebooks.culture.dev",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o25",
+      "claim_id": "c56",
+      "seam": "web UI (Playwright)",
+      "behavior": "Upload, library browse/search/delete, send-to-device with status, device pairing, settings each pass a Playwright flow against the compose stack",
+      "source_text": "Web UI flows: (1) upload by drag-drop with format check, (2) library browse/search/delete, (3) send-to-device queue with delivery status, (4) devices: pair (show device key/QR), last seen, (5) settings: tunnel status and API keys. Designed with frontend-design, verified by Playwright flows",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o26",
+      "claim_id": "c61",
+      "seam": "firmware TLS client",
+      "behavior": "A >= 5 MB EPUB downloads over HTTPS from xteink.culture.dev on the X3 without OOM or watchdog reset",
+      "source_text": "Firmware sync client supports HTTPS (TLS) to xteink.culture.dev within ESP32-C3 RAM limits (no PSRAM on X3/X4), since the hotspot fallback goes through the tunnel; upstream already runs TLS on C3 via wolfSSL",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o27",
+      "claim_id": "c62",
+      "seam": "firmware TLS verification",
+      "behavior": "Sync against a MITM proxy with an untrusted cert fails closed; against xteink.culture.dev it succeeds",
+      "source_text": "Firmware verifies the server certificate on every HTTPS sync: replace upstream's http.setInsecure() (src/network/HttpDownloader.cpp:36) with a pinned CA bundle for xteink.culture.dev's Cloudflare edge chain, so the device key cannot be MITM'd on a hotspot",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o28",
+      "claim_id": "c63",
+      "seam": "firmware OTA",
+      "behavior": "OTA check on the fork never offers an upstream CrossPoint release",
+      "source_text": "Fork repoints OTA (upstream src/network/OtaUpdater.cpp:22 hardcodes api.github.com/repos/crosspoint-reader/crosspoint-reader/releases/latest) to the fork's own releases, or disables it, so an on-device 'update' never silently replaces our firmware with stock CrossPoint",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o29",
+      "claim_id": "c66",
+      "seam": "CLI device backup",
+      "behavior": "'xteink device backup --apply' writes a full-flash dump with sha256 before first flash; restore procedure documented and rehearsed once",
+      "source_text": "Before the first flash of any unit, 'xteink device backup --port ... --apply' dumps the full stock flash (esptool read-flash) to the server's private store, and docs give the restore path (esptool write-flash / crosspoint-tools boot repair)",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o30",
+      "claim_id": "c67",
+      "seam": "cultureflare provisioning",
+      "behavior": "Two remote-login setups exist: ebooks.culture.dev with Access allow-policy, xteink.culture.dev with --no-access; both route to the same origin",
+      "source_text": "Remote access uses two cultureflare hostnames: 'remote-login setup --hostname ebooks.culture.dev --allow <owner email>' (Access SSO, web UI) and 'remote-login setup --hostname xteink.culture.dev --no-access' (device endpoints; xteink enforces the device key), both in front of the same origin",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o31",
+      "claim_id": "c70",
+      "seam": "firmware zoom/reflow",
+      "behavior": "Zoom steps snap to available point sizes; reflow happens once on leaving zoom mode; the same passage remains on screen",
+      "source_text": "Zoom = reader font point size: built-in fonts offer 12/14/16/18 pt, vector fonts 8-22 pt (upstream src/ReaderFontSizes.h). The zoom scale shows these steps; re-layout happens once when zoom mode exits (not per press), and position/progress is kept by reading position (percent/chapter offset), not page number, since reflow renumbers pages",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o32",
+      "claim_id": "c72",
+      "seam": "device protocol lifecycle",
+      "behavior": "Deleting a delivered book removes the unmodified device copy only for mirror devices; low SD space -> refusal before download; revoked key -> 401",
+      "source_text": "Lifecycle: removing a book from the server's device queue/library removes it from the device on next sync only if the device-side copy is unmodified (opt-in 'mirror' per device); low-SD-space is reported to the server and blocks the download instead of failing mid-write; a lost device's key is revocable from CLI/web",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o33",
+      "claim_id": "c73",
+      "seam": "device status API + device home screen",
+      "behavior": "Server exposes last_seen, last sync result and queue per device (API, CLI --json, web); device shows a one-line sync status",
+      "source_text": "Observability: the server records per-device last_seen, last sync result and queue state (visible in web UI and 'xteink device list --json'); the device shows a one-line sync status (ok / n new / error code) on the home screen",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o34",
+      "claim_id": "c74",
+      "seam": "upload ingress (web/API/MCP)",
+      "behavior": "Oversized file, wrong magic bytes and EPUB zip bomb are all rejected with 4xx on every upload path",
+      "source_text": "Upload containment: size cap, magic-byte/format check, EPUB zip-bomb guard (max entries/uncompressed size), timeout-bounded conversion subprocesses; applies equally to web, API and MCP uploads",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o35",
+      "claim_id": "c81",
+      "seam": "network exposure",
+      "behavior": "API/MCP reachable via LAN and tailnet IPs with key; through the tunnel only /api/device/* is routed, any other path -> 404",
+      "source_text": "The API/MCP listener is reachable from the LAN and the Tailscale/mesh interfaces of spark (not just 127.0.0.1), while the tunnel ingress for xteink.culture.dev routes only /api/device/* to the origin; any other path through the tunnel returns 404",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o36",
+      "claim_id": "c82",
+      "seam": "article ingestion",
+      "behavior": "A Markdown/HTML article pushed via MCP or web becomes an EPUB tagged kind=article and syncs to and paginates on the X3",
+      "source_text": "Articles are first-class: push_file / web upload accept Markdown and HTML articles (with title/author metadata) and convert them to EPUB (c78), listed alongside books with a kind=article tag",
+      "origin": "llm",
+      "status": "approved"
+    }
+  ]
+}

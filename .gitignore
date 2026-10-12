@@ -239,3 +239,16 @@ skills.local.yaml
 # .qwen/settings.json.example to .qwen/settings.json locally, never commit it.
 .qwen/settings.json
 
+# devague working state (not committed by default)
+.devague/reviews/
+
+# xteink: local deployment state and secrets (only .env.example is tracked)
+.env.*
+!.env.example
+data/
+node_modules/
+web/node_modules/
+.pio/
+*.key
+compose.override.yaml
+docker-compose.override.yaml

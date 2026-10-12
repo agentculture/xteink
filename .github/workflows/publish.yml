@@ -24,7 +24,8 @@ jobs:
 
       - run: uv python install 3.12
 
-      - run: uv sync
+      # --extra server: without fastapi/mcp the server suites and the OpenAPI drift check skip.
+      - run: uv sync --extra server
 
       - run: uv run pytest -n auto -v
 

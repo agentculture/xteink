@@ -302,3 +302,9 @@ def test_a_non_http_scheme_is_not_treated_as_an_endpoint(tmp_path: Path) -> None
     """The endpoint check is scoped to http(s) URLs, as documented."""
     findings = _write_and_scan(tmp_path, '{"endpoint": "unix:///var/run/thing.sock"}\n')
     assert findings == []
+
+
+@pytest.mark.parametrize("name", ["uv.lock", "package-lock.json", "web/package-lock.json"])
+def test_lockfiles_are_excluded(name: str) -> None:
+    """Lockfiles carry registry/funding URLs and hashes, not secrets (npm's too)."""
+    assert name.endswith(scan_secrets.EXCLUDE_SUFFIXES)

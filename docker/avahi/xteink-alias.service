@@ -1,0 +1,14 @@
+# Optional: publish the alias hostname xteink.local -> this host's address.
+# Edit the IP below (or the interface) before installing. See README.md.
+[Unit]
+Description=Publish xteink.local mDNS alias
+After=avahi-daemon.service network-online.target
+Requires=avahi-daemon.service
+
+[Service]
+# Replace 192.0.2.10 with the LAN IPv4 address of this host.
+ExecStart=/usr/bin/avahi-publish -a -R xteink.local 192.0.2.10
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

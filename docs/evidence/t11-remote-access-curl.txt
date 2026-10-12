@@ -1,0 +1,8 @@
+# t11 curl matrix 2026-10-06T21:18:43+03:00
+anon UI  https://ebooks.culture.dev/ -> 302 https://agentculture.cloudflareaccess.com/cdn-cgi/access/login/ebooks.culture.dev
+device no key  /api/device/queue -> 401
+device /api/library via tunnel -> 404
+device /docs via tunnel -> 404
+device key via tunnel /api/device/queue -> 200
+revoked device key via tunnel -> 401
+LAN main / -> 200  LAN /api/keys no key -> 401

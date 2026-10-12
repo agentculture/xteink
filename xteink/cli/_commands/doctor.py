@@ -4,7 +4,7 @@ Mirrors the two invariants ``steward doctor`` verifies for a mesh agent:
 
 * **prompt-file-present** — the repo declares an agent in ``culture.yaml`` and
   has the matching prompt file on disk;
-* **backend-consistency** — the declared ``backend`` is one this template
+* **backend-consistency** — the declared ``backend`` is one this agent
   knows, and the *resident* prompt file that backend actually reads is on disk
   (``claude`` → ``CLAUDE.md``, ``colleague`` → ``AGENTS.colleague.md``,
   ``acp``/``codex``/``copilot`` → ``AGENTS.md``, ``gemini`` → ``GEMINI.md``).
@@ -37,7 +37,7 @@ _AGENTS_MD = "AGENTS.md"
 # backend → every prompt file RECOGNIZED under that backend name.
 #
 # Values are tuples because four harnesses occupy only three backend names in
-# this template: Qwen Code runs on ``acp`` (QWEN.md), and associate/Pi runs on
+# this repo: Qwen Code runs on ``acp`` (QWEN.md), and associate/Pi runs on
 # ``colleague`` (AGENTS.override.md as context plus .pi/SYSTEM.md as the system
 # prompt). This is a *recognition* table — it answers "does some harness on
 # this backend read this file?", which is what tooling needs when it walks a

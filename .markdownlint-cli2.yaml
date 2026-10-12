@@ -16,6 +16,13 @@ config:
 
 ignores:
   - "node_modules/**"
+  # Local virtualenvs: installed packages ship their own (unlinted) markdown.
+  - ".venv/**"
+  # web/ is a Vite app: its dependencies and Playwright output are not ours to lint.
+  - "web/node_modules/**"
+  - "web/e2e/.results/**"
+  # Deliberately malformed inputs for the ingest tests (e.g. ingest/bad.md).
+  - "tests/fixtures/**"
   - ".local/**"
   - ".afi/**"
   - ".teken/**"

@@ -1,0 +1,48 @@
+# Privacy test stack (driven by .github/scripts/privacy-check.sh; runnable locally).
+#
+# One network, `internal: true`: Docker gives it no gateway and no NAT, so nothing on it can
+# reach the internet or the host. The api service has no published ports and the tunnel
+# (cloudflared, profile `remote` in the main compose.yaml) is not part of this file at all.
+# If any xteink code path tried an outbound connection it would fail here.
+x-image: &image ${XTEINK_IMAGE:-xteink:local}
+
+services:
+  api:
+    build:
+      context: ..
+    image: *image
+    command: ["python", "-m", "xteink.server", "serve"]
+    environment:
+      XTEINK_DATA_DIR: /data
+      XTEINK_BIND: 0.0.0.0
+      XTEINK_PORT: "8780"
+      XTEINK_DEVICE_PORT: "8781"
+    volumes:
+      - data:/data
+    networks: [airgap]
+
+  # Throwaway test runner on the same internal network. pytest is pre-installed into the
+  # host dir PRIVACY_DEPS_DIR (by privacy-check.sh, on the default network, before the stack starts).
+  tester:
+    image: *image
+    profiles: [tools]
+    pull_policy: never
+    user: "0:0"
+    working_dir: /work
+    environment:
+      PYTHONPATH: /deps
+      PYTHONDONTWRITEBYTECODE: "1"
+      XTEINK_DATA_DIR: /tmp/xteink-data
+      API_URL: http://api:8780
+      DEVICE_URL: http://api:8781
+    volumes:
+      - ..:/work:ro
+      - ${PRIVACY_DEPS_DIR:?set by privacy-check.sh}:/deps:ro
+    networks: [airgap]
+
+networks:
+  airgap:
+    internal: true
+
+volumes:
+  data:

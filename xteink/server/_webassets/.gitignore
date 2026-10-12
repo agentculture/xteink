@@ -1,0 +1,5 @@
+# Built by `npm run build` in web/. Only this file and README.md are tracked,
+# so the committed tree serves the placeholder page and the bundle stays a build step.
+*
+!.gitignore
+!README.md
