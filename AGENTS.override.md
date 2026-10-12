@@ -32,8 +32,8 @@ firmware (separate repo, `agentculture/xteink-firmware`) is hardware-verified on
 the X3: books sync over the home LAN or a phone hotspot and read offline, and it
 updates over the air from the server (a once-a-day start-time routine; release
 flow `xteink firmware release`, see `docs/firmware-release.md`). Its Home screen
-clock changes every minute while awake, and the daily sync keeps the RTC on
-network time. Other Xteink models are build-verified only;
+clock changes every minute while awake, and the daily sync writes network time
+to the RTC (its on-device accuracy check is pending). Other Xteink models are build-verified only;
 large (≥ 5 MB) EPUB syncs through the tunnel are **not verified**. PDF ingest is *(planned)*. User docs: `README.md`, `docs/api.md`,
 `docs/mcp.md`. See `CLAUDE.md` § "Current state vs. roadmap".
 

@@ -262,7 +262,7 @@ Response `200`: the Firmware. `404` if unknown.
 
 Response `200`: `{"rollbacks": [{"device_id", "device_name", "rolled_back_at"}, ...]}`,
 the devices that rolled this image back, oldest first. `404` if unknown. Read-only; the
-firmware release script uses it to refuse a build that already rolled back and to report
+firmware release verb (`xteink firmware release`) uses it to refuse a build that already rolled back and to report
 rollbacks on the PR that shipped it.
 
 ### POST /api/firmware/{firmware_id}/offer
