@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-11T16:28:00Z",
-  "updated": "2026-10-12T04:03:36Z",
+  "updated": "2026-10-12T21:56:13Z",
   "claims": [
     {
       "id": "c1",
@@ -1570,7 +1570,7 @@
         "t3"
       ],
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "l6",
@@ -1581,7 +1581,7 @@
         "t3"
       ],
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "l7",
@@ -1593,7 +1593,7 @@
         "t5"
       ],
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "l8",
@@ -1605,7 +1605,7 @@
         "t17"
       ],
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "l9",
@@ -1617,7 +1617,7 @@
         "t17"
       ],
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "l10",
@@ -1629,7 +1629,7 @@
         "t17"
       ],
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "l11",
@@ -1641,7 +1641,7 @@
         "t17"
       ],
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "l12",
@@ -1653,7 +1653,7 @@
         "t3"
       ],
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "l13",
@@ -1665,7 +1665,7 @@
         "t16"
       ],
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "l14",
@@ -1677,7 +1677,7 @@
         "d8"
       ],
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     },
     {
       "id": "l15",
@@ -1690,7 +1690,7 @@
         "routes_device.py:_firmware_offer"
       ],
       "origin": "llm",
-      "status": "proposed"
+      "status": "approved"
     }
   ],
   "obligations": []
