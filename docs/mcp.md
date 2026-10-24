@@ -111,7 +111,7 @@ are converted to EPUB. Give **exactly one** of `path`, `content` or
 | `content_base64` | string | Binary file, base64. Needs `filename` |
 | `filename` | string | e.g. `article.md`; the extension picks the format |
 | `title`, `author` | string | Optional metadata |
-| `kind` | `book` or `article` | Optional |
+| `kind` | `book`, `article`, `transcript` or `newspaper` | Optional |
 | `device` | string or integer | Device id or name; queues the item for it |
 
 Push a Markdown article and queue it for a reader called `my-reader`:
@@ -135,8 +135,8 @@ is `false` when identical bytes were already in the library.
 
 ### list_library
 
-List or search items. Arguments: `q` (searches title and author), `kind`,
-`limit` (1 to 1000, default 100).
+List or search items. Arguments: `q` (searches title and author), `kind`
+(`book`, `article`, `transcript` or `newspaper`), `limit` (1 to 1000, default 100).
 
 ```json
 {"name": "list_library", "arguments": {"q": "local-first", "kind": "article"}}

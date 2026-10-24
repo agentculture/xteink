@@ -97,7 +97,8 @@ Item:
 }
 ```
 
-`kind` is `book` or `article`. `format` is `epub`, `bmp` or `txt`.
+`kind` is `book`, `article`, `transcript` or `newspaper`. `format` is `epub`,
+`bmp` or `txt`.
 `size` is in bytes.
 
 Device: `id`, `name`, `key_id`, `mirror`, `created_at`, `revoked_at`,
@@ -119,7 +120,7 @@ API key: `id`, `name`, `key_id`, `created_at`, `revoked_at`, `last_used`.
 
 ### GET /api/library
 
-Query parameters: `q` (search title and author), `kind` (`book` or `article`),
+Query parameters: `q` (search title and author), `kind` (`book`, `article`, `transcript` or `newspaper`),
 `limit` (1 to 1000, default 100), `offset` (default 0).
 
 ```bash
@@ -132,8 +133,8 @@ Response `200`: `{"items": [Item, ...]}`.
 
 Upload one file as `multipart/form-data`. Fields: `file` (required), `title`
 (default: the filename without its extension), `author` (default empty), `kind`
-(`book` or `article`; default `article` for converted Markdown/HTML, `book`
-otherwise).
+(`book`, `article`, `transcript` or `newspaper`; default `article` for converted
+Markdown/HTML, `book` otherwise). Any other value is `422`.
 
 ```bash
 curl -H "Authorization: Bearer <api-key>" \
@@ -174,6 +175,33 @@ Response `200`: an Item. `404` if it does not exist.
 
 The stored bytes, with a media type for the format and a safe download
 filename. `404` if the item does not exist.
+
+### PATCH /api/library/{item_id}
+
+Change an item's kind. Body: `{"kind": "transcript"}`, where `kind` is one of
+`book`, `article`, `transcript` or `newspaper`. Only `kind` changes: `id`, `sha256`
+and `title` stay as they are.
+
+```bash
+curl -X PATCH -H "Authorization: Bearer <api-key>" -H "Content-Type: application/json" \
+     -d '{"kind": "transcript"}' \
+     http://localhost:8780/api/library/1
+```
+
+Response `200`: the Item, in the same shape as `GET /api/library/{item_id}`.
+`422` for a kind outside the four, or a missing `kind`. `404` if the item does not
+exist. `401` without a credential.
+
+A file already on a reader is not moved when the kind changes. The device finds
+it by sha256 and acknowledges it in place. A device that does not have the file
+yet gets it in the folder for the new kind (see the
+[device protocol](device-protocol.md#get-apidevicequeue)).
+
+From the CLI: `xteink library set-kind ID KIND`. It is a dry run unless `--apply`
+is given.
+
+Re-uploading the same bytes with another kind does not change the kind. The
+upload returns the existing item with `"created": false` and its original kind.
 
 ### DELETE /api/library/{item_id}
 
