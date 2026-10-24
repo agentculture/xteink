@@ -1,0 +1,506 @@
+{
+  "slug": "kind-transcript",
+  "title": "kind transcript",
+  "frame_slug": "kind-transcript",
+  "schema_version": 5,
+  "status": "exported",
+  "created": "2026-10-24T15:25:01Z",
+  "updated": "2026-10-24T15:54:26Z",
+  "targets": [
+    {
+      "id": "c1",
+      "kind": "announcement",
+      "text": "Transcripts and newspapers get their own folders on the reader: the xteink server accepts kind=transcript and kind=newspaper and sends each item's kind in its device queue entry, and the X3 firmware files articles under /xteink/articles/, transcripts under /xteink/transcripts/ and newspapers under /xteink/newspapers/, while books stay in /xteink/ (issue 8)",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h1",
+      "kind": "honesty",
+      "text": "Both halves ship: a server release that sends kind and a firmware image (offered via xteink firmware release) that files by kind; neither half alone is announced as done",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c2",
+      "kind": "requirement",
+      "text": "Schema step 3 in xteink/core/store.py _MIGRATIONS rebuilds the items table with CHECK (kind IN ('book','article','transcript','newspaper')), because SQLite can't ALTER a CHECK and _SCHEMA (store.py:16-18) is never edited; the rebuild keeps items.id values, sqlite_sequence and the queue.item_id FK rows (store.py:47) intact; tests/core/test_firmware.py::test_firmware_never_goes_into_items (asserts the old CHECK text, :246) is updated and a new migration test covers an issue-1/v2 DB with queue rows",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h2",
+      "kind": "honesty",
+      "text": "A copy of a v2 production library.db (items + queue rows) migrates to v3 with every items.id, sha256, kind and queue row unchanged, and a fresh DB gets the same columns (test_fresh_db_gets_the_same_schema_as_a_migrated_one)",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c3",
+      "kind": "requirement",
+      "text": "transcript and newspaper are accepted everywhere a kind is enumerated: xteink/core/models.py:7 KINDS, routes_library.py:40 Kind Literal (upload + list filter), cli/_commands/library.py:18 KINDS (kept equal by tests/cli/test_nouns.py:317), mcp/tools.py:12 _KIND enum, web/src/services/api.ts:21 Kind; api/openapi.json is regenerated (export-openapi.py --check); any other value is still refused with 422",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h3",
+      "kind": "honesty",
+      "text": "kind=transcript is accepted by the API, CLI --kind, MCP push_file and the web Add form, and kind=comic still returns 422 from each",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h23",
+      "kind": "honesty",
+      "text": "kind=transcript and kind=newspaper are accepted by the API, CLI --kind, MCP push_file and the web Add form, and kind=comic still returns 422 from each",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c4",
+      "kind": "requirement",
+      "text": "Each device queue entry carries kind: xteink/core/devices.py _Q (:12-15) selects i.kind, QueueEntry (core/models.py:50-62) gains kind, routes_device.py get_queue (:262-271) emits it, with 'book' when the item has none; tests/server/test_device_protocol.py::test_queue_shape is updated",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h21",
+      "kind": "honesty",
+      "text": "GET /api/device/queue returns kind on every entry, one of book|article|transcript|newspaper, 'book' for any item without a kind, and no other entry field changes",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c5",
+      "kind": "boundary",
+      "text": "The device protocol stays v1 (PROTOCOL_VERSION '1', routes_device.py:33): kind is an additive field like the OTA additions (routes_device.py:12-13, docs/device-protocol.md changelog :222-231); older firmware ignores it because parseQueue (xteink-firmware SyncProtocol.cpp) reads JSON keys by name with ArduinoJson and skips unknown ones; docs/device-protocol.md gets the field and a changelog line",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h5",
+      "kind": "honesty",
+      "text": "The current X3 firmware (pre-change) syncs a queue that carries kind without dropping items (parseQueue droppedItems stays 0)",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c6",
+      "kind": "boundary",
+      "text": "Dedup by sha256 is unchanged: xteink/core/library.py:52-56 looks up by sha256 only, so re-uploading the same bytes returns the existing item (created: false) with its original kind, whatever kind the new upload names",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h6",
+      "kind": "honesty",
+      "text": "Uploading identical bytes twice, once as article and once as transcript, returns created:false and the original item with kind article",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c7",
+      "kind": "requirement",
+      "text": "Clients show transcripts and newspapers as their own kinds: web/src/views/LibraryView.tsx:200 (item.kind === 'article' ? 'Article' : 'Book' would label them Book) becomes a kind-to-label map, the filter radios (:87-94) and AddView.tsx option list (:118-121) gain Transcript and Newspaper, and docs/api.md (:100,:122,:135), docs/mcp.md (:114) and xteink/explain/catalog.py:164 (whose stale 'image' kind is dropped) list book|article|transcript|newspaper",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h7",
+      "kind": "honesty",
+      "text": "Transcript items are labelled Transcript (never Book) in the library view and selectable in the filter and Add form",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c8",
+      "kind": "requirement",
+      "text": "Firmware QueueItem (xteink-firmware src/xteink/SyncProtocol.h:118, origin/feat/issue-1) parses an optional kind, where absent, unknown or wrong-typed means book, and a pure helper in SyncProtocol.{h,cpp} maps kind to folder (/xteink, /xteink/articles, /xteink/transcripts, /xteink/newspapers) so test/xteink_sync/XteinkSyncTest.cpp (host GoogleTest, no Storage) covers the per-kind path choice",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h22",
+      "kind": "honesty",
+      "text": "parseQueue maps absent, unknown and non-string kind to book, and the kind-to-folder helper returns /xteink, /xteink/articles, /xteink/transcripts, /xteink/newspapers, with host tests for each",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c9",
+      "kind": "requirement",
+      "text": "Firmware placeFile (XteinkSync.cpp:489, origin/feat/issue-1) creates /xteink and then the kind subfolder on demand (Storage.mkdir is non-recursive), and applies the bookFileName / bookFileNameWithId clash rule and the never-overwrite-sideloaded-or-modified check inside that folder; docs/xteink/sync.md step 4 (:58-60) names the per-kind folders",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h9",
+      "kind": "honesty",
+      "text": "placeFile never overwrites a sideloaded or user-modified file inside /xteink/articles or /xteink/transcripts, and creates the folder when it is missing",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c10",
+      "kind": "boundary",
+      "text": "Manifest, inventory, re-hash and mirror-delete need no change: DeliveredFile stores the full path, and every walk (XteinkSync.cpp:612 inventory, :819 deletes, origin/feat/issue-1) iterates manifest.files rather than scanning /xteink, so subfolder files work as they are",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h10",
+      "kind": "honesty",
+      "text": "A file in /xteink/transcripts is re-hashed on inventory and removed by a mirror-delete exactly like a flat /xteink file",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c13",
+      "kind": "audience",
+      "text": "The xteink operator reading on the X3, and culture-rules' Pocket-transcript workflow, which uploads one EPUB per recording and queues it on the device",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h14",
+      "kind": "honesty",
+      "text": "culture-rules can switch its upload from kind=article to kind=transcript with no other change to its workflow (same fields: file, title, author, kind)",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c14",
+      "kind": "before_state",
+      "text": "Today every delivered item lands flat in /xteink/ on the reader, and the server refuses kind=transcript (routes_library.py:40 Literal, store.py:23 CHECK), so dozens of daily transcripts would mix with books and the daily newspaper",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h15",
+      "kind": "honesty",
+      "text": "On main today, POST /api/library with kind=transcript returns 422, and every X3 delivery path starts with /xteink/ followed directly by the filename",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c15",
+      "kind": "why_it_matters",
+      "text": "Transcripts arrive daily and grow without bound; without their own folder the books the operator actually reads get buried in /xteink/",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h16",
+      "kind": "honesty",
+      "text": "The operator, not the agent, confirmed that separating transcripts from books is the goal (issue 8 author)",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c16",
+      "kind": "after_state",
+      "text": "After one daily sync, a transcript sits in /xteink/transcripts/, a newspaper in /xteink/newspapers/, an article in /xteink/articles/ and a book stays in /xteink/, and an older firmware still syncs all four flat without error",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h17",
+      "kind": "honesty",
+      "text": "The three paths are observed in a real X3 sync log, not inferred from unit tests",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c17",
+      "kind": "success_signal",
+      "text": "On the X3, 1 item of each of the 4 kinds pushed in one sync lands in its own folder (4 folders) on the first try (0 SD errors), and the full server suite plus the firmware ctest suite pass, with \u2265 1 new test per acceptance criterion in issue 8",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h18",
+      "kind": "honesty",
+      "text": "The X3 run and both test suites are recorded with their actual output in the evidence file, including any failure",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c20",
+      "kind": "requirement",
+      "text": "PATCH /api/library/{id} accepts {kind} (any value in KINDS: book|article|transcript|newspaper; 422 otherwise) and xteink library set-kind ID KIND (dry-run unless --apply, MCP not required) calls it; the item record and every queue entry then carry the new kind. Files already on a device stay where they are (c11): re-queueing to the same device does not move the file, because the firmware finds its sha256 in the manifest and acks it in place (XteinkSync.cpp alreadyHere). A re-kinded item lands in its new folder only on a device that does not already hold it",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h13",
+      "kind": "honesty",
+      "text": "After PATCH kind=transcript, GET /api/library/{id} and the device queue entry both report transcript, sha256 and id are unchanged, and kind=comic returns 422",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "c22",
+      "kind": "requirement",
+      "text": "Before applying any pending schema step, the Store copies library.db to library.db.v2.bak (named after the version being migrated from; sqlite3 backup API, same data dir), so rolling the server image back after the v3 rebuild has a restore path: an older xteink refuses a newer schema (store.py:111-115) and there is no backup of library.db today",
+      "deferred": false,
+      "deferred_reason": ""
+    },
+    {
+      "id": "h20",
+      "kind": "honesty",
+      "text": "Opening a v2 DB with v3 code leaves a readable library.db.v2.bak whose user_version is 2 and whose items rows match the pre-migration DB; an up-to-date DB writes no backup",
+      "deferred": false,
+      "deferred_reason": ""
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "summary": "Schema v3: items-table rebuild for four kinds + pre-migration backup (xteink/core/store.py)",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "A v2 DB built from tests/core/test_firmware.py's issue-1 fixture plus queue rows migrates to user_version 3 with every items.id, sha256, kind and queue row unchanged, and the next inserted item id is max(id)+1 (not a reused id)",
+        "After migration, INSERT of kind 'transcript' and 'newspaper' succeeds, kind 'firmware' still raises IntegrityError, PRAGMA foreign_key_check is empty, and deleting an item cascades its queue rows",
+        "test_fresh_db_gets_the_same_schema_as_a_migrated_one and test_migration_is_idempotent pass; test_firmware_never_goes_into_items asserts the new four-kind CHECK",
+        "Opening a DB with a pending step writes library.db.vN.bak (N = version before migrating) via the sqlite3 backup API, readable with user_version N and the pre-migration items rows; opening an up-to-date DB writes no backup file"
+      ],
+      "deps": [],
+      "covers": [
+        "c2",
+        "h2",
+        "c22",
+        "h20"
+      ],
+      "instruction": "Append step 3 to _MIGRATIONS as single statements (store.py:64-66): CREATE TABLE items_new (same columns, CHECK (kind IN ('book','article','transcript','newspaper'))), INSERT INTO items_new SELECT * FROM items, DROP TABLE items, ALTER TABLE items_new RENAME TO items. Do not edit _SCHEMA. The _migrate connection has foreign_keys off (only Store.connect turns it on) - keep it that way. Take the backup in Store.__init__/_migrate before BEGIN IMMEDIATE only when user_version < SCHEMA_VERSION and the DB already exists with tables (skip a brand-new empty DB). Put new tests in tests/core/test_store_v3.py; touch only store.py, tests/core/test_firmware.py and the new test file."
+    },
+    {
+      "id": "t2",
+      "summary": "Core: KINDS gains transcript/newspaper, queue entries carry kind, library.set_kind (models.py, devices.py, library.py)",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "xteink.core.models.KINDS == ('book','article','transcript','newspaper'); library.add accepts each and still raises ValidationError for 'comic'",
+        "QueueEntry has a kind field filled from items.kind by devices.py _Q; tests/core/test_devices.py asserts it for each kind",
+        "Adding identical bytes as article and then as transcript returns created False and the original item with kind article (tests/core/test_library.py)",
+        "library.set_kind(item_id, kind) updates only kind (id, sha256, title unchanged), raises ValidationError for a value outside KINDS and NotFound for an unknown id, and a queue entry read afterwards reports the new kind"
+      ],
+      "deps": [
+        "t1"
+      ],
+      "covers": [
+        "c4",
+        "c6",
+        "h6",
+        "c20",
+        "h13",
+        "c3"
+      ],
+      "instruction": "Touch only xteink/core/models.py, devices.py, library.py and tests/core/test_library.py, tests/core/test_devices.py. Reuse the existing ValidationError/NotFound types library.py already raises. Keep dedup in library.add exactly as is (lookup by sha256 only)."
+    },
+    {
+      "id": "t3",
+      "summary": "Server routes: four-kind Literal, PATCH /api/library/{id} kind, kind in device queue entries, regenerate api/openapi.json",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "POST /api/library accepts kind=transcript and kind=newspaper, and kind=comic returns 422; GET /api/library?kind=newspaper filters (tests/server/test_app_routes.py)",
+        "PATCH /api/library/{id} with {kind: transcript} returns the item with kind transcript and unchanged id/sha256; kind comic returns 422; an unknown id returns 404; it requires operator auth like the rest of the router",
+        "GET /api/device/queue entries carry kind (book|article|transcript|newspaper) and otherwise the same fields; PROTOCOL_VERSION stays '1'; test_queue_shape updated",
+        "uv run python scripts/export-openapi.py --check passes after regenerating api/openapi.json"
+      ],
+      "deps": [
+        "t2"
+      ],
+      "covers": [
+        "c3",
+        "h23",
+        "h3",
+        "c4",
+        "h21",
+        "c5",
+        "c20",
+        "h13"
+      ],
+      "instruction": "Touch xteink/server/routes_library.py (Kind Literal at :40, new PATCH on the operator-auth router at :22-24, JSON body with a kind field), xteink/server/routes_device.py (get_queue dict at :262-271: add kind from entry.kind), api/openapi.json (regenerated, never hand-edited), tests/server/test_app_routes.py, tests/server/test_device_protocol.py, tests/server/fake_device.py if it pins the shape. Derive the Literal from the same four values as core KINDS."
+    },
+    {
+      "id": "t4",
+      "summary": "CLI + MCP: four kinds, xteink library set-kind verb, client.set_kind, explain catalog",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "xteink library list/add --kind accept transcript and newspaper (test_library_kind_choices_match_the_server passes)",
+        "xteink library set-kind ID KIND prints what it would do without --apply, calls PATCH with --apply, and renders --json; an invalid KIND is an argparse error (exit 1)",
+        "MCP push_file and list_library advertise and accept kind transcript and newspaper (tests/mcp)",
+        "xteink explain library set-kind exists and catalog.py:164 lists book|article|transcript|newspaper (no 'image'); uv run teken cli doctor . --strict passes"
+      ],
+      "deps": [
+        "t3"
+      ],
+      "covers": [
+        "c3",
+        "h3",
+        "h23",
+        "c20",
+        "h13"
+      ],
+      "instruction": "Touch xteink/client.py (add set_kind), xteink/cli/_commands/library.py (KINDS + set-kind verb, dry-run unless --apply like the other mutating verbs), xteink/mcp/tools.py (_KIND enum), xteink/explain/catalog.py, tests/cli/test_nouns.py, tests/mcp/*. Set-kind is not added to MCP."
+    },
+    {
+      "id": "t5",
+      "summary": "Web UI: Transcript and Newspaper kinds in the API type, library labels, filter and Add form",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "LibraryView renders Transcript and Newspaper labels for those kinds (never Book) via a kind-to-label map, and the filter offers both (LibraryView.test.tsx)",
+        "AddView offers Transcript and Newspaper and sends the chosen kind in the upload body (AddView.test.tsx / api.test.ts)",
+        "cd web && npm test && npm run typecheck pass"
+      ],
+      "deps": [],
+      "covers": [
+        "c7",
+        "h7",
+        "h23",
+        "c3"
+      ],
+      "instruction": "Touch only web/src/services/api.ts (Kind type), web/src/views/LibraryView.tsx (:87-94 filter, :200 label), web/src/views/AddView.tsx (:118-121 options) and their tests. Wording elsewhere (empty state, aria-label 'Books and articles') may say 'library' instead."
+    },
+    {
+      "id": "t6",
+      "summary": "Docs: kind in the device protocol (v1 additive), API and MCP docs for four kinds and PATCH",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "docs/device-protocol.md queue example and field list include kind with the 'book when none' rule, and the changelog has a 'v1, additive (kind)' entry; protocol version text still says 1",
+        "docs/api.md documents the four kinds and PATCH /api/library/{id}; docs/mcp.md lists the four kinds; markdownlint-cli2 passes on the three files"
+      ],
+      "deps": [
+        "t3",
+        "t4"
+      ],
+      "covers": [
+        "c5",
+        "c7"
+      ],
+      "instruction": "Touch only docs/device-protocol.md (:139-164, changelog :222-231), docs/api.md (:100, :122, :135, plus a PATCH section), docs/mcp.md (:114, :138). Match the implemented shapes from t3/t4."
+    },
+    {
+      "id": "t7",
+      "summary": "Firmware protocol: QueueItem parses kind, pure kind-to-folder helper, host tests (xteink-firmware SyncProtocol)",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "parseQueue sets QueueItem.kind; absent, unknown and non-string kind become book; the doc-example test still passes and droppedItems stays 0 for an entry with kind (test/xteink_sync/XteinkSyncTest.cpp)",
+        "kindFolder (or similar) returns /xteink for book, /xteink/articles, /xteink/transcripts and /xteink/newspapers, with a test per kind plus unknown",
+        "cmake -S test -B build/test -G Ninja && cmake --build build/test && ctest --test-dir build/test passes"
+      ],
+      "deps": [],
+      "covers": [
+        "c8",
+        "h22"
+      ],
+      "instruction": "In agentculture/xteink-firmware, branch from origin/feat/issue-1 (2b3cbdea or newer), not the stale local checkout; worktree under ../.worktrees.xteink/. Plain commits, no AI trailers in the fork. Touch only src/xteink/SyncProtocol.h/.cpp and test/xteink_sync/XteinkSyncTest.cpp. Follow parseQueue's existing ArduinoJson pattern (it[\"kind\"] | \"\", lowercased)."
+    },
+    {
+      "id": "t8",
+      "summary": "Firmware placement: placeFile files by kind folder, clash rule inside it, sync.md (xteink-firmware XteinkSync)",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "placeFile creates /xteink then the kind folder when missing, and places into kindFolder(item.kind); books still go to /xteink/",
+        "Inside a kind folder the plain-name then (id)-name rule applies and a sideloaded or modified file is never overwritten (same code path as today, dir parameterised)",
+        "The firmware builds for the X3 env and ctest still passes; manifest, inventory and delete code is unchanged (diff shows no edits outside placeFile and its kBooksDir use)",
+        "docs/xteink/sync.md step 4 names /xteink/articles, /xteink/transcripts and /xteink/newspapers and says earlier flat files are not moved"
+      ],
+      "deps": [
+        "t7"
+      ],
+      "covers": [
+        "c9",
+        "h9",
+        "c10"
+      ],
+      "instruction": "Same fork worktree/branch as t7. Touch only src/xteink/XteinkSync.cpp (placeFile at ~:489, kBooksDir) and docs/xteink/sync.md. Storage.mkdir is non-recursive: mkdir /xteink first, then the subfolder."
+    },
+    {
+      "id": "t9",
+      "summary": "Ship and verify on the X3: server PR + deploy, firmware PR + xteink firmware release, 4-kind sync, evidence file",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "Before deploying, POST kind=transcript against the running main server returns 422 and is recorded (before-state)",
+        "After the server deploy and BEFORE the new firmware is offered, the current X3 firmware syncs a queue that carries kind with 0 dropped items (device log quoted)",
+        "After xteink firmware release of the merged fork PR, one book, article, transcript and newspaper pushed together land in /xteink/, /xteink/articles/, /xteink/transcripts/, /xteink/newspapers/ on the first sync with 0 SD errors, appear in the X3 library browser, and a mirror-delete removes the transcript (device log lines quoted)",
+        "docs/evidence/kind-transcript-validation.md records each step with actual output, including any failure; the server PR bumps the version and passes CI (tests, lint, harness-smoke, version-check); CLAUDE.md and the three other prompt files describe the four kinds"
+      ],
+      "deps": [
+        "t3",
+        "t4",
+        "t5",
+        "t6",
+        "t8"
+      ],
+      "covers": [
+        "c1",
+        "h1",
+        "c16",
+        "h17",
+        "c17",
+        "h18",
+        "h5",
+        "h10",
+        "c14",
+        "h15",
+        "c15",
+        "h16"
+      ],
+      "instruction": "Follow memory x3-flash-protocol and docs/firmware-release.md; ask the operator before flashing or touching the X3 ('awake, hands off'). No pushed book/article/transcript text in git - titles only. Redact network identifiers. Open the server PR with the cicd skill and run ask-colleague review first."
+    },
+    {
+      "id": "t10",
+      "summary": "Follow-up issues: culture-rules switch to kind=transcript/newspaper, and the 300-entry manifest cap",
+      "origin": "llm",
+      "status": "confirmed",
+      "acceptance_criteria": [
+        "A culture-rules issue (communicate skill, agtag) asks to upload transcripts as kind=transcript and the newspaper as kind=newspaper, and says existing items can be re-kinded with xteink library set-kind; it states no other upload field changes",
+        "A follow-up issue records kMaxManifestEntries = 300 shared by all kinds (SyncProtocol.h:23)"
+      ],
+      "deps": [
+        "t3"
+      ],
+      "covers": [
+        "c13",
+        "h14"
+      ],
+      "instruction": "Outward-facing: get the operator's go-ahead before posting. The xteink-firmware repo has issues disabled, so file the manifest-cap issue on agentculture/xteink."
+    }
+  ],
+  "risks": [
+    {
+      "id": "r1",
+      "text": "The probe ran the items rebuild outside `_migrate`; the step-3 statements must run inside its BEGIN IMMEDIATE with foreign_keys off on that connection",
+      "kind": "unknown_nonblocking",
+      "task_id": "t1",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r2",
+      "text": "Order matters for h5: the pre-change X3 firmware compat check must run after the server deploy and before the new firmware is offered; once OTA installs, it cannot be re-measured without a flash back",
+      "kind": "unknown_nonblocking",
+      "task_id": "t9",
+      "resolved": false,
+      "resolution": ""
+    },
+    {
+      "id": "r3",
+      "text": "kMaxManifestEntries = 300 is shared by all four kinds; raising or pruning it is a follow-up (user decision)",
+      "kind": "out_of_scope",
+      "task_id": null,
+      "resolved": false,
+      "resolution": ""
+    }
+  ],
+  "obligations": []
+}
