@@ -144,7 +144,7 @@ Response `200`:
 {
   "protocol": "1",
   "items": [
-    {"id": 42, "title": "Dune", "size": 812345, "sha256": "...", "format": "epub", "url": "/api/device/items/42"}
+    {"id": 42, "title": "Dune", "size": 812345, "sha256": "...", "format": "epub", "kind": "book", "url": "/api/device/items/42"}
   ],
   "skipped": [{"id": 43, "reason": "sd_full"}],
   "deletes": [{"sha256": "..."}]
@@ -152,6 +152,12 @@ Response `200`:
 ```
 
 - `items`: entries queued (not yet acked) for this device, in queue order.
+  Each entry has `kind`, one of `book`, `article`, `transcript` or `newspaper`.
+  An absent or unknown `kind` is treated as `book`. Firmware that knows the
+  kinds files each item in its folder: articles in `/xteink/articles/`,
+  transcripts in `/xteink/transcripts/`, newspapers in `/xteink/newspapers/`,
+  and books in `/xteink/`. Files already delivered are not moved. Older
+  firmware ignores the field.
 - `skipped`: queued items that do not fit. The budget is the last reported
   `free_sd_bytes` minus a 1 MiB safety margin. Items are taken in order and each
   included item uses up budget. An item larger than what is left is skipped
@@ -230,3 +236,7 @@ Error bodies are JSON with a `detail` field.
   (`id`, `version`, `size`, `sha256`, `url`). New route
   `GET /api/device/firmware/<id>` serves the device's own offered image with
   `Range` and `ETag`.
+- **v1, additive (kind)**: still `X-Xteink-Protocol: 1`; nothing an existing v1
+  device sends or reads changed. Each `items` entry of `GET /api/device/queue`
+  gains `kind` (`book`, `article`, `transcript` or `newspaper`). An absent or
+  unknown kind is read as `book`, and older firmware ignores the field.
