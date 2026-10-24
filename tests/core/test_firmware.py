@@ -232,7 +232,7 @@ def _dump_schema(db_path):
     return version, set(objects), cols
 
 
-# --- items stay books/articles only ------------------------------------------------
+# --- items hold library kinds only, never firmware ------------------------------------------------
 
 
 def test_firmware_never_goes_into_items(store, firmware):
@@ -243,7 +243,7 @@ def test_firmware_never_goes_into_items(store, firmware):
         items_sql = conn.execute(
             "SELECT sql FROM sqlite_master WHERE type='table' AND name='items'"
         ).fetchone()[0]
-        assert "CHECK (kind IN ('book', 'article'))" in items_sql
+        assert "CHECK (kind IN ('book', 'article', 'transcript', 'newspaper'))" in items_sql
         with pytest.raises(sqlite3.IntegrityError):
             conn.execute(
                 "INSERT INTO items (sha256, kind, title, format, size, created_at)"

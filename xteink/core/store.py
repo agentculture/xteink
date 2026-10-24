@@ -69,7 +69,8 @@ _MIGRATIONS: tuple[tuple[str, ...], ...] = (
     # have these tables; the IF NOT EXISTS schema above created them on fresh ones.
     (),
     # 2: OTA firmware + daily-run status. Images live in their own table, never in items
-    # (items.kind stays CHECK-constrained to book/article); blobs share files/<aa>/<sha>.
+    # (items.kind holds library kinds only; step 3 widens its CHECK); blobs share
+    # files/<aa>/<sha>.
     (
         "CREATE TABLE firmware ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -92,17 +93,64 @@ _MIGRATIONS: tuple[tuple[str, ...], ...] = (
         "ALTER TABLE devices ADD COLUMN last_fw_outcome TEXT",
         "ALTER TABLE devices ADD COLUMN last_content_outcome TEXT",
     ),
+    # 3: items.kind takes four kinds (book, article, transcript, newspaper). SQLite cannot
+    # change a CHECK in place, so the table is rebuilt: same columns, same ids. The
+    # migration connection keeps foreign_keys off, so dropping the old table leaves the
+    # queue rows alone and their REFERENCES items resolve to the renamed table. The
+    # AUTOINCREMENT high-water mark moves to the new table first, so an id freed by an
+    # earlier delete is never handed out again.
+    (
+        "CREATE TABLE items_new ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " sha256 TEXT NOT NULL UNIQUE,"
+        " kind TEXT NOT NULL CHECK (kind IN ('book', 'article', 'transcript', 'newspaper')),"
+        " title TEXT NOT NULL,"
+        " author TEXT NOT NULL DEFAULT '',"
+        " format TEXT NOT NULL,"
+        " size INTEGER NOT NULL,"
+        " created_at TEXT NOT NULL)",
+        "INSERT INTO items_new SELECT * FROM items",
+        "DELETE FROM sqlite_sequence WHERE name = 'items_new'",
+        "UPDATE sqlite_sequence SET name = 'items_new' WHERE name = 'items'",
+        "DROP TABLE items",
+        "ALTER TABLE items_new RENAME TO items",
+    ),
 )
 
 SCHEMA_VERSION = len(_MIGRATIONS)
 
 
-def _migrate(conn: sqlite3.Connection) -> None:
+def _backup_if_pending(conn: sqlite3.Connection, db_path: Path) -> None:
+    """Copy the database to ``library.db.vN.bak`` before a pending step runs.
+
+    N is the version before migrating. Nothing is written for an up-to-date database
+    or a brand-new one (no tables yet). The copy uses the sqlite3 backup API, so it is
+    a consistent snapshot even while another connection is open.
+    """
+    current = conn.execute("PRAGMA user_version").fetchone()[0]
+    if current >= SCHEMA_VERSION:
+        return
+    tables = conn.execute("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'")
+    if not tables.fetchone()[0]:
+        return
+    backup_path = db_path.with_name(f"{db_path.name}.v{int(current)}.bak")
+    dest = sqlite3.connect(backup_path)
+    try:
+        conn.backup(dest)
+    finally:
+        dest.close()
+
+
+def _migrate(conn: sqlite3.Connection, db_path: Path | None = None) -> None:
     """Apply every pending step; a no-op on an up-to-date database.
 
-    ``BEGIN IMMEDIATE`` takes the write lock before user_version is read, so two
-    processes opening the same old database cannot both run a step.
+    When ``db_path`` is given and a step is pending on an existing database, a backup
+    is taken first (see ``_backup_if_pending``). ``BEGIN IMMEDIATE`` takes the write
+    lock before user_version is read, so two processes opening the same old database
+    cannot both run a step.
     """
+    if db_path is not None:
+        _backup_if_pending(conn, db_path)
     conn.executescript(_SCHEMA)
     conn.isolation_level = None  # manage the transaction by hand
     conn.execute("BEGIN IMMEDIATE")
@@ -140,7 +188,7 @@ class Store:
         self.files_dir.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(self.db_path, timeout=30)
         try:
-            _migrate(conn)
+            _migrate(conn, self.db_path)
         finally:
             conn.close()
 
