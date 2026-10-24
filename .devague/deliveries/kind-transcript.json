@@ -1,0 +1,347 @@
+{
+  "plan_slug": "kind-transcript",
+  "schema_version": 2,
+  "created": "2026-10-24T16:03:00Z",
+  "updated": "2026-10-24T20:16:25Z",
+  "deviations": [
+    {
+      "id": "d1",
+      "what": "t1 step 3 has six statements, not the four in its instruction: two sqlite_sequence statements (DELETE the items_new row, rename the items row to items_new) carry the AUTOINCREMENT high-water mark across the rebuild",
+      "task_ref": "t1",
+      "reason": "without them the rebuild resets sqlite_sequence to max(id), so an id freed by deleting the highest item would be reused, breaking t1's own criterion 'not a reused id'; guarded by test_rebuild_keeps_the_autoincrement_high_water_mark",
+      "affects": [
+        "t1"
+      ],
+      "origin": "llm",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 1
+    },
+    {
+      "id": "d2",
+      "what": "xteink/core/firmware.py:3-4 docstring still says items.kind is CHECK-constrained to book/article; no task owns that file, so the main agent fixes the one docstring line on the integration branch",
+      "task_ref": "t1",
+      "reason": "t1's instruction limited it to store.py and two test files; the stale docstring is now false",
+      "affects": [
+        "t1"
+      ],
+      "origin": "llm",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 2
+    },
+    {
+      "id": "d3",
+      "what": "At the t2 merge the main agent also widens the CLI's KINDS tuple (xteink/cli/_commands/library.py:18) to the four kinds, a one-line change from t4's file set, so the full suite stays green after t2; t4 keeps everything else (set-kind verb, MCP, explain, client)",
+      "task_ref": "t2",
+      "reason": "t2 widens core KINDS, and tests/cli/test_nouns.py::test_library_kind_choices_match_the_server requires the CLI tuple to equal it; with the plan's split the suite fails between t2 and t4, which the after-merge test gate forbids",
+      "affects": [
+        "t2",
+        "t4"
+      ],
+      "origin": "llm",
+      "status": "approved",
+      "classification": "acceptable",
+      "seq": 3
+    },
+    {
+      "id": "d4",
+      "what": "t9 runs the OTA before any sync on the old firmware: the on-device old-firmware compat check (h5) is not observed; the 3 real queued items (2 Pocket transcripts, 1 daily newspaper, uploaded as article) are re-kinded and delivered by the new firmware instead",
+      "task_ref": "t9",
+      "reason": "the X3's daily run already happened today (04:54Z), so the check needs a manual sync, and the old firmware would file those 3 real items flat in /xteink/ for good (c11); the operator chose to keep them for the per-kind folders. h5 rests on host evidence: parseQueue reads keys by name and the live queue already carries kind",
+      "affects": [
+        "t9"
+      ],
+      "origin": "user",
+      "status": "approved",
+      "classification": "risky",
+      "seq": 4
+    }
+  ],
+  "evidence": [
+    {
+      "id": "e1",
+      "obligation_ref": "o1",
+      "test_ref": "tests/core/test_store_v3.py (v2 migrate, v0/v1 through step 3, autoincrement high-water, foreign keys)",
+      "behavior_text": "asserts a v2 db migrates with items and queue unchanged and the next id is not reused",
+      "contract_text": "c2 schema step 3 rebuilds items for four kinds",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "ran green on merged main",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-24T19:59:28Z",
+        "commit": "d5c2945"
+      },
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 5
+    },
+    {
+      "id": "e2",
+      "obligation_ref": "o1",
+      "test_ref": "live migration on spark, docs/evidence/kind-transcript-validation.md step 2",
+      "behavior_text": "user_version 2->3, 51 items same ids, seq 54, integrity ok, fk_check empty",
+      "contract_text": "c2 schema step 3 rebuilds items for four kinds",
+      "evidence_type": "observation",
+      "strength": "fidelity",
+      "strength_basis": "measured on the production data volume after the 0.13.0 deploy",
+      "outcome": "pass",
+      "run": null,
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 6
+    },
+    {
+      "id": "e3",
+      "obligation_ref": "o2",
+      "test_ref": "tests/core/test_store_v3.py::test_pending_step_writes_a_backup_of_the_old_db (+ v0 naming, up-to-date and new db write none)",
+      "behavior_text": "asserts library.db.vN.bak is written before a pending step and not otherwise",
+      "contract_text": "c22 backup before migrating",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "ran green on merged main",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-24T19:59:28Z",
+        "commit": "d5c2945"
+      },
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 7
+    },
+    {
+      "id": "e4",
+      "obligation_ref": "o2",
+      "test_ref": "live deploy, evidence step 2",
+      "behavior_text": "library.db.v2.bak present with user_version 2 and 51 items",
+      "contract_text": "c22 backup before migrating",
+      "evidence_type": "observation",
+      "strength": "fidelity",
+      "strength_basis": "read from the production data volume",
+      "outcome": "pass",
+      "run": null,
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 8
+    },
+    {
+      "id": "e5",
+      "obligation_ref": "o3",
+      "test_ref": "tests/server/test_app_routes.py::test_upload_accepts_new_kinds, ::test_upload_rejects_comic_kind, ::test_kind_literal_matches_core_kinds; tests/cli/test_nouns.py::test_library_kind_choices_match_the_server; tests/core/test_store_v3.py::test_four_kinds_are_accepted",
+      "behavior_text": "asserts transcript/newspaper upload 201, other kinds refused, all kind lists equal core KINDS",
+      "contract_text": "c3 transcript and newspaper accepted everywhere",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "ran green on merged main",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-24T19:59:28Z",
+        "commit": "d5c2945"
+      },
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 9
+    },
+    {
+      "id": "e6",
+      "obligation_ref": "o4",
+      "test_ref": "tests/server/test_device_protocol.py::test_queue_entries_carry_kind; tests/core/test_devices.py::test_queue_entries_carry_the_item_kind, ::test_set_kind_shows_in_the_queue",
+      "behavior_text": "asserts the device queue JSON carries kind and reflects a re-kind",
+      "contract_text": "c4 each queue entry carries kind",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "ran green on merged main",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-24T19:59:28Z",
+        "commit": "d5c2945"
+      },
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 10
+    },
+    {
+      "id": "e7",
+      "obligation_ref": "o5",
+      "test_ref": "X3 serial log on firmware 2b3cbdea, evidence step 3",
+      "behavior_text": "Queue: 5 items, 0 skipped, 0 deletes, 0 dropped; Sync done: OK, 4 new, 0 failed",
+      "contract_text": "c5 protocol stays v1, kind additive",
+      "evidence_type": "observation",
+      "strength": "fidelity",
+      "strength_basis": "observed on hardware (unplanned, see lapse l1)",
+      "outcome": "pass",
+      "run": null,
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 11
+    },
+    {
+      "id": "e8",
+      "obligation_ref": "o6",
+      "test_ref": "tests/core/test_library.py::test_same_bytes_as_another_kind_dedups_to_the_original",
+      "behavior_text": "asserts re-upload with another kind returns the original item with its kind",
+      "contract_text": "c6 dedup by sha256 unchanged",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "ran green on merged main",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-24T19:59:28Z",
+        "commit": "d5c2945"
+      },
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 12
+    },
+    {
+      "id": "e9",
+      "obligation_ref": "o7",
+      "test_ref": "tests/server/test_app_routes.py::test_patch_kind, ::test_patch_kind_errors, ::test_patch_kind_requires_auth; tests/cli/test_nouns.py::test_library_set_kind_*; tests/core/test_library.py::test_set_kind_*",
+      "behavior_text": "asserts PATCH changes only kind, 422/404/401, CLI dry-run then --apply",
+      "contract_text": "c20 PATCH and set-kind",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "ran green on merged main; also used live on items 29, 53, 54",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-24T19:59:28Z",
+        "commit": "d5c2945"
+      },
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 13
+    },
+    {
+      "id": "e10",
+      "obligation_ref": "o8",
+      "test_ref": "web/src/views/LibraryView.test.tsx, AddView.test.tsx (vitest, 70 passed)",
+      "behavior_text": "asserts Transcript and Newspaper labels, filters and add options",
+      "contract_text": "c7 clients show the new kinds",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "ran green on merged main",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-24T19:59:28Z",
+        "commit": "d5c2945"
+      },
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 14
+    },
+    {
+      "id": "e11",
+      "obligation_ref": "o9",
+      "test_ref": "firmware ctest XteinkSyncQueue.ParsesKind, XteinkSyncQueue.AbsentUnknownOrNonStringKindIsBook (711/711)",
+      "behavior_text": "asserts kind parse and the book fallback",
+      "contract_text": "c8 firmware parses optional kind",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "ran green at the fork commit",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-24T19:59:28Z",
+        "commit": "ef7ff339"
+      },
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 15
+    },
+    {
+      "id": "e12",
+      "obligation_ref": "o10",
+      "test_ref": "firmware ctest XteinkSyncKind.FolderPerKind, XteinkSyncKind.EveryFolderIsUnderTheBooksDir",
+      "behavior_text": "asserts each kind maps to its folder under /xteink",
+      "contract_text": "c9 placeFile files per kind",
+      "evidence_type": "automated",
+      "strength": "execution",
+      "strength_basis": "ran green at the fork commit",
+      "outcome": "pass",
+      "run": {
+        "timestamp": "2026-10-24T19:59:28Z",
+        "commit": "ef7ff339"
+      },
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 16
+    },
+    {
+      "id": "e13",
+      "obligation_ref": "o11",
+      "test_ref": "X3 serial log, evidence steps 6 and 7",
+      "behavior_text": "Queue: 0 items, 6 deletes -> 6 deleted 0 failed (4 in subfolders); then 33 deleted 0 failed; inventory 43 = 37 library items + 6",
+      "contract_text": "c10 mirror-delete needs no change",
+      "evidence_type": "observation",
+      "strength": "fidelity",
+      "strength_basis": "observed on hardware on ef7ff339",
+      "outcome": "pass",
+      "run": null,
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 17
+    },
+    {
+      "id": "e14",
+      "obligation_ref": "o12",
+      "test_ref": "X3 serial log + operator, evidence step 5",
+      "behavior_text": "LIBIDX built: 51 books, 6 folders after the sync; operator saw the articles, transcripts and newspapers folders",
+      "contract_text": "c12 subfolder files appear in the X3 library",
+      "evidence_type": "observation",
+      "strength": "fidelity",
+      "strength_basis": "operator observation; per-file listing not captured",
+      "outcome": "pass",
+      "run": null,
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 18
+    },
+    {
+      "id": "e15",
+      "obligation_ref": "o13",
+      "test_ref": "X3 serial log, evidence step 5; full suites 615 passed / 711 passed",
+      "behavior_text": "Queue: 4 items -> Sync done: OK, 4 new, 0 failed; operator saw the 3 kind folders",
+      "contract_text": "c17 one item per kind lands in its own folder, 0 SD errors",
+      "evidence_type": "observation",
+      "strength": "fidelity",
+      "strength_basis": "the firmware logs no per-file paths, so per-item placement rests on the operator seeing the folders and on the subfolder mirror deletes succeeding",
+      "outcome": "pass",
+      "run": null,
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false,
+      "seq": 19
+    }
+  ],
+  "deltas": [
+    {
+      "id": "b1",
+      "kind": "amended",
+      "behavior_text": "the 5 items queued before the OTA (29, 53-56) were delivered flat in /xteink/ by the old firmware, because Check for updates synced before installing; only items queued after ef7ff339 use the kind folders",
+      "caused_by": [
+        "d4"
+      ],
+      "evidence_refs": [
+        "e7"
+      ],
+      "origin": "llm",
+      "status": "approved",
+      "superseded": false
+    }
+  ],
+  "supersessions": []
+}
