@@ -12,6 +12,7 @@ from .models import KINDS, AddResult, Item
 from .store import Store, now
 
 _SEL = "SELECT id, sha256, kind, title, author, format, size, created_at FROM items"
+_SEL_BY_ID = _SEL + " WHERE id = ?"
 
 
 def _item(r) -> Item:
@@ -82,12 +83,12 @@ class LibraryService:
                 if row is None:
                     raise
                 return AddResult(_item(row), False)
-            row = c.execute(_SEL + " WHERE id = ?", (cur.lastrowid,)).fetchone()
+            row = c.execute(_SEL_BY_ID, (cur.lastrowid,)).fetchone()
         return AddResult(_item(row), True)
 
     def get(self, item_id: int) -> Item:
         with self.store.connect() as c:
-            row = c.execute(_SEL + " WHERE id = ?", (item_id,)).fetchone()
+            row = c.execute(_SEL_BY_ID, (item_id,)).fetchone()
         if row is None:
             raise NotFoundError(f"item {item_id} not found")
         return _item(row)
@@ -100,7 +101,7 @@ class LibraryService:
             cur = c.execute("UPDATE items SET kind = ? WHERE id = ?", (kind, item_id))
             if cur.rowcount == 0:
                 raise NotFoundError(f"item {item_id} not found")
-            row = c.execute(_SEL + " WHERE id = ?", (item_id,)).fetchone()
+            row = c.execute(_SEL_BY_ID, (item_id,)).fetchone()
         return _item(row)
 
     def list(self, *, kind: str | None = None, limit: int = 100, offset: int = 0) -> list[Item]:

@@ -180,7 +180,9 @@ def test_library_rm_dry_run_then_apply(api, capsys):
 def test_library_set_kind_dry_run_then_apply(api, capsys):
     rc, out, _ = run(capsys, ["library", "set-kind", "2", "transcript"])
     assert rc == 0
-    assert "would" in out and "transcript" in out and "--apply" in out
+    assert "would" in out
+    assert "transcript" in out
+    assert "--apply" in out
     assert api.writes == []
     rc, out, _ = run(capsys, ["library", "set-kind", "2", "newspaper", "--apply", "--json"])
     rep = json.loads(out)

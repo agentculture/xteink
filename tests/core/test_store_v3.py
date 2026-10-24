@@ -111,8 +111,8 @@ def test_four_kinds_are_accepted(migrated, kind):
 
 @pytest.mark.parametrize("kind", ["firmware", "pdf", ""])
 def test_other_kinds_are_refused(migrated, kind):
-    with pytest.raises(sqlite3.IntegrityError):
-        with migrated.connect() as conn:
+    with migrated.connect() as conn:
+        with pytest.raises(sqlite3.IntegrityError):
             _insert_item(conn, "c" * 64, kind)
 
 
@@ -126,8 +126,8 @@ def test_foreign_keys_hold_after_the_rebuild(migrated):
 
 
 def test_queue_still_refuses_an_unknown_item(migrated):
-    with pytest.raises(sqlite3.IntegrityError):
-        with migrated.connect() as conn:
+    with migrated.connect() as conn:
+        with pytest.raises(sqlite3.IntegrityError):
             conn.execute(
                 "INSERT INTO queue (device_id, item_id, queued_at) VALUES (1, 999, ?)", (TS,)
             )
