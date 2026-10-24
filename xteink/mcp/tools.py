@@ -9,7 +9,7 @@ from xteink.client import ApiError, Client, ConfigError
 
 __all__ = ["ToolError", "call_tool", "tool_specs"]
 
-_KIND = {"type": "string", "enum": ["book", "article"]}
+_KIND = {"type": "string", "enum": ["book", "article", "transcript", "newspaper"]}
 _DEVICE = {
     "type": ["string", "integer"],
     "description": "device id or name (see list_devices via the API)",
