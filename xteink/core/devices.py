@@ -10,7 +10,7 @@ from .store import Store, now
 PREFIX = "xtd"
 
 _Q = (
-    "SELECT q.id, q.device_id, q.item_id, i.title, i.size, i.sha256, i.format, q.state,"
+    "SELECT q.id, q.device_id, q.item_id, i.title, i.size, i.sha256, i.format, i.kind, q.state,"
     " q.queued_at, q.delivered_at FROM queue q JOIN items i ON i.id = q.item_id"
 )
 
