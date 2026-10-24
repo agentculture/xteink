@@ -154,6 +154,53 @@ def test_upload_goes_through_ingest(main_client, h, monkeypatch):
     assert seen["kind"] == "article"
 
 
+@pytest.mark.parametrize("kind", ["transcript", "newspaper"])
+def test_upload_accepts_new_kinds(main_client, h, kind):
+    r = upload(main_client, h, kind.encode(), "x.txt", kind=kind)
+    assert r.status_code == 201, r.text
+    assert r.json()["item"]["kind"] == kind
+    listed = main_client.get(f"/api/library?kind={kind}", headers=h).json()["items"]
+    assert [i["kind"] for i in listed] == [kind]
+    assert main_client.get("/api/library?kind=book", headers=h).json()["items"] == []
+
+
+def test_upload_rejects_comic_kind(main_client, h):
+    assert upload(main_client, h, b"c", "x.txt", kind="comic").status_code == 422
+    assert main_client.get("/api/library?kind=comic", headers=h).status_code == 422
+
+
+def test_kind_literal_matches_core_kinds():
+    import typing
+
+    from xteink.core.models import KINDS
+    from xteink.server.routes_library import Kind
+
+    assert typing.get_args(Kind) == KINDS
+
+
+def test_patch_kind(main_client, h):
+    item = upload(main_client, h, b"patch me", "p.txt").json()["item"]
+    r = main_client.patch(f"/api/library/{item['id']}", json={"kind": "transcript"}, headers=h)
+    assert r.status_code == 200, r.text
+    assert r.json() == {**item, "kind": "transcript"}
+    assert main_client.get(f"/api/library/{item['id']}", headers=h).json()["kind"] == "transcript"
+
+
+def test_patch_kind_errors(main_client, h):
+    item = upload(main_client, h, b"patch me", "p.txt").json()["item"]
+    url = f"/api/library/{item['id']}"
+    assert main_client.patch(url, json={"kind": "comic"}, headers=h).status_code == 422
+    assert main_client.patch(url, json={}, headers=h).status_code == 422
+    assert (
+        main_client.patch("/api/library/99999", json={"kind": "book"}, headers=h).status_code == 404
+    )
+    assert main_client.get(url, headers=h).json()["kind"] == "book"
+
+
+def test_patch_kind_requires_auth(main_client):
+    assert main_client.patch("/api/library/1", json={"kind": "book"}).status_code == 401
+
+
 def test_upload_requires_file(main_client, h):
     assert main_client.post("/api/library", data={"title": "x"}, headers=h).status_code == 422
 
