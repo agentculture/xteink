@@ -33,7 +33,9 @@ the X3: books sync over the home LAN or a phone hotspot and read offline, and it
 updates over the air from the server (a once-a-day start-time routine; release
 flow `xteink firmware release`, see `docs/firmware-release.md`). Its Home screen
 clock changes every minute while awake, and the daily sync writes network time
-to the RTC (its on-device accuracy check is pending). Other Xteink models are build-verified only;
+to the RTC (its on-device accuracy check is pending). Library items are a `book`, `article`,
+`transcript` or `newspaper` (re-kind with `xteink library set-kind`); the firmware files the last three
+in `/xteink/articles/`, `/xteink/transcripts/` and `/xteink/newspapers/` (not yet verified on the X3). Other Xteink models are build-verified only;
 large (≥ 5 MB) EPUB syncs through the tunnel are **not verified**. PDF ingest is *(planned)*. User docs: `README.md`, `docs/api.md`,
 `docs/mcp.md`. See `CLAUDE.md` § "Current state vs. roadmap".
 

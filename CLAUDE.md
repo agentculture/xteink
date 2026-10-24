@@ -24,7 +24,11 @@ Landed and in the tree (read the code, not this list, when in doubt):
 
 - **Core** (`xteink/core`): SQLite store plus content-addressed blobs, library,
   devices and queue, API/device keys, and ingest (size and zip-bomb limits,
-  Markdown/HTML to EPUB through pandoc).
+  Markdown/HTML to EPUB through pandoc). Library items have one of four kinds:
+  `book`, `article`, `transcript`, `newspaper` (schema v3; `library.db.vN.bak` is
+  written before a migration). `PATCH /api/library/{id}` and `xteink library
+  set-kind` re-kind an item, and each device queue entry carries its `kind`
+  (an additive v1 field).
 - **Server** (`xteink/server`): the main app on :8780 (`/api/library*`,
   `/api/devices*`, `/api/keys*`, the web UI at `/`, OpenAPI at `api/openapi.json`)
   and a separate device-only app on :8781 (`/api/device/*`, device protocol v1 in
@@ -88,6 +92,10 @@ Still **(planned)** or unverified:
 - **(unverified)** Syncing a large (≥ 5 MB) EPUB through the tunnel. A 6.5 MB
   EPUB has synced over the home LAN with no SD retries; through the tunnel only
   small articles have synced so far.
+- **(unverified)** Per-kind folders on the X3: the firmware files articles,
+  transcripts and newspapers under `/xteink/articles/`, `/xteink/transcripts/` and
+  `/xteink/newspapers/` (books stay in `/xteink/`). Host-tested and build-verified
+  only until `docs/evidence/kind-transcript-validation.md` records an X3 sync.
 - **(unverified)** On-device OTA rollback, OTA over the tunnel, and battery-start
   timing of the daily routine (open items in `docs/evidence/ota-daily-validation.md`).
 - **(planned)** PDF ingest (rejected today with `pdf_not_supported`).
