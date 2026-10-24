@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from "react";
 import {
+  KIND_LABELS,
   deleteItem,
   downloadItem,
   listDevices,
@@ -90,6 +91,8 @@ export function LibraryView({ refreshToken = 0, onAddClick }: Props) {
               ["", "All"],
               ["book", "Books"],
               ["article", "Articles"],
+              ["transcript", "Transcripts"],
+              ["newspaper", "Newspapers"],
             ] as const
           ).map(([value, label]) => (
             <label key={value} className={kind === value ? "is-on" : undefined}>
@@ -197,7 +200,7 @@ function LibraryItem({
         </h2>
         {item.author && <p className="book-author">{item.author}</p>}
         <p className="book-meta">
-          {item.kind === "article" ? "Article" : "Book"}, {item.format.toUpperCase()},{" "}
+          {KIND_LABELS[item.kind] ?? "Book"}, {item.format.toUpperCase()},{" "}
           {formatBytes(item.size)}, added {formatWhen(item.created_at)}
         </p>
         {sent.map(({ device, entry }) => (
