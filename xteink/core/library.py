@@ -92,6 +92,17 @@ class LibraryService:
             raise NotFoundError(f"item {item_id} not found")
         return _item(row)
 
+    def set_kind(self, item_id: int, kind: str) -> Item:
+        """Change only an item's kind; id, sha256 and title stay as they are."""
+        if kind not in KINDS:
+            raise ValidationError(f"kind must be one of {KINDS}")
+        with self.store.connect() as c:
+            cur = c.execute("UPDATE items SET kind = ? WHERE id = ?", (kind, item_id))
+            if cur.rowcount == 0:
+                raise NotFoundError(f"item {item_id} not found")
+            row = c.execute(_SEL + " WHERE id = ?", (item_id,)).fetchone()
+        return _item(row)
+
     def list(self, *, kind: str | None = None, limit: int = 100, offset: int = 0) -> list[Item]:
         sql = _SEL
         params: list = []

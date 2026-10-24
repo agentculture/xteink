@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-KINDS = ("book", "article")
+KINDS = ("book", "article", "transcript", "newspaper")
 
 
 @dataclass(frozen=True)
@@ -57,6 +57,7 @@ class QueueEntry:
     size: int
     sha256: str
     format: str
+    kind: str
     state: str  # 'queued' | 'delivered'
     queued_at: str
     delivered_at: str | None
