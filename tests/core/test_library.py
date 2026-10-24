@@ -134,3 +134,38 @@ def test_add_survives_a_concurrent_insert_of_the_same_bytes(library, monkeypatch
     again = library.add(b"same", title="B", kind="book", format="txt")
     assert again.created is False
     assert again.item.id == first.id
+
+
+def test_kinds_are_the_four_known_ones(library):
+    from xteink.core.models import KINDS
+
+    assert KINDS == ("book", "article", "transcript", "newspaper")
+    for i, kind in enumerate(KINDS):
+        assert _add(library, data=b"k%d" % i, kind=kind).item.kind == kind
+    with pytest.raises(ValidationError):
+        _add(library, data=b"zz", kind="comic")
+
+
+def test_same_bytes_as_another_kind_dedups_to_the_original(library):
+    first = _add(library, data=b"same", kind="article")
+    second = _add(library, data=b"same", kind="transcript")
+    assert second.created is False
+    assert second.item.id == first.item.id
+    assert second.item.kind == "article"
+
+
+def test_set_kind_updates_only_kind(library):
+    item = _add(library, kind="article").item
+    out = library.set_kind(item.id, "transcript")
+    assert out.kind == "transcript"
+    assert (out.id, out.sha256, out.title) == (item.id, item.sha256, item.title)
+    assert library.get(item.id).kind == "transcript"
+
+
+def test_set_kind_rejects_bad_kind_and_unknown_id(library):
+    item = _add(library).item
+    with pytest.raises(ValidationError):
+        library.set_kind(item.id, "comic")
+    assert library.get(item.id).kind == "book"
+    with pytest.raises(NotFoundError):
+        library.set_kind(9999, "article")

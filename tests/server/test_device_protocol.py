@@ -107,12 +107,23 @@ def test_queue_shape(device_client, lib, devs):
                 "size": 5,
                 "sha256": a.sha256,
                 "format": "epub",
+                "kind": "book",
                 "url": f"/api/device/items/{a.id}",
             }
         ],
         "skipped": [],
         "deletes": [],
     }
+
+
+@pytest.mark.parametrize("kind", ["article", "transcript", "newspaper"])
+def test_queue_entries_carry_kind(device_client, lib, devs, kind):
+    dev, raw = register(devs)
+    a = lib.add(kind.encode(), title="K", kind=kind, format="epub").item
+    devs.queue_item(dev.id, a.id)
+    r = device_client.get("/api/device/queue", headers=h(raw))
+    assert r.json()["protocol"] == "1"
+    assert [i["kind"] for i in r.json()["items"]] == [kind]
 
 
 def test_ranged_download(device_client, lib, devs):

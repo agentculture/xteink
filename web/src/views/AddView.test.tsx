@@ -80,4 +80,19 @@ describe("AddView", () => {
     await userEvent.upload(screen.getByLabelText(/choose files/i), new File(["n"], "notes.txt"));
     expect(await screen.findByText(/added as “Notes”/i)).toBeInTheDocument();
   });
+
+  it("offers Transcript and Newspaper and sends the chosen kind", async () => {
+    uploadItem.mockResolvedValue({ item: item(1, "T"), created: true });
+    render(<AddView onAdded={vi.fn()} />);
+    const select = screen.getByLabelText("Kind", { selector: "select" });
+    expect(within(select).getByRole("option", { name: "Transcript" })).toBeInTheDocument();
+    expect(within(select).getByRole("option", { name: "Newspaper" })).toBeInTheDocument();
+    await userEvent.selectOptions(select, "newspaper");
+    drop([new File(["x"], "daily.epub")]);
+    await screen.findByText("daily.epub");
+    expect(uploadItem).toHaveBeenCalledWith(
+      expect.any(File),
+      expect.objectContaining({ kind: "newspaper" }),
+    );
+  });
 });

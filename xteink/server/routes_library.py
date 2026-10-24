@@ -9,6 +9,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, JSONResponse
+from pydantic import BaseModel
 
 from xteink.core.ingest import (
     DEFAULT_LIMITS,
@@ -37,7 +38,12 @@ _MEDIA_TYPES = {
 }
 _UNSAFE_FILENAME = re.compile(r"[^\w .()\-]+")
 
-Kind = Literal["book", "article"]
+# Keep in step with ``xteink.core.models.KINDS`` (a test asserts they match).
+Kind = Literal["book", "article", "transcript", "newspaper"]
+
+
+class KindPatch(BaseModel):
+    kind: Kind
 
 
 def _ingest_error_response(exc: IngestError) -> JSONResponse:
@@ -98,6 +104,12 @@ async def upload_item(
 @router.get("/{item_id}")
 def get_item(item_id: int, services: Services = Depends(get_services)) -> dict:
     return asdict(services.library.get(item_id))
+
+
+@router.patch("/{item_id}")
+def patch_item(item_id: int, body: KindPatch, services: Services = Depends(get_services)) -> dict:
+    """Change only an item's kind; id and sha256 are unchanged."""
+    return asdict(services.library.set_kind(item_id, body.kind))
 
 
 @router.get("/{item_id}/file", response_class=FileResponse)

@@ -18,7 +18,15 @@
 
 import { getStoredKey } from "./storage";
 
-export type Kind = "book" | "article";
+export type Kind = "book" | "article" | "transcript" | "newspaper";
+
+/** Singular display label per kind; the single source for cards and the Add form. */
+export const KIND_LABELS: Record<Kind, string> = {
+  book: "Book",
+  article: "Article",
+  transcript: "Transcript",
+  newspaper: "Newspaper",
+};
 
 export type Item = {
   id: number;

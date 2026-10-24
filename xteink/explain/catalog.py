@@ -33,7 +33,7 @@ on the X3 and build-verified for the other Xteink models. See `xteink learn` for
 - `xteink doctor` — check the agent-identity invariants.
 - `xteink cli overview` — describe the CLI surface.
 - `xteink server` — HTTP API health (`status`).
-- `xteink library` — list, add, rm library items.
+- `xteink library` — list, add, rm, set-kind library items.
 - `xteink device` — list, queue, revoke, backup, provision readers.
 - `xteink firmware` — list, upload, offer reader firmware (OTA).
 - `xteink tunnel` — Cloudflare Tunnel status and plan.
@@ -156,14 +156,15 @@ _LIBRARY = """\
 # xteink library
 
 Manage the library through the HTTP API (no direct database access).
-`add` and `rm` are **dry-run unless `--apply`**: they say what they would do and
+`add`, `rm` and `set-kind` are **dry-run unless `--apply`**: they say what they would do and
 send no write request.
 
 ## Usage
 
-    xteink library list [--q TEXT] [--kind book|article|image] [--limit N] [--json]
+    xteink library list [--q TEXT] [--kind book|article|transcript|newspaper] [--limit N] [--json]
     xteink library add PATH [--title T] [--author A] [--kind K] [--device ID|NAME] [--apply]
     xteink library rm ID [--apply]
+    xteink library set-kind ID book|article|transcript|newspaper [--apply]
     xteink library overview
 
 `add --device` also queues the new item for that device (after upload, with
@@ -308,6 +309,7 @@ ENTRIES: dict[tuple[str, ...], str] = {
     ("library", "list"): _LIBRARY,
     ("library", "add"): _LIBRARY,
     ("library", "rm"): _LIBRARY,
+    ("library", "set-kind"): _LIBRARY,
     ("device",): _DEVICE,
     ("device", "overview"): _DEVICE,
     ("device", "list"): _DEVICE,

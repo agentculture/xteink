@@ -192,6 +192,10 @@ class Client:
         body, ctype = _multipart(fields, filename, data)  # type: ignore[arg-type]
         return self._request("POST", "/api/library", raw_body=body, content_type=ctype)
 
+    def set_kind(self, item_id: int, kind: str) -> dict:
+        """Change an item's kind (``PATCH /api/library/{id}``); returns the updated item."""
+        return self._request("PATCH", f"/api/library/{int(item_id)}", json_body={"kind": kind})
+
     def delete_item(self, item_id: int) -> None:
         self._request("DELETE", f"/api/library/{int(item_id)}")
 

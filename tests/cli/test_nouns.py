@@ -14,7 +14,7 @@ from xteink.explain import known_paths
 
 NOUNS = {
     "server": ["status"],
-    "library": ["add", "list", "rm"],
+    "library": ["add", "list", "rm", "set-kind"],
     "device": ["list", "queue", "revoke", "backup", "provision"],
     "firmware": ["list", "upload", "offer", "rollbacks"],
     "tunnel": ["status", "plan"],
@@ -175,6 +175,36 @@ def test_library_rm_dry_run_then_apply(api, capsys):
     rc, out, _ = run(capsys, ["library", "rm", "1", "--apply", "--json"])
     assert json.loads(out)["applied"] is True
     assert api.writes == [("DELETE", "/api/library/1")]
+
+
+def test_library_set_kind_dry_run_then_apply(api, capsys):
+    rc, out, _ = run(capsys, ["library", "set-kind", "2", "transcript"])
+    assert rc == 0
+    assert "would" in out
+    assert "transcript" in out
+    assert "--apply" in out
+    assert api.writes == []
+    rc, out, _ = run(capsys, ["library", "set-kind", "2", "newspaper", "--apply", "--json"])
+    rep = json.loads(out)
+    assert rc == 0
+    assert rep["applied"] is True
+    assert rep["item"]["kind"] == "newspaper"
+    assert api.writes == [("PATCH", "/api/library/2")]
+    assert json.loads(api.bodies[-1]) == {"kind": "newspaper"}
+
+
+def test_library_set_kind_invalid_kind_is_user_error(api, capsys):
+    with pytest.raises(SystemExit) as exc:
+        main(["library", "set-kind", "2", "image", "--apply"])
+    assert exc.value.code == 1
+    assert "invalid choice" in capsys.readouterr().err
+    assert api.requests == []
+
+
+def test_library_set_kind_unknown_id(api, capsys):
+    rc, _, err = run(capsys, ["library", "set-kind", "99", "book", "--apply"])
+    assert rc == 1
+    assert api.writes == []
 
 
 def test_device_queue_dry_run_then_apply(api, capsys):

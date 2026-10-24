@@ -70,7 +70,9 @@
               {
                 "enum": [
                   "book",
-                  "article"
+                  "article",
+                  "transcript",
+                  "newspaper"
                 ],
                 "type": "string"
               },
@@ -144,6 +146,25 @@
           "name"
         ],
         "title": "KeyCreate",
+        "type": "object"
+      },
+      "KindPatch": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "book",
+              "article",
+              "transcript",
+              "newspaper"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "KindPatch",
         "type": "object"
       },
       "MirrorUpdate": {
@@ -1039,7 +1060,9 @@
                 {
                   "enum": [
                     "book",
-                    "article"
+                    "article",
+                    "transcript",
+                    "newspaper"
                   ],
                   "type": "string"
                 },
@@ -1237,6 +1260,64 @@
           }
         ],
         "summary": "Get Item",
+        "tags": [
+          "library"
+        ]
+      },
+      "patch": {
+        "description": "Change only an item's kind; id and sha256 are unchanged.",
+        "operationId": "patch_item_api_library__item_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KindPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Patch Item Api Library  Item Id  Patch",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Patch Item",
         "tags": [
           "library"
         ]

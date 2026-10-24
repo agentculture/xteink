@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-10-24
+
+### Added
+
+- Library kinds `transcript` and `newspaper` beside `book` and `article` (issue 8), in the API, CLI, MCP and web UI
+- `PATCH /api/library/{id}` and `xteink library set-kind ID KIND` re-kind an item (dry-run unless `--apply`)
+- Device queue entries carry `kind` (additive device protocol v1 field; older firmware ignores it)
+- Schema v3 rebuilds `items` for the four kinds and keeps ids, the id counter and queue rows; `library.db.vN.bak` is written before any migration
+
+### Changed
+
+- Firmware fork (`xteink/kind-folders`): articles, transcripts and newspapers are filed in `/xteink/articles/`, `/xteink/transcripts/` and `/xteink/newspapers/`; earlier files are not moved
+
 ## [0.12.1] - 2026-10-13
 
 ### Changed

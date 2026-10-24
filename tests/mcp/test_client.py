@@ -96,3 +96,13 @@ def test_register_and_revoke_device(api_url, api_key):
     assert minted["device"]["mirror"] is True
     cl.revoke_device(minted["device"]["id"])
     assert any(d["id"] == minted["device"]["id"] and d["revoked_at"] for d in cl.list_devices())
+
+
+def test_set_kind_patches_the_item(api_url, api_key):
+    cl = make(api_url, api_key)
+    item = cl.upload(b"# Hi\n\nbody", "sk.md", title="SK")["item"]
+    assert cl.set_kind(item["id"], "transcript")["kind"] == "transcript"
+    assert cl.get_item(item["id"])["kind"] == "transcript"
+    with pytest.raises(c.ApiError) as e:
+        cl.set_kind(item["id"], "image")
+    assert e.value.status == 422

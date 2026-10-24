@@ -263,6 +263,7 @@ def get_queue(
                 "size": entry.size,
                 "sha256": entry.sha256,
                 "format": entry.format,
+                "kind": entry.kind,
                 "url": f"/api/device/items/{entry.item_id}",
             }
         )

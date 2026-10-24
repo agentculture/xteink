@@ -175,3 +175,20 @@ def test_report_status_keeps_run_fields_when_omitted(devices):
     after = devices.report_status(dev.id, last_sync_result="ok", content_outcome="partial")
     assert (after.last_run_at, after.last_run_trigger) == ("t0", "power_on")
     assert (after.last_fw_outcome, after.last_content_outcome) == ("installed", "partial")
+
+
+def test_queue_entries_carry_the_item_kind(devices, library):
+    dev, _ = devices.register("k")
+    for i, kind in enumerate(("book", "article", "transcript", "newspaper")):
+        item = library.add(b"kind%d" % i, title="T", kind=kind, format="epub").item
+        assert devices.queue_item(dev.id, item.id).kind == kind
+
+
+def test_set_kind_shows_in_the_queue(devices, library):
+    dev, _ = devices.register("k2")
+    item = _item(library, b"retag")
+    entry = devices.queue_item(dev.id, item.id)
+    assert entry.kind == "book"
+    library.set_kind(item.id, "newspaper")
+    assert devices.queue_item(dev.id, item.id).kind == "newspaper"
+    assert all(e.kind == "newspaper" for e in devices.queue(dev.id))
