@@ -98,4 +98,33 @@ describe("LibraryView", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Add books" }));
     expect(onAdd).toHaveBeenCalled();
   });
+
+  it("labels transcript and newspaper items with their own kind, never Book", async () => {
+    vi.mocked(api.listItems).mockResolvedValue({
+      items: [
+        { ...book, id: 11, kind: "transcript", title: "Call notes" },
+        { ...book, id: 12, kind: "newspaper", title: "Daily Brief" },
+      ],
+    });
+    render(<LibraryView onAddClick={vi.fn()} />);
+    const t = (await screen.findByRole("heading", { name: "Call notes" })).closest("article")!;
+    expect(within(t).getByText(/^Transcript,/)).toBeInTheDocument();
+    expect(within(t).queryByText(/^Book,/)).toBeNull();
+    const n = (await screen.findByRole("heading", { name: "Daily Brief" })).closest("article")!;
+    expect(within(n).getByText(/^Newspaper,/)).toBeInTheDocument();
+    expect(within(n).queryByText(/^Book,/)).toBeNull();
+  });
+
+  it("offers Transcripts and Newspapers in the filter", async () => {
+    render(<LibraryView onAddClick={vi.fn()} />);
+    await screen.findByRole("heading", { name: "Middlemarch" });
+    await userEvent.click(screen.getByLabelText("Transcripts"));
+    await vi.waitFor(() =>
+      expect(api.listItems).toHaveBeenLastCalledWith(expect.objectContaining({ kind: "transcript" })),
+    );
+    await userEvent.click(screen.getByLabelText("Newspapers"));
+    await vi.waitFor(() =>
+      expect(api.listItems).toHaveBeenLastCalledWith(expect.objectContaining({ kind: "newspaper" })),
+    );
+  });
 });

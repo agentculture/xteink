@@ -119,6 +119,8 @@ export function AddView({ onAdded }: Props) {
               <option value="">Decide from the file</option>
               <option value="book">Book</option>
               <option value="article">Article</option>
+              <option value="transcript">Transcript</option>
+              <option value="newspaper">Newspaper</option>
             </select>
           </label>
         </div>
