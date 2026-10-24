@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] - 2026-10-24
+
+### Changed
+
+- Per-kind folders on the X3 are hardware-verified, including mirror deletes from the subfolders (`docs/evidence/kind-transcript-validation.md` steps 2–7)
+- Prompt files describe xteink's library as the private device store: culture-library is the official library and culture-rules delivers from it (xteink#3)
+
 ## [0.13.0] - 2026-10-24
 
 ### Added

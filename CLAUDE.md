@@ -28,7 +28,18 @@ Landed and in the tree (read the code, not this list, when in doubt):
   `book`, `article`, `transcript`, `newspaper` (schema v3; `library.db.vN.bak` is
   written before a migration). `PATCH /api/library/{id}` and `xteink library
   set-kind` re-kind an item, and each device queue entry carries its `kind`
-  (an additive v1 field).
+  (an additive v1 field). On the X3 the firmware files articles, transcripts and
+  newspapers in `/xteink/articles/`, `/xteink/transcripts/` and
+  `/xteink/newspapers/` (books stay in `/xteink/`; files delivered earlier are
+  not moved). Hardware-verified on 2026-10-24, including mirror deletes from the
+  subfolders (`docs/evidence/kind-transcript-validation.md`).
+- **Library role**: xteink's library is the private device store, holding only
+  what was sent to a reader. culture-library (library.culture.dev) is the
+  official library. culture-rules fetches an item from it on a send request,
+  uploads it to xteink's `POST /api/library` and queues it (culture-rules#86).
+  xteink never calls culture-library; the two keep separate ids, linked by
+  sha256 (xteink#3). Don't grow catalog features (search, OPDS, repo documents)
+  here.
 - **Server** (`xteink/server`): the main app on :8780 (`/api/library*`,
   `/api/devices*`, `/api/keys*`, the web UI at `/`, OpenAPI at `api/openapi.json`)
   and a separate device-only app on :8781 (`/api/device/*`, device protocol v1 in
@@ -48,7 +59,8 @@ Landed and in the tree (read the code, not this list, when in doubt):
   profile adds `cloudflared-ui` and `cloudflared-device`), `docker/avahi/` notes
   for `xteink.local`, pandoc 3.12 in the image.
 - **Remote access**: two cultureflare tunnels (see `docs/remote-access.md`):
-  `ebooks.culture.dev` behind Cloudflare Access to `api:8780`, and
+  `ebooks.culture.dev` behind Cloudflare Access to `api:8780` (to be torn down
+  once culture-rules delivers from culture-library, xteink#3), and
   `xteink.culture.dev` tunnel-only to `api:8781`. Tokens are hidden grant secrets
   injected with `grant run --inject`; xteink never calls the Cloudflare API.
 - **CLI nouns**: `server`, `library`, `device` (`list`, `queue`, `revoke`,
@@ -92,10 +104,6 @@ Still **(planned)** or unverified:
 - **(unverified)** Syncing a large (≥ 5 MB) EPUB through the tunnel. A 6.5 MB
   EPUB has synced over the home LAN with no SD retries; through the tunnel only
   small articles have synced so far.
-- **(unverified)** Per-kind folders on the X3: the firmware files articles,
-  transcripts and newspapers under `/xteink/articles/`, `/xteink/transcripts/` and
-  `/xteink/newspapers/` (books stay in `/xteink/`). Host-tested and build-verified
-  only until `docs/evidence/kind-transcript-validation.md` records an X3 sync.
 - **(unverified)** On-device OTA rollback, OTA over the tunnel, and battery-start
   timing of the daily routine (open items in `docs/evidence/ota-daily-validation.md`).
 - **(planned)** PDF ingest (rejected today with `pdf_not_supported`).
