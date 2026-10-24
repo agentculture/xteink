@@ -90,6 +90,9 @@ def _handler(api: FakeApi, device_app: bool):
                     return self._send(200, ITEMS[iid])
                 if method == "DELETE":
                     return self._send(204)
+                if method == "PATCH":
+                    kind = json.loads(body).get("kind")
+                    return self._send(200, {**ITEMS[iid], "kind": kind})
             if method == "GET" and path == "/api/devices":
                 return self._send(200, {"devices": api.devices})
             if method == "GET" and path == "/api/firmware":
@@ -129,6 +132,7 @@ def _handler(api: FakeApi, device_app: bool):
         do_GET = lambda self: self._route("GET")  # noqa: E731
         do_POST = lambda self: self._route("POST")  # noqa: E731
         do_DELETE = lambda self: self._route("DELETE")  # noqa: E731
+        do_PATCH = lambda self: self._route("PATCH")  # noqa: E731
 
     return H
 

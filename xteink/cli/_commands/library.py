@@ -1,6 +1,6 @@
-"""``xteink library`` — add, list and remove library items via the HTTP API (thin client).
+"""``xteink library`` — add, list, remove and re-kind library items via the HTTP API (thin client).
 
-``add`` and ``rm`` are dry-run unless ``--apply`` is given.
+``add``, ``rm`` and ``set-kind`` are dry-run unless ``--apply`` is given.
 """
 
 from __future__ import annotations
@@ -92,6 +92,27 @@ def cmd_rm(args: argparse.Namespace) -> None:
     _emit(args, payload, f"removed: {what}")
 
 
+def cmd_set_kind(args: argparse.Namespace) -> None:
+    client = make_client()
+    item = call(lambda: client.get_item(args.item_id))
+    what = (
+        f"change library item {item['id']} ({item['title']!r}) from kind "
+        f"{item['kind']} to {args.kind}"
+    )
+    payload: dict[str, Any] = {
+        "action": "set-kind",
+        "applied": bool(args.apply),
+        "item": {"id": item["id"], "title": item["title"], "kind": item["kind"]},
+        "kind": args.kind,
+    }
+    if not args.apply:
+        _emit(args, payload, f"would {what}\n{DRY_RUN_HINT}")
+        return
+    updated = call(lambda: client.set_kind(item["id"], args.kind))
+    payload["item"] = updated
+    _emit(args, payload, f"updated: {_line(updated)}")
+
+
 def cmd_overview(args: argparse.Namespace) -> None:
     emit_overview(
         "xteink library",
@@ -103,10 +124,11 @@ def cmd_overview(args: argparse.Namespace) -> None:
                     "add PATH [--title --author --kind --device ID|NAME] [--apply] — upload a file "
                     "(and optionally queue it)",
                     "rm ID [--apply] — remove an item",
+                    "set-kind ID KIND [--apply] — change an item's kind",
                     "overview — this description",
                 ],
             },
-            {"title": "Safety", "items": ["add/rm are dry-run until --apply is given"]},
+            {"title": "Safety", "items": ["add/rm/set-kind are dry-run until --apply is given"]},
         ],
         json_mode=json_mode(args),
     )
@@ -140,6 +162,13 @@ def register(sub: argparse._SubParsersAction) -> None:
     r.add_argument("--apply", action="store_true", help="Actually remove.")
     add_json(r)
     r.set_defaults(func=cmd_rm)
+
+    sk = nsub.add_parser("set-kind", help="Change an item's kind (dry-run by default).")
+    sk.add_argument("item_id", metavar="ID", type=int)
+    sk.add_argument("kind", metavar="KIND", choices=KINDS)
+    sk.add_argument("--apply", action="store_true", help="Actually change the kind.")
+    add_json(sk)
+    sk.set_defaults(func=cmd_set_kind)
 
     ov = nsub.add_parser("overview", help="Describe the library noun.")
     add_json(ov)
