@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.2] - 2026-10-24
+
+### Added
+
+- Delivery summary for issue 8 (`docs/deliveries/2026-10-24-kind-transcript.md`), with the approved obligations, evidence, delta and lapse records in `.devague/`
+
 ## [0.13.1] - 2026-10-24
 
 ### Changed

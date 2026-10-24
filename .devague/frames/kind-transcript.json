@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-24T04:52:58Z",
-  "updated": "2026-10-24T16:07:38Z",
+  "updated": "2026-10-24T20:16:24Z",
   "claims": [
     {
       "id": "c1",
@@ -710,6 +710,138 @@
       "seeds": []
     }
   ],
-  "lapses": [],
-  "obligations": []
+  "lapses": [
+    {
+      "id": "l1",
+      "code": "assumption-for-measurement",
+      "what": "Main agent told the operator that Settings > Check for updates only installs the offered image; on the X3 it ran a full sync on the old firmware first (Queue: 5 items, Sync done: OK, 4 new) and only then installed ef7ff339, so the 5 queued items were filed flat in /xteink/, which is what deviation d4 meant to avoid",
+      "skipped_check": "read the fork's Check-for-updates path (or ota-daily-validation.md) before telling the operator what it does",
+      "refs": [
+        "t9",
+        "d4",
+        "serial log 2026-10-24 17:35Z"
+      ],
+      "origin": "llm",
+      "status": "approved"
+    }
+  ],
+  "obligations": [
+    {
+      "id": "o1",
+      "claim_id": "c2",
+      "seam": "xteink/core/store.py _MIGRATIONS step 3",
+      "behavior": "a v0/v1/v2 database migrates to v3 keeping items, ids, queue rows and the id counter",
+      "source_text": "Schema step 3 in xteink/core/store.py _MIGRATIONS rebuilds the items table with CHECK (kind IN ('book','article','transcript','newspaper')), because SQLite can't ALTER a CHECK and _SCHEMA (store.py:16-18) is never edited; the rebuild keeps items.id values, sqlite_sequence and the queue.item_id FK rows (store.py:47) intact; tests/core/test_firmware.py::test_firmware_never_goes_into_items (asserts the old CHECK text, :246) is updated and a new migration test covers an issue-1/v2 DB with queue rows",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o2",
+      "claim_id": "c22",
+      "seam": "xteink/core/store.py _backup_if_pending",
+      "behavior": "a pending schema step writes library.db.vN.bak first; an up-to-date or new database writes none",
+      "source_text": "Before applying any pending schema step, the Store copies library.db to library.db.v2.bak (named after the version being migrated from; sqlite3 backup API, same data dir), so rolling the server image back after the v3 rebuild has a restore path: an older xteink refuses a newer schema (store.py:111-115) and there is no backup of library.db today",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o3",
+      "claim_id": "c3",
+      "seam": "API, CLI and core KINDS",
+      "behavior": "transcript and newspaper are accepted on upload; other kinds are refused; CLI and API kind lists match core",
+      "source_text": "transcript and newspaper are accepted everywhere a kind is enumerated: xteink/core/models.py:7 KINDS, routes_library.py:40 Kind Literal (upload + list filter), cli/_commands/library.py:18 KINDS (kept equal by tests/cli/test_nouns.py:317), mcp/tools.py:12 _KIND enum, web/src/services/api.ts:21 Kind; api/openapi.json is regenerated (export-openapi.py --check); any other value is still refused with 422",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o4",
+      "claim_id": "c4",
+      "seam": "device queue entries",
+      "behavior": "each queue entry carries the item kind, and a re-kind shows in the queue",
+      "source_text": "Each device queue entry carries kind: xteink/core/devices.py _Q (:12-15) selects i.kind, QueueEntry (core/models.py:50-62) gains kind, routes_device.py get_queue (:262-271) emits it, with 'book' when the item has none; tests/server/test_device_protocol.py::test_queue_shape is updated",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o5",
+      "claim_id": "c5",
+      "seam": "older firmware on the X3",
+      "behavior": "firmware without kind support syncs a queue carrying kind without dropping anything",
+      "source_text": "The device protocol stays v1 (PROTOCOL_VERSION '1', routes_device.py:33): kind is an additive field like the OTA additions (routes_device.py:12-13, docs/device-protocol.md changelog :222-231); older firmware ignores it because parseQueue (xteink-firmware SyncProtocol.cpp) reads JSON keys by name with ArduinoJson and skips unknown ones; docs/device-protocol.md gets the field and a changelog line",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o6",
+      "claim_id": "c6",
+      "seam": "library sha256 dedup",
+      "behavior": "the same bytes uploaded with another kind return the original item unchanged",
+      "source_text": "Dedup by sha256 is unchanged: xteink/core/library.py:52-56 looks up by sha256 only, so re-uploading the same bytes returns the existing item (created: false) with its original kind, whatever kind the new upload names",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o7",
+      "claim_id": "c20",
+      "seam": "PATCH /api/library/{id} and xteink library set-kind",
+      "behavior": "re-kind changes only kind, 422 for a bad kind, 404 for an unknown id, dry run unless --apply",
+      "source_text": "PATCH /api/library/{id} accepts {kind} (any value in KINDS: book|article|transcript|newspaper; 422 otherwise) and xteink library set-kind ID KIND (dry-run unless --apply, MCP not required) calls it; the item record and every queue entry then carry the new kind. Files already on a device stay where they are (c11): re-queueing to the same device does not move the file, because the firmware finds its sha256 in the manifest and acks it in place (XteinkSync.cpp alreadyHere). A re-kinded item lands in its new folder only on a device that does not already hold it",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o8",
+      "claim_id": "c7",
+      "seam": "web UI LibraryView and AddView",
+      "behavior": "transcripts and newspapers show their own labels, filters and add options",
+      "source_text": "Clients show transcripts and newspapers as their own kinds: web/src/views/LibraryView.tsx:200 (item.kind === 'article' ? 'Article' : 'Book' would label them Book) becomes a kind-to-label map, the filter radios (:87-94) and AddView.tsx option list (:118-121) gain Transcript and Newspaper, and docs/api.md (:100,:122,:135), docs/mcp.md (:114) and xteink/explain/catalog.py:164 (whose stale 'image' kind is dropped) list book|article|transcript|newspaper",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o9",
+      "claim_id": "c8",
+      "seam": "firmware QueueItem parse",
+      "behavior": "kind is parsed; absent, unknown or non-string kind is book",
+      "source_text": "Firmware QueueItem (xteink-firmware src/xteink/SyncProtocol.h:118, origin/feat/issue-1) parses an optional kind, where absent, unknown or wrong-typed means book, and a pure helper in SyncProtocol.{h,cpp} maps kind to folder (/xteink, /xteink/articles, /xteink/transcripts, /xteink/newspapers) so test/xteink_sync/XteinkSyncTest.cpp (host GoogleTest, no Storage) covers the per-kind path choice",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o10",
+      "claim_id": "c9",
+      "seam": "firmware placeFile and kindFolder",
+      "behavior": "each kind maps to its folder under /xteink, created on demand",
+      "source_text": "Firmware placeFile (XteinkSync.cpp:489, origin/feat/issue-1) creates /xteink and then the kind subfolder on demand (Storage.mkdir is non-recursive), and applies the bookFileName / bookFileNameWithId clash rule and the never-overwrite-sideloaded-or-modified check inside that folder; docs/xteink/sync.md step 4 (:58-60) names the per-kind folders",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o11",
+      "claim_id": "c10",
+      "seam": "firmware mirror delete over manifest paths",
+      "behavior": "files in the kind subfolders are inventoried and mirror-deleted without change",
+      "source_text": "Manifest, inventory, re-hash and mirror-delete need no change: DeliveredFile stores the full path, and every walk (XteinkSync.cpp:612 inventory, :819 deletes, origin/feat/issue-1) iterates manifest.files rather than scanning /xteink, so subfolder files work as they are",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o12",
+      "claim_id": "c12",
+      "seam": "X3 library index",
+      "behavior": "files in the kind subfolders show up in the X3 library",
+      "source_text": "Files in /xteink/articles and /xteink/transcripts appear in the reader's library because LibraryBuilder.cpp:242 is described as a recursive walk and the sync marks the index dirty (XteinkSync.cpp); this is unverified on the X3",
+      "origin": "llm",
+      "status": "approved"
+    },
+    {
+      "id": "o13",
+      "claim_id": "c17",
+      "seam": "X3 sync of one item per kind",
+      "behavior": "4 items of 4 kinds sync in one run on the first try with 0 failures, into their folders; server and firmware suites pass",
+      "source_text": "On the X3, 1 item of each of the 4 kinds pushed in one sync lands in its own folder (4 folders) on the first try (0 SD errors), and the full server suite plus the firmware ctest suite pass, with \u2265 1 new test per acceptance criterion in issue 8",
+      "origin": "llm",
+      "status": "approved"
+    }
+  ]
 }
