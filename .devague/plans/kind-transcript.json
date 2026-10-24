@@ -5,7 +5,7 @@
   "schema_version": 5,
   "status": "exported",
   "created": "2026-10-24T15:25:01Z",
-  "updated": "2026-10-24T15:54:26Z",
+  "updated": "2026-10-24T16:07:38Z",
   "targets": [
     {
       "id": "c1",
@@ -482,8 +482,8 @@
       "text": "The probe ran the items rebuild outside `_migrate`; the step-3 statements must run inside its BEGIN IMMEDIATE with foreign_keys off on that connection",
       "kind": "unknown_nonblocking",
       "task_id": "t1",
-      "resolved": false,
-      "resolution": ""
+      "resolved": true,
+      "resolution": "t1 merged: step 3 runs inside the migration transaction with foreign_keys off; tests pass on sqlite 3.53.1 and on the Docker image's 3.40.1"
     },
     {
       "id": "r2",

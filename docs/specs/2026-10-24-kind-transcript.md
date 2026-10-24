@@ -126,10 +126,10 @@
 
 ## Open parks
 
-- [unknown_nonblocking] Residual: the probe ran the rebuild outside `_migrate`; the real step-3 tuple must keep single statements (store.py:64-66) and run under the same BEGIN IMMEDIATE with `foreign_keys` off on that connection
 - [follow_up] Firmware work starts from origin/feat/issue-1 (2b3cbdea); the local xteink-firmware checkout is 31 commits behind it, so the worktree must branch from the remote ref
 - [follow_up] culture-rules switches the daily-newspaper upload to kind=newspaper and transcripts to kind=transcript once the server ships (a culture-rules change, to be filed via the communicate skill); existing newspaper items can be re-kinded with xteink library set-kind
 
 ## Resolved vagueness
 
 - [unknown_nonblocking] kMaxManifestEntries is 300 (xteink-firmware SyncProtocol.h:23) and Manifest::add fails past it; books, articles and dozens of transcripts a day share that cap. Does transcript volume need a higher cap or pruning, or is it a follow-up? — resolved: Follow-up issue; cap unchanged in this work (user decision 2026-10-24)
+- [unknown_nonblocking] Residual: the probe ran the rebuild outside `_migrate`; the real step-3 tuple must keep single statements (store.py:64-66) and run under the same BEGIN IMMEDIATE with `foreign_keys` off on that connection — resolved: carried to plan risk r1; t1 ran step 3 inside the store migration (merged into kind/transcript)

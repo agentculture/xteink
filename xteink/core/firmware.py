@@ -1,7 +1,7 @@
 """FirmwareStore: uploaded device images, per-device offers and rollback memory.
 
 Images get their own ``firmware`` table and never go into ``items`` (whose ``kind`` is
-book/article only). The bytes reuse the content-addressed ``files/<aa>/<sha256>`` store.
+a library kind: book, article, transcript or newspaper). The bytes reuse the content-addressed ``files/<aa>/<sha256>`` store.
 Validating that the bytes are a real image for the board is the caller's job (see the
 ESP image header check); this module only stores and tracks them.
 """

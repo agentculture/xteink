@@ -4,7 +4,7 @@
   "schema_version": 6,
   "status": "exported",
   "created": "2026-10-24T04:52:58Z",
-  "updated": "2026-10-24T15:47:46Z",
+  "updated": "2026-10-24T16:07:38Z",
   "claims": [
     {
       "id": "c1",
@@ -538,8 +538,8 @@
       "text": "Residual: the probe ran the rebuild outside _migrate; the real step-3 tuple must keep single statements (store.py:64-66) and run under the same BEGIN IMMEDIATE with foreign_keys off on that connection",
       "kind": "unknown_nonblocking",
       "claim_id": "c2",
-      "resolved": false,
-      "resolution": "",
+      "resolved": true,
+      "resolution": "carried to plan risk r1; t1 ran step 3 inside the store migration (merged into kind/transcript)",
       "resolution_claim_id": null
     },
     {

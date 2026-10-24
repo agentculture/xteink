@@ -162,8 +162,6 @@ Edit the Owner/Model columns before approving gate 2 — the default Model is a 
 ### Open items
 
 - [follow_up] Firmware work starts from origin/feat/issue-1 (2b3cbdea); the local xteink-firmware checkout is 31 commits behind it, so the worktree must branch from the remote ref
-- [unknown_nonblocking] Residual: the probe ran the rebuild outside _migrate; the real step-3 tuple must keep single statements (store.py:64-66) and run under the same BEGIN IMMEDIATE with foreign_keys off on that connection
 - [follow_up] culture-rules switches the daily-newspaper upload to kind=newspaper and transcripts to kind=transcript once the server ships (a culture-rules change, to be filed via the communicate skill); existing newspaper items can be re-kinded with xteink library set-kind
-- [unknown_nonblocking] The probe ran the items rebuild outside `_migrate`; the step-3 statements must run inside its BEGIN IMMEDIATE with foreign_keys off on that connection
 - [unknown_nonblocking] Order matters for h5: the pre-change X3 firmware compat check must run after the server deploy and before the new firmware is offered; once OTA installs, it cannot be re-measured without a flash back
 - [out_of_scope] kMaxManifestEntries = 300 is shared by all four kinds; raising or pruning it is a follow-up (user decision)
