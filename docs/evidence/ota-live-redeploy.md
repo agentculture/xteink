@@ -20,3 +20,22 @@ Run 2026-10-11 with the owner's approval. The live compose project `xteink` was 
 ## Rollback
 
 Stop `api`/`mcp`, restore the tarball into the volume, and rebuild from `feat/issue-1`.
+
+## Second redeploy, from `main` (2026-10-12T21:53Z)
+
+Run with the owner's approval after xteink #5 and #6 merged, so the live server carries the stale-offer fix: a device that reports running its offered build has the offer withdrawn.
+
+1. `api` and `mcp` were stopped, with the tunnels left up.
+2. The `xteink_xteink-data` volume was backed up to `xteink/backups/server/20261012T215338Z-xteink-data.tgz` under the operator's XDG data home (20,082,057 B, sha256 prefix `1253b11156a8c47e`; contains `library.db` and `files/`). This lives outside the repo and is not committed.
+3. The stack was rebuilt with the same command as above, from a clean worktree detached at `main` `d56e0d8`. The main checkout carries untracked leftovers that collide with files now on `main`, so it was not used.
+
+Verification:
+
+- `api` and `mcp` are healthy, and both cloudflared connectors are still up.
+- `library.db`: `PRAGMA user_version` = 2 (no new migration), and `integrity_check` = `ok`.
+- Data is intact: 5 library items, 3 devices and 5 firmware images. `x3-ori` (id 3) is active on `xteink-fw 1.6.5+xteink.2b3cbdea`.
+- `xteink firmware list` and `xteink device list` answer. A dry-run `xteink firmware offer 5 --device 3` reports what it would do and changes nothing (the new shared dry-run path).
+- With no credentials: `GET /api/device/firmware/5` gives `401` on the LAN device port and on the device host, `POST /api/device/status` gives `401`, and the UI host gives `302` to Cloudflare Access.
+- **Pending:** device 3 still holds the fulfilled offer #5. The fixed server withdraws it on the X3's next status report (its next daily run). Check `offered_firmware` is null afterwards.
+
+Rollback: stop `api`/`mcp`, restore `20261012T215338Z-xteink-data.tgz` into the volume, and rebuild from `c034c0b^` (`main` before #5).
