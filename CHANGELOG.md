@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/). This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.3] - 2026-10-30
+
+### Added
+
+- CI gate: the `test` job fails a PR that has any OPEN or CONFIRMED SonarCloud issue. ACCEPTED and FALSE_POSITIVE issues pass. `scripts/sonar-pr-issues.py` and its tests are cited from `agentculture/culture-rules@48942c3`.
+
+### Changed
+
+- Bump the `cloudflared-ui` and `cloudflared-device` connector image from `cloudflare/cloudflared:2025.9.1` to `2026.10.7`. The old image bundled go-jose 4.1.0, which is affected by CVE-2026-116587 (high, a DoS when parsing JWKs with RSA keys), CVE-2026-116585, CVE-2026-116586 and CVE-2026-34986. 2026.10.7 ships go-jose 4.1.6. The connectors must be recreated with `grant run --inject` (see `docs/remote-access.md`), because a plain `docker compose up` drops the tunnel tokens.
+
 ## [0.13.2] - 2026-10-24
 
 ### Added
