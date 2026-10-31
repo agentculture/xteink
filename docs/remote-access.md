@@ -120,6 +120,23 @@ grant run \
 Without `--profile remote`, `docker compose up -d` starts only `api` and `mcp`,
 and no cloudflared container runs (`scripts/check-compose.sh` checks this).
 
+### Upgrading the connectors
+
+After bumping the `cloudflare/cloudflared` image in `compose.yaml`, recreate only
+the two connectors, so `api` and `mcp` keep running:
+
+```bash
+docker pull cloudflare/cloudflared:<new>
+grant run \
+  --inject TUNNEL_TOKEN_UI=XTEINK_TUNNEL_TOKEN_UI \
+  --inject TUNNEL_TOKEN_DEVICE=XTEINK_TUNNEL_TOKEN_DEVICE \
+  -- docker compose --profile remote up -d --no-deps cloudflared-ui cloudflared-device
+```
+
+Always go through `grant run --inject`. A plain `docker compose up` recreates the
+connectors with an empty `TUNNEL_TOKEN`, and they crash-loop until they are
+recreated with the tokens.
+
 ## Checking it
 
 ```bash

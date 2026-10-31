@@ -91,7 +91,7 @@ services:
   # tunnel (devague deviation d1). Each connector gets its own token from .env.
   cloudflared-ui: &cloudflared
     profiles: [remote]
-    image: cloudflare/cloudflared:2025.9.1
+    image: cloudflare/cloudflared:2026.10.7
     command: tunnel --no-autoupdate run
     restart: unless-stopped
     environment:
